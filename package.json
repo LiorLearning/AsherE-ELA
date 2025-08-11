@@ -8,7 +8,8 @@
     "dev:server": "tsx watch server/index.ts",
     "dev": "concurrently -k -n client,server -c auto,auto \"npm:dev:client\" \"npm:dev:server\"",
     "build": "vite build",
-    "preview": "vite preview --open"
+    "preview": "vite preview --open",
+    "server:start": "tsx server/index.ts"
   },
   "dependencies": {
     "@types/multer": "^2.0.0",
