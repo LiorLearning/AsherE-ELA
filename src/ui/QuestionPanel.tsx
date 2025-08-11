@@ -477,7 +477,9 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
       const formData = new FormData();
       formData.append('audio', blobToProcess, 'recording.wav');
 
-      const response = await fetch('http://localhost:8787/api/speech-to-text', {
+      // Use environment variable for API URL, fallback to localhost for development
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787';
+      const response = await fetch(`${apiBaseUrl}/api/speech-to-text`, {
         method: 'POST',
         body: formData,
       });
