@@ -6,12 +6,14 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
-    proxy: {
-      '/api': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:8787',
-        changeOrigin: true,
-      },
-    },
+    // For local dev, you can still proxy to your API if desired.
+    // When deploying, set VITE_API_BASE_URL on the client instead of using a proxy.
+    // proxy: {
+    //   '/api': {
+    //     target: 'http://localhost:8787',
+    //     changeOrigin: true,
+    //   },
+    // },
   },
 });
 
