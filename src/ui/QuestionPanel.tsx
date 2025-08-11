@@ -34,10 +34,10 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   const blendingQuestions: BlendingQuestion[] = [
     {
       id: 1,
-      word: "sack",
-      imageUrl: "🛍️", // Shopping bag/sack emoji
-      phonemes: ["s", "a", "ck"], // individual letter sounds - "ck" is a digraph
-      explanation: "Great job blending the sounds s-a-ck to make 'sack'!"
+      word: "Asher",
+      imageUrl: "🧑‍🚀", // Captain Asher
+      phonemes: ["a", "sh", "er"], // special phoneme breakdown for Asher
+      explanation: "Blend the sounds a-sh-er to make 'Asher'!"
     }
   ];
 
@@ -45,10 +45,10 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   const speechQuestions: SpeechQuestion[] = [
     {
       id: 1,
-      text: "Pam is so happy. Today, she is going to her first baseball game with her dad. First, Pam and Dad look for seats. Then, they sit down next to a lot of people. Pam smells popcorn and hot dogs. The man selling snacks is near Pam and Dad.",
-      imageUrl: "👧🏽⚾👨‍👧🍿🌭", // Girl, baseball, father-daughter, popcorn, hot dog
-      expectedWords: ["pam", "baseball", "dad", "seats", "popcorn", "hot dogs", "snacks"],
-      explanation: "Great job reading about Pam's baseball adventure! You mentioned the key parts of the story."
+      text: "Map, please! Captain Asher and Clay were in the moon jungle. Shracker zipped overhead. The boss ran at Asher. Asher slid aside—WHOOSH! The boss fell into a spinning hole. A bright gate glowed. ‘Map, please,’ said Asher. The gate gave him a map.",
+      imageUrl: "🗺️🚪✨🌙🌴", // Map, gate, sparkle, moon, jungle
+      expectedWords: ["map", "gate"],
+      explanation: "Great reading! You said the important words from the story."
     }
   ];
 
@@ -69,33 +69,22 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
       correctAnswer: "chop", // The correct spelling
       explanation: 'Clay uses his laser axe to "chop" jungle vines!'
     },
-    {
-      id: 3,
-      word: "think",
-      imageUrl: "🤔", // Perfect single emoji showing thinking
-      correctAnswer: 0, // "th"
-      explanation: 'Shracker must "think" fast to scan for enemies - it starts with "th"!'
-    },
-    {
-      id: 4,
-      word: "throw",
-      imageUrl: "⚾", // Baseball emoji for throwing action
-      correctAnswer: 0, // "th"
-      explanation: 'Clay can "throw" his energy ball at the enemies - it starts with "th"!'
-    },
+    // Removed questions 3 (think) and 4 (throw) per request
     {
       id: 5,
-      word: "shark",
-      imageUrl: "🦈", // Perfect single emoji for shark
-      correctAnswer: 2, // "sh"
-      explanation: 'Watch out for the space "shark" swimming through the cosmic ocean - it starts with "sh"!'
+      word: "clay",
+      imageUrl: "🐉", // Clay the MudWing dragon
+      isSpelling: true,
+      correctAnswer: "clay",
+      explanation: 'Type the sidekick\'s name: Clay!'
     },
     {
       id: 6,
-      word: "chase",
-      imageUrl: "🏃‍♂️💨", // Running person with speed lines for chase
-      correctAnswer: 1, // "ch"
-      explanation: 'The team must "chase" the Time Stranglers away - it starts with "ch"!'
+      word: "shracker",
+      imageUrl: "🤖🐦", // Shracker the robot bird
+      isSpelling: true,
+      correctAnswer: "shracker",
+      explanation: 'Type the robo-bird\'s name: Shracker!'
     }
   ];
 
@@ -119,6 +108,8 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   const [isProcessing, setIsProcessing] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [speechRecognition, setSpeechRecognition] = useState<any>(null);
+  // Global speech state for toggle-able audio button
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   
   // Blending-related state
   const [blendingSoundOn, setBlendingSoundOn] = useState(true);
@@ -153,7 +144,7 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
           soundToPlay = 'chuh'; // The actual "ch" sound like in "chip"
           break;
         case 'sh':
-          soundToPlay = 'shuh'; // The actual "sh" sound like in "ship"
+          soundToPlay = 'sh'; // For this lesson, use plain "sh"
           break;
         // Individual letter sounds for blending
         case 's':
@@ -161,6 +152,9 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
           break;
         case 'a':
           soundToPlay = 'ack'; // Short "a" sound as in "sack"
+          break;
+        case 'er':
+          soundToPlay = 'er';
           break;
         case 'ck':
           soundToPlay = 'kuh'; // "ck" digraph makes one "k" sound
@@ -215,24 +209,30 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
 
   // Handle Hear button - play the complete word
   const handleHearWord = () => {
-    if (currentBlendingQuestion && 'speechSynthesis' in window) {
+    if (!('speechSynthesis' in window)) return;
+    // Toggle off if currently speaking
+    if (window.speechSynthesis.speaking || isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    if (currentBlendingQuestion) {
       const utterance = new SpeechSynthesisUtterance(currentBlendingQuestion.word);
       utterance.rate = 0.8; // Clear pronunciation
       utterance.pitch = 1.1; // Child-friendly pitch
       utterance.volume = 0.9;
-      
-      // Try to use a child-friendly voice if available
+
       const voices = window.speechSynthesis.getVoices();
-      const childFriendlyVoice = voices.find(voice => 
-        voice.name.toLowerCase().includes('female') || 
+      const childFriendlyVoice = voices.find(voice =>
+        voice.name.toLowerCase().includes('female') ||
         voice.name.toLowerCase().includes('samantha') ||
         voice.name.toLowerCase().includes('karen')
       );
-      
-      if (childFriendlyVoice) {
-        utterance.voice = childFriendlyVoice;
-      }
-      
+      if (childFriendlyVoice) utterance.voice = childFriendlyVoice;
+
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -602,37 +602,40 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
 
   const handleSoundClick = () => {
     if ('speechSynthesis' in window) {
+      // Toggle off if currently speaking
+      if (window.speechSynthesis.speaking || isSpeaking) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+        return;
+      }
+
       let textToSpeak = '';
-      
       if (isBlendingQuestion && currentBlendingQuestion) {
-        // For blending questions, read the word
         textToSpeak = currentBlendingQuestion.word;
       } else if (isSpeechQuestion && currentSpeechQuestion) {
-        // For speech questions, read the story text
         textToSpeak = currentSpeechQuestion.text;
       } else if (!isSpeechQuestion && !isBlendingQuestion && currentRegularQuestion) {
-        // For regular questions, read the word
         textToSpeak = currentRegularQuestion.word;
       }
-      
+
       if (textToSpeak) {
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
         utterance.rate = isSpeechQuestion ? 0.8 : 0.7; // Slightly faster for longer text
         utterance.pitch = 1.1; // Child-friendly pitch
-        
-        // Try to use a child-friendly voice
-      const voices = window.speechSynthesis.getVoices();
-      const childFriendlyVoice = voices.find(voice => 
-        voice.name.toLowerCase().includes('female') || 
-        voice.name.toLowerCase().includes('samantha') ||
-        voice.name.toLowerCase().includes('karen')
-      );
-      
-      if (childFriendlyVoice) {
-        utterance.voice = childFriendlyVoice;
-      }
-      
-      window.speechSynthesis.speak(utterance);
+
+        const voices = window.speechSynthesis.getVoices();
+        const childFriendlyVoice = voices.find(voice =>
+          voice.name.toLowerCase().includes('female') ||
+          voice.name.toLowerCase().includes('samantha') ||
+          voice.name.toLowerCase().includes('karen')
+        );
+        if (childFriendlyVoice) utterance.voice = childFriendlyVoice;
+
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+
+        window.speechSynthesis.speak(utterance);
       }
     }
   };
@@ -1352,7 +1355,7 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
               {transcript && !isRecording && (
                 <div style={{
                   padding: '20px 24px',
-                  background: transcript.toLowerCase().includes('pam') && transcript.toLowerCase().includes('baseball')
+                  background: (transcript.toLowerCase().includes('map') || transcript.toLowerCase().includes('gate'))
                     ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
                     : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                   color: 'white',
@@ -1374,7 +1377,7 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
                     letterSpacing: '0.5px',
                     opacity: 0.9
                   }}>
-                    {transcript.toLowerCase().includes('pam') && transcript.toLowerCase().includes('baseball') ? '🎯 Final Result' : '🔄 Final Result'}
+                    {(transcript.toLowerCase().includes('map') || transcript.toLowerCase().includes('gate')) ? '🎯 Final Result' : '🔄 Final Result'}
                   </div>
                   <div style={{
                     background: 'rgba(255,255,255,0.2)',
@@ -1430,7 +1433,7 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
                     🔁 Try Again
                   </button>
                   {/* Only show continue button if transcript contains key words */}
-                  {transcript.toLowerCase().includes('pam') && transcript.toLowerCase().includes('baseball') && (
+                  {(transcript.toLowerCase().includes('map') || transcript.toLowerCase().includes('gate')) && (
                     <button
                       onClick={handleNextQuestion}
                       style={{
@@ -1579,7 +1582,7 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
           {!isBlendingQuestion && !isSpeechQuestion && currentRegularQuestion && (
             <div style={{ marginTop: '12px' }}>
               {currentRegularQuestion.isSpelling ? (
-                /* Spelling input interface */
+                /* Spelling input interface (dynamic length) */
                 <div style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -1592,46 +1595,46 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
                     color: '#374151',
                     textAlign: 'center'
                   }}>
-                    🎯 Spell the word you hear:
+                    🎯 Type the word you hear:
                   </div>
                   <div style={{
                     display: 'flex',
                     gap: '8px',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center'
                   }}>
-                    {/* Individual letter inputs */}
-                    {[0, 1, 2, 3].map((index) => (
+                    {Array.from({ length: (currentRegularQuestion.correctAnswer as string).length }).map((_, index) => (
                       <input
                         key={index}
                         type="text"
+                        aria-label={`Letter ${index + 1}`}
                         maxLength={1}
                         value={spellingInput[index] || ''}
                         onChange={(e) => {
                           const newInput = spellingInput.split('');
                           newInput[index] = e.target.value.toLowerCase();
                           setSpellingInput(newInput.join(''));
-                          
                           // Auto-focus next input
-                          if (e.target.value && index < 3) {
-                            const nextInput = e.target.parentElement?.children[index + 1] as HTMLInputElement;
+                          if (e.target.value && index < (currentRegularQuestion.correctAnswer as string).length - 1) {
+                            const nextInput = e.currentTarget.parentElement?.children[index + 1] as HTMLInputElement;
                             nextInput?.focus();
                           }
                         }}
                         onKeyDown={(e) => {
-                          // Handle backspace to move to previous input
                           if (e.key === 'Backspace' && !e.currentTarget.value && index > 0) {
                             const prevInput = e.currentTarget.parentElement?.children[index - 1] as HTMLInputElement;
                             prevInput?.focus();
                           }
                         }}
                         style={{
-                          width: '60px',
-                          height: '60px',
-                          fontSize: '24px',
+                          width: '48px',
+                          height: '56px',
+                          fontSize: '22px',
                           fontWeight: '700',
                           textAlign: 'center',
                           border: '3px solid #e0e0e0',
-                          borderRadius: '12px',
+                          borderRadius: '10px',
                           background: 'white',
                           color: '#374151',
                           outline: 'none',
@@ -1705,7 +1708,9 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
 
       {/* Submit button - only for regular questions */}
       {!isSpeechQuestion && !isBlendingQuestion && !showFeedback && currentRegularQuestion && (
-        (currentRegularQuestion.isSpelling ? spellingInput.length >= 3 : selectedOption !== null)
+        (currentRegularQuestion.isSpelling 
+          ? spellingInput.length >= Math.min(3, (currentRegularQuestion.correctAnswer as string).length)
+          : selectedOption !== null)
       ) && (
         <div style={{
           marginTop: '32px',
