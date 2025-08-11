@@ -1,0 +1,14 @@
+{
+  "functions": {
+    "api/speech-to-text.ts": {
+      "maxDuration": 30
+    },
+    "api/chat.ts": {
+      "maxDuration": 30
+    },
+    "api/video.ts": {
+      "maxDuration": 30
+    }
+  },
+  "buildCommand": "npm run build"
+}
