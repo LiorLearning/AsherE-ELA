@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/speech-to-text.ts": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "api/chat.ts": {
       "maxDuration": 30
