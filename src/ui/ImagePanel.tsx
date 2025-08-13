@@ -14,7 +14,7 @@ type Props = {
 };
 
 export function ImagePanel({ imageUrl, loading, error, progress = 0, headerText, headerAvatar = '🗨️', onListen, footerCard, centerCard, overlay }: Props): JSX.Element {
-  const segmentIcons = ['🌀','🤖','🪵'];
+  const segmentIcons = ['🌀','🤖'];
 
   return (
     <div style={{ position: 'relative', height: '100%', background: '#0f172a' }}>
