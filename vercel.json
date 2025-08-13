@@ -8,6 +8,12 @@
     },
     "api/video.ts": {
       "maxDuration": 30
+    },
+    "api/text-to-speech.ts": {
+      "maxDuration": 30
+    },
+    "api/image.ts": {
+      "maxDuration": 60
     }
   },
   "buildCommand": "npm run build"

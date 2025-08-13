@@ -58,3 +58,4 @@ coverage/
 
 # Optional eslint cache
 .eslintcache
+.vercel
