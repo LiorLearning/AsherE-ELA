@@ -15,6 +15,5 @@
     "api/image.ts": {
       "maxDuration": 60
     }
-  },
-  "buildCommand": "npm run build"
+  }
 }

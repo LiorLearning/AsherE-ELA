@@ -1,13 +1,57 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import bg1Url from '../../../bg1.png';
+import { useStory } from '../story/StoryStore';
+import bg1Url from '../../../bg2.png';
+import { audioManager } from '../audioManager';
 
-export function AdventureMode(): JSX.Element {
-  const [adventureMessages, setAdventureMessages] = useState<Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>>([
-    { role: 'ai', text: "🎉 Amazing reading, brave explorer! Captain Asher needs your help planning his next moon jungle adventure. What exciting mission should he go on next? 🚀🌙" }
-  ]);
+type Props = {
+  onAdventureMessage?: (userMessage: string) => void;
+  onStoryUpdate?: (storyUpdate: string) => void;
+  adventureMessages?: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>;
+  onAdventureMessagesUpdate?: (messages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>) => void;
+};
+
+export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMessages: propAdventureMessages, onAdventureMessagesUpdate }: Props): JSX.Element {
+  const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat } = useStory();
+  // Use parent-provided messages or default/local persisted
+  const defaultMessages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }> = [
+    { role: 'ai' as const, text: "🎉 London! I'm bursting with excitement to continue our magical adventure! Sparkle just saved Earth with the Starlight Reverso Button and promised to save the alien planet too! 🌟✨ That group hug with the monster was amazing! Now I'm on the edge of my seat... what happens next in our cosmic rescue mission?" }
+  ];
+  const [localAdventureMessages, setLocalAdventureMessages] = useState<Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>>(
+    (storyState?.adventureMessages?.length ?? 0) > 0
+      ? (storyState.adventureMessages as any)
+      : defaultMessages
+  );
+  const adventureMessages = propAdventureMessages || localAdventureMessages;
+  
+  // Helper to update messages (functional to avoid stale snapshots)
+  const updateAdventureMessages = (updater: (prev: typeof adventureMessages) => typeof adventureMessages) => {
+    setLocalAdventureMessages(prev => {
+      const base = propAdventureMessages ?? prev;
+      const next = updater(base as any);
+      if (onAdventureMessagesUpdate) onAdventureMessagesUpdate(next);
+      return next as any;
+    });
+  };
   const [adventureInput, setAdventureInput] = useState('');
   const [isAdventureRecording, setIsAdventureRecording] = useState(false);
   const [adventureSpeechRecognition, setAdventureSpeechRecognition] = useState<any>(null);
+  
+  // Adventure state management
+  const [adventureState, setAdventureState] = useState<'new' | 'ongoing' | 'character_creation'>('ongoing');
+  const [currentAdventure, setCurrentAdventure] = useState<{
+    type?: string;
+    protagonist?: string;
+    sidekick?: string;
+    villain?: string;
+    goal?: string;
+    setting?: string;
+  }>({
+    type: 'magical space adventure',
+    protagonist: 'Sparkle (radiant, glittery pink superstar in pink astronaut suit)',
+    sidekick: 'friend in white astronaut suit',
+    setting: 'The Moon, Sprinkle Chip Caverns, near glowing Earth',
+    goal: 'just saved Earth with Starlight Reverso Button, now must save alien planet'
+  });
   const ADVENTURE_IMAGE_OVERLAY_OPACITY = 0.45;
   const adventureScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -20,6 +64,41 @@ export function AdventureMode(): JSX.Element {
   const audioCacheRef = useRef<Map<string, string>>(new Map());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hasUserGestureRef = useRef<boolean>(false);
+
+  // Helper function to analyze responses and update adventure state
+  const updateAdventureContext = (userMessage: string, aiResponse: string) => {
+    const lowerUser = userMessage.toLowerCase();
+    const lowerAI = aiResponse.toLowerCase();
+    
+    // Check for interest-based adventure selection
+    const interests = ['animals', 'jungles', 'barbies', 'tigers', 'magic', 'space', 'sparkles', 'sports', 'movies', 'dinosaurs', 'robots', 'pirates', 'knights', 'ninjas'];
+    const selectedInterest = interests.find(interest => lowerUser.includes(interest));
+    
+    if (selectedInterest && adventureState === 'new') {
+      setCurrentAdventure(prev => ({ ...prev, type: selectedInterest }));
+      setAdventureState('ongoing');
+    }
+    
+    // Check for character creation keywords
+    if (lowerUser.includes('create') && (lowerUser.includes('character') || lowerUser.includes('sidekick'))) {
+      setAdventureState('character_creation');
+    }
+    
+    // Check for adventure progression
+    if (adventureState === 'new' && lowerUser.length > 10) {
+      setAdventureState('ongoing');
+    }
+    
+    // Parse potential character/adventure elements from user input
+    if (lowerUser.includes('name') && adventureState === 'character_creation') {
+      // Extract potential names or update sidekick name
+      const words = userMessage.split(' ');
+      const nameIndex = words.findIndex(w => w.toLowerCase() === 'name');
+      if (nameIndex >= 0 && nameIndex < words.length - 1) {
+        setCurrentAdventure(prev => ({ ...prev, sidekick: words[nameIndex + 1] }));
+      }
+    }
+  };
 
   useEffect(() => {
     const node = adventureScrollRef.current;
@@ -43,6 +122,14 @@ export function AdventureMode(): JSX.Element {
   }, []);
 
   useEffect(() => {
+    // If arriving from Step 4 with a pending chat, inject it once
+    const pending = consumePendingAdventureChat?.();
+    if (pending && pending.text) {
+      // Drive the normal send path to avoid duplicate appends
+      setAdventureInput(pending.text);
+      setTimeout(() => { void sendAdventureMessage(); }, 50);
+    }
+
     const latestMessage = adventureMessages[adventureMessages.length - 1];
     const latestIndex = adventureMessages.length - 1;
     if (
@@ -64,9 +151,10 @@ export function AdventureMode(): JSX.Element {
     const text = adventureInput.trim();
     if (!text) return;
 
-    setAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 Create image: ${text}` }]);
+    updateAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 Create image: ${text}` }]);
+    appendStoryMessage({ role: 'student', text: `🌄 Create image: ${text}` });
     setAdventureInput('');
-    setAdventureMessages(prev => [...prev, { role: 'ai', text: 'Creating your adventure image...', isLoading: true }]);
+    updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Creating your adventure image...', isLoading: true }]);
 
     try {
       const response = await fetch('/api/image', {
@@ -76,7 +164,7 @@ export function AdventureMode(): JSX.Element {
       });
       const data = await response.json();
       if (response.ok && data.imageUrl) {
-        setAdventureMessages(prev => {
+        updateAdventureMessages(prev => {
           const newMessages = [...prev];
           const loadingIndex = newMessages.findIndex(m => m.isLoading);
           if (loadingIndex !== -1) {
@@ -91,13 +179,14 @@ export function AdventureMode(): JSX.Element {
           return newMessages;
         });
         setFullscreenImageUrl(data.imageUrl);
+        appendStoryMessage({ role: 'ai', text: "Here's your adventure image! 🌄✨", isImage: true, imageUrl: data.imageUrl });
         setShowFullscreenImage(true);
       } else {
         throw new Error(data.error || 'Failed to generate image');
       }
     } catch (error) {
       console.error('Error generating image:', error);
-      setAdventureMessages(prev => {
+      updateAdventureMessages(prev => {
         const newMessages = [...prev];
         const loadingIndex = newMessages.findIndex(m => m.isLoading);
         if (loadingIndex !== -1) {
@@ -109,15 +198,14 @@ export function AdventureMode(): JSX.Element {
         }
         return newMessages;
       });
+      appendStoryMessage({ role: 'ai', text: "Sorry, I couldn't create that image. Please try again with a different description! 🌄" });
     }
   };
 
   const playAIResponse = async (messageIndex: number, text: string) => {
     try {
-      if (audioRef.current) {
-        try { audioRef.current.pause(); } catch {}
-        audioRef.current.currentTime = 0;
-      }
+      // Ensure only one audio plays at a time globally
+      audioManager.stopAll();
       setAudioLoading(messageIndex);
       const cleanText = text.replace(/[🎉🚀🌙🌄✨😊]/g, '').trim();
       if (!cleanText) {
@@ -149,6 +237,9 @@ export function AdventureMode(): JSX.Element {
         audio.onended = () => setPlayingAudio(prev => prev === messageIndex ? null : prev);
         audio.onerror = () => setPlayingAudio(prev => prev === messageIndex ? null : prev);
         audio.onabort = () => setPlayingAudio(prev => prev === messageIndex ? null : prev);
+        audio.onpause = () => setPlayingAudio(prev => prev === messageIndex ? null : prev);
+        // Register as the active audio; this will stop any other playing audio
+        audioManager.setActive(audio);
         try {
           if (!hasUserGestureRef.current) {
             const resumeOnGesture = () => {
@@ -179,16 +270,36 @@ export function AdventureMode(): JSX.Element {
     }
   };
 
+  const toggleAIResponse = async (messageIndex: number, text: string) => {
+    // If this message is currently playing, toggle off
+    if (playingAudio === messageIndex) {
+      try {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+      } catch {}
+      setPlayingAudio(null);
+      // Also clear global active audio
+      audioManager.stopAll();
+      return;
+    }
+    // Otherwise, play this message (will stop any other audio via audioManager)
+    await playAIResponse(messageIndex, text);
+  };
+
   const sendAdventureMessage = async () => {
     const text = adventureInput.trim();
+    console.log('sendAdventureMessage called with text:', text);
     if (!text) return;
     if (text.toLowerCase() === 'image' || text.toLowerCase() === 'create image' || text.toLowerCase().startsWith('create image')) {
       const imagePrompt = text.toLowerCase() === 'image' || text.toLowerCase() === 'create image'
-        ? 'Captain Asher on an exciting space adventure'
-        : text.replace(/^create image\s*/i, '').trim() || 'Captain Asher on an exciting space adventure';
-      setAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 ${text}` }]);
+        ? 'Sparkle in her pink astronaut suit on a magical space adventure with sparkles and whimsy'
+        : text.replace(/^create image\s*/i, '').trim() || 'Sparkle in her pink astronaut suit on a magical space adventure with sparkles and whimsy';
+      updateAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 ${text}` }]);
+      onAdventureMessage?.(text);
       setAdventureInput('');
-      setAdventureMessages(prev => [...prev, { role: 'ai', text: 'Creating your adventure image...', isLoading: true }]);
+      updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Creating your adventure image...', isLoading: true }]);
       try {
         const response = await fetch('/api/image', {
           method: 'POST',
@@ -197,7 +308,7 @@ export function AdventureMode(): JSX.Element {
         });
         const data = await response.json();
         if (response.ok && data.imageUrl) {
-          setAdventureMessages(prev => {
+          updateAdventureMessages(prev => {
             const newMessages = [...prev];
             const loadingIndex = newMessages.findIndex(m => m.isLoading);
             if (loadingIndex !== -1) {
@@ -218,7 +329,7 @@ export function AdventureMode(): JSX.Element {
         }
       } catch (error) {
         console.error('Error generating image:', error);
-        setAdventureMessages(prev => {
+        updateAdventureMessages(prev => {
           const newMessages = [...prev];
           const loadingIndex = newMessages.findIndex(m => m.isLoading);
           if (loadingIndex !== -1) {
@@ -234,28 +345,40 @@ export function AdventureMode(): JSX.Element {
       return;
     }
 
-    setAdventureMessages(prev => [...prev, { role: 'student', text }]);
+    updateAdventureMessages(prev => [...prev, { role: 'student', text }]);
+    appendStoryMessage({ role: 'student', text });
+    onAdventureMessage?.(text);
     setAdventureInput('');
-    setAdventureMessages(prev => [...prev, { role: 'ai', text: 'Thinking about your adventure...', isLoading: true }]);
+    updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Thinking about your adventure...', isLoading: true }]);
     try {
       const currentMessages = adventureMessages.filter(m => !m.isLoading && !m.isImage);
       const conversationMessages = [
         {
           role: 'system',
-          content: `You are Captain Asher's AI companion helping young students (ages 5-8) create exciting reading adventures. You should:
+          content: `Role & Perspective: Be my loyal sidekick in an imaginative adventure for children aged 8–14. Speak in the first person as my companion.
 
-1. Respond enthusiastically and encouragingly to their ideas
-2. Ask follow-up questions to develop their story ideas further
-3. Suggest creative plot developments that involve reading and problem-solving
-4. Keep responses appropriate for young children (no scary or inappropriate content)
-5. Encourage them to use their imagination and think about characters, settings, and adventures
-6. Reference the existing story elements: Captain Asher (space explorer), Clay (dragon sidekick), Shracker (robot bird), moon jungle adventures
-7. Keep responses to 1-2 sentences maximum for easy reading
-8. Use encouraging emojis and simple vocabulary
-9. Help build on their previous ideas to create a cohesive story
-10. Respond directly to what the student just said - don't repeat the same response
+Tone: Friendly, encouraging, and light-hearted, with humor and kid-friendly language. Ask only one question at a time. Keep responses under 80 words.
 
-The student just completed reading a story about Captain Asher in the moon jungle and is now creating their next adventure.`
+Goal: Create fast-paced, mission-oriented adventures with lovable characters, thrilling twists, and cliffhangers. Keep me eager for the next scene and encourage multiple missions to inspire a love for storytelling.
+
+Ongoing Adventure: Show excitement, prompt me for what happens next, and occasionally suggest 1–2 creative ideas to spark the next turn.
+
+New Adventure: Ask about my interests (sports, animals, movies, space, etc.). Offer:
+- Interest-based adventure (protagonist + villain + clear goal)
+- Another interest-based adventure
+- "Create-your-own" adventure (I invent the setting, sidekick, and villain)
+
+Use rich plots, lovable characters, and suspenseful cliffhangers.
+
+Adventure State: ${adventureState === 'new' ? 'NEW_ADVENTURE' : adventureState === 'character_creation' ? 'CHARACTER_CREATION' : 'ONGOING_ADVENTURE'}
+
+Current Adventure Context: ${JSON.stringify(currentAdventure)}
+
+Student Profile (London): Loves animals, jungles, Barbies, baby tigers, and magical adventures. Prefers realistic-cartoon blend with bright fantasy elements, sparkles, whimsy, and stylized magical charm.
+
+Character Creation: When creating sidekicks/characters, let me choose names with suggestions, offer trait lists (funny, optimistic, resilient, etc.), and ask me to describe appearance for image creation.
+
+Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or London. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses magical and whimsical to match London's interests.`
         },
         ...currentMessages
           .slice(-4)
@@ -270,15 +393,23 @@ The student just completed reading a story about Captain Asher in the moon jungl
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       const aiReply = data.reply || 'That sounds like an amazing adventure! What happens next?';
-      setAdventureMessages(prev => {
+      updateAdventureMessages(prev => {
         const newMessages = [...prev];
         const loadingIndex = newMessages.findIndex(m => m.isLoading);
         if (loadingIndex !== -1) newMessages[loadingIndex] = { role: 'ai', text: aiReply, isLoading: false } as any;
         return newMessages;
       });
+      appendStoryMessage({ role: 'ai', text: aiReply });
+      
+      // Update adventure context based on conversation
+      updateAdventureContext(text, aiReply);
+      
+      // Pass story update to parent component for use in other steps
+      const storyUpdate = `User: ${text} | AI: ${aiReply}`;
+      onStoryUpdate?.(storyUpdate);
     } catch (error) {
       console.error('Error calling GPT-4o API:', error);
-      setAdventureMessages(prev => {
+      updateAdventureMessages(prev => {
         const newMessages = [...prev];
         const loadingIndex = newMessages.findIndex(m => m.isLoading);
         if (loadingIndex !== -1) {
@@ -290,6 +421,7 @@ The student just completed reading a story about Captain Asher in the moon jungl
         }
         return newMessages;
       });
+      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! 🚀 Tell me more about what Captain Asher should do next!' });
     }
   };
 
@@ -377,9 +509,9 @@ The student just completed reading a story about Captain Asher in the moon jungl
                     <span style={{ fontFamily: 'Quicksand, sans-serif', fontSize: 15, fontWeight: 500, lineHeight: 1.4 }}>{m.text}</span>
                   )}
                   {m.role === 'ai' && !m.isLoading && !m.isImage ? (
-                    <button onClick={() => void playAIResponse(i, m.text)} disabled={audioLoading === i}
+                    <button onClick={() => void toggleAIResponse(i, m.text)} disabled={audioLoading === i}
                       style={{ position: 'absolute', right: 8, bottom: 6, width: 20, height: 20, borderRadius: 10, border: 'none', background: playingAudio === i ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', cursor: audioLoading === i ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, boxShadow: '0 2px 6px rgba(0,0,0,0.2)', transition: 'all 0.2s ease', opacity: audioLoading === i ? 0.6 : 1 }}
-                      title={audioLoading === i ? 'Loading audio...' : playingAudio === i ? 'Playing...' : 'Listen to Captain Asher'}
+                      title={audioLoading === i ? 'Loading audio...' : playingAudio === i ? 'Stop' : 'Listen to Captain Asher'}
                       onMouseEnter={(e) => { if (audioLoading !== i) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.1)'; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     >{audioLoading === i ? '⋯' : playingAudio === i ? '🔴' : '🔊'}</button>
@@ -390,11 +522,38 @@ The student just completed reading a story about Captain Asher in the moon jungl
               ))}
             </div>
 
+            {/* Quick adventure options - show when starting new adventure */}
+            {adventureState === 'new' && adventureMessages.length <= 2 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12, justifyContent: 'center' }}>
+                {['🦁 Animals', '🌿 Jungles', '💖 Barbies', '🐅 Tigers', '✨ Magic', '🚀 Space'].map((option) => (
+                  <button key={option} onClick={() => {
+                    const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
+                    setAdventureInput(`I love ${interest} adventures!`);
+                    setTimeout(() => void sendAdventureMessage(), 100);
+                  }}
+                    style={{ padding: '8px 12px', borderRadius: 16, border: 'none', background: 'rgba(255,255,255,0.9)', color: '#374151', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'Quicksand, sans-serif', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s ease' }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.95)', padding: '8px 12px', borderRadius: 20, gap: 10, border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                 <input value={adventureInput} onChange={(e) => setAdventureInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void sendAdventureMessage(); }} placeholder="Message..."
                   style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#111827', fontSize: 16, fontWeight: 400, fontFamily: 'Quicksand, sans-serif' }} />
                 <button onClick={() => void generateAdventureImage()} aria-label="Generate Image" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(16,185,129,0.3)', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Generate image from your message">🌄</button>
+                {adventureState !== 'new' && (
+                  <button onClick={() => {
+                    setAdventureState('new');
+                    setCurrentAdventure({});
+                    updateAdventureMessages(() => [{ role: 'ai', text: "🎉 Hey there, brave adventurer! I'm your loyal sidekick, ready for an epic quest! What kind of adventure gets you excited - sports, animals, space, or something totally different? Let's create an amazing story together! 🚀✨" }]);
+                    resetStory();
+                  }} aria-label="New Adventure" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(245,158,11,0.3)', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Start a new adventure">🎪</button>
+                )}
                 <button onClick={() => void sendAdventureMessage()} aria-label="Send" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(139,92,246,0.3)', background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>▲</button>
               </div>
               <button onClick={toggleAdventureMic} aria-label="Record" style={{ width: 48, height: 48, borderRadius: 24, border: 'none', cursor: 'pointer', background: isAdventureRecording ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)', boxShadow: isAdventureRecording ? '0 6px 18px rgba(239, 68, 68, 0.3)' : '0 6px 18px rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

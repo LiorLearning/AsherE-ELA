@@ -27,8 +27,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Prompt is required and must be a string' })
     }
 
-    // Create a more descriptive prompt for Captain Asher's adventure
-    const enhancedPrompt = `A vibrant, family-friendly illustration for a children's story featuring Captain Asher's space adventure: ${prompt}. Style: colorful, adventurous, suitable for kids, with a sci-fi fantasy theme.`
+    // Create vividly realistic images for children's adventures with strict safety guidelines
+    const enhancedPrompt = `Create a vividly realistic image suitable for children aged 8-14 featuring Sparkle's magical space adventure: ${prompt}. Style: realistic blend with bright fantasy elements, sparkles, whimsy, and stylized magical charm. Ensure content is completely appropriate for kids and STRICTLY NOT sexual in any manner whatsoever. Focus on adventure, friendship, magic, and wonder.`
 
     const response = await openai.images.generate({
       model: "dall-e-3",
@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       quality: "standard"
     })
 
-    const imageUrl = response.data[0]?.url
+    const imageUrl = response.data?.[0]?.url
     
     if (!imageUrl) {
       throw new Error('No image URL returned from DALL-E')
