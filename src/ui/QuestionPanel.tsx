@@ -1,29 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import bg1Url from '../../bg1.png';
+import { Question, BlendingQuestion, SpeechQuestion } from './questions/types';
+import { blendingQuestions as blendingQuestionsData, speechQuestions as speechQuestionsData, questions as regularQuestionsData, options } from './questions/data';
+import { AdventureMode } from './questions/AdventureMode';
 
-type Question = {
-  id: number;
-  word: string;
-  imageUrl: string;
-  correctAnswer: number | string; // index of correct option or correct spelling
-  explanation: string;
-  isSpelling?: boolean; // Optional flag for spelling questions
-};
-
-type BlendingQuestion = {
-  id: number;
-  word: string;
-  imageUrl: string;
-  phonemes: string[]; // individual sounds for blending
-  explanation: string;
-};
-
-type SpeechQuestion = {
-  id: number;
-  text: string;
-  imageUrl: string;
-  expectedWords: string[]; // words the student should say
-  explanation: string;
-};
+// Simple global audio manager to prevent overlapping audio
+const audioManager = (() => {
+  let activeAudio: HTMLAudioElement | null = null;
+  return {
+    stopAll: () => {
+      try { if (activeAudio) { activeAudio.pause(); activeAudio.currentTime = 0; } } catch {}
+      activeAudio = null;
+      try { window.speechSynthesis?.cancel(); } catch {}
+    },
+    setActive: (el: HTMLAudioElement | null) => { activeAudio = el; },
+    getActive: () => activeAudio
+  };
+})();
 
 type Props = {
   onComplete?: () => void;
@@ -31,68 +24,16 @@ type Props = {
 
 export function QuestionPanel({ onComplete }: Props): JSX.Element {
   // Blending question data (first question)
-  const blendingQuestions: BlendingQuestion[] = [
-    {
-      id: 1,
-      word: "Asher",
-      imageUrl: "🧑‍🚀", // Captain Asher
-      phonemes: ["a", "sh", "er"], // special phoneme breakdown for Asher
-      explanation: "Blend the sounds a-sh-er to make 'Asher'!"
-    }
-  ];
+  const blendingQuestions: BlendingQuestion[] = blendingQuestionsData;
 
   // Speech question data
-  const speechQuestions: SpeechQuestion[] = [
-    {
-      id: 1,
-      text: "Map, please! Captain Asher and Clay were in the moon jungle. Shracker zipped overhead. The boss ran at Asher. Asher slid aside—WHOOSH! The boss fell into a spinning hole. A bright gate glowed. ‘Map, please,’ said Asher. The gate gave him a map.",
-      imageUrl: "🗺️🚪✨🌙🌴", // Map, gate, sparkle, moon, jungle
-      expectedWords: ["map", "gate"],
-      explanation: "Great reading! You said the important words from the story."
-    }
-  ];
+  const speechQuestions: SpeechQuestion[] = speechQuestionsData;
 
   // Question data
-  const questions: Question[] = [
-    {
-      id: 1,
-      word: "ship",
-      imageUrl: "🚀", // Perfect single emoji for spaceship
-      correctAnswer: 2, // "sh"
-      explanation: 'Captain Asher flies his amazing space "ship" - it starts with "sh"!'
-    },
-    {
-      id: 2,
-      word: "chop",
-      imageUrl: "🪓", // Axe emoji for chopping - SPELLING QUESTION
-      isSpelling: true, // New flag to indicate this is a spelling question
-      correctAnswer: "chop", // The correct spelling
-      explanation: 'Clay uses his laser axe to "chop" jungle vines!'
-    },
-    // Removed questions 3 (think) and 4 (throw) per request
-    {
-      id: 5,
-      word: "clay",
-      imageUrl: "🐉", // Clay the MudWing dragon
-      isSpelling: true,
-      correctAnswer: "clay",
-      explanation: 'Type the sidekick\'s name: Clay!'
-    },
-    {
-      id: 6,
-      word: "shracker",
-      imageUrl: "🤖🐦", // Shracker the robot bird
-      isSpelling: true,
-      correctAnswer: "shracker",
-      explanation: 'Type the robo-bird\'s name: Shracker!'
-    }
-  ];
-
-  const options = ['th', 'ch', 'sh'];
+  const questions: Question[] = regularQuestionsData;
   
-  // Combined question management - start with blending question, then speech question, then regular questions
-  const allQuestions = [...blendingQuestions, ...speechQuestions, ...questions];
-  const totalQuestions = allQuestions.length;
+  // Flow order: adventure mode (step 1) -> blending -> speech -> adventure mode (step 4) -> regular questions -> adventure mode (step 9)
+  const totalSteps = 1 + blendingQuestions.length + speechQuestions.length + 1 + questions.length + 1;
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -110,6 +51,29 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   const [speechRecognition, setSpeechRecognition] = useState<any>(null);
   // Global speech state for toggle-able audio button
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  // Story continuation experiment state
+  const [storyContext, setStoryContext] = useState<string[]>([]);
+  const [aiSummary, setAiSummary] = useState<string>('');
+  const [isSummaryLoading, setIsSummaryLoading] = useState<boolean>(false);
+  const [isSummarySpeaking, setIsSummarySpeaking] = useState<boolean>(false);
+  const summaryAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [hasAutoplayedSummary, setHasAutoplayedSummary] = useState<boolean>(false);
+  const [hasGeneratedSummary, setHasGeneratedSummary] = useState<boolean>(false);
+  const [summaryRefreshCount, setSummaryRefreshCount] = useState<number>(0);
+  const [continuationInput, setContinuationInput] = useState<string>('');
+  const [validationMessage, setValidationMessage] = useState<string>(''); // AI 1-2 word reply
+  const [validatedContinuation, setValidatedContinuation] = useState<string>(''); // shows as user bubble
+  // Voice capture for continuation (lightweight Web Speech API)
+  const [isContRecording, setIsContRecording] = useState<boolean>(false);
+  const [contRecognition, setContRecognition] = useState<any>(null);
+  const [contMediaRecorder, setContMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [isContProcessing, setIsContProcessing] = useState<boolean>(false);
+  const [isContinuationAnimating, setIsContinuationAnimating] = useState<boolean>(false);
+  const [isContinuationHidden, setIsContinuationHidden] = useState<boolean>(false);
+  const [isFeedbackRemoved, setIsFeedbackRemoved] = useState<boolean>(false);
+  const [hasAutoplayedContPrompt, setHasAutoplayedContPrompt] = useState<boolean>(false);
+  // Dynamic header shown in the green container during continuation (CTA or AI help lines)
+  const [continuationHeader, setContinuationHeader] = useState<string>('');
   
   // Blending-related state
   const [blendingSoundOn, setBlendingSoundOn] = useState(true);
@@ -122,12 +86,58 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   const [blendingMediaRecorder, setBlendingMediaRecorder] = useState<MediaRecorder | null>(null);
   const [blendingRecognition, setBlendingRecognition] = useState<any>(null);
   
-  // Determine current question type
-  const isBlendingQuestion = currentQuestionIndex < blendingQuestions.length;
-  const isSpeechQuestion = !isBlendingQuestion && currentQuestionIndex < blendingQuestions.length + speechQuestions.length;
-  const currentBlendingQuestion = isBlendingQuestion ? blendingQuestions[currentQuestionIndex] : null;
-  const currentSpeechQuestion = isSpeechQuestion ? speechQuestions[currentQuestionIndex - blendingQuestions.length] : null;
-  const currentRegularQuestion = !isBlendingQuestion && !isSpeechQuestion ? questions[currentQuestionIndex - blendingQuestions.length - speechQuestions.length] : null;
+  // Determine current step type
+  const isAdventureMode1 = currentQuestionIndex === 0;
+  const isBlendingQuestion = currentQuestionIndex >= 1 && currentQuestionIndex < 1 + blendingQuestions.length;
+  const isSpeechQuestion = currentQuestionIndex >= 1 + blendingQuestions.length && currentQuestionIndex < 1 + blendingQuestions.length + speechQuestions.length;
+  const isAdventureMode4 = currentQuestionIndex === (1 + blendingQuestions.length + speechQuestions.length);
+  const isAdventureMode9 = currentQuestionIndex === (1 + blendingQuestions.length + speechQuestions.length + 1 + questions.length);
+  const isAdventureMode = isAdventureMode1 || isAdventureMode4 || isAdventureMode9;
+  const currentBlendingQuestion = isBlendingQuestion ? blendingQuestions[currentQuestionIndex - 1] : null;
+  const currentSpeechQuestion = isSpeechQuestion ? speechQuestions[currentQuestionIndex - 1 - blendingQuestions.length] : null;
+  const currentRegularQuestion = (!isBlendingQuestion && !isSpeechQuestion && !isAdventureMode)
+    ? questions[currentQuestionIndex - 1 - blendingQuestions.length - speechQuestions.length - 1]
+    : null;
+  // Continuation experiment flags (now data-driven via aiHook)
+  const isFirstRegularStep = (!isBlendingQuestion && !isSpeechQuestion && !isAdventureMode && currentRegularQuestion?.id === 1);
+  const isSecondRegularStep = (!isBlendingQuestion && !isSpeechQuestion && !isAdventureMode && currentRegularQuestion?.id === 2);
+  const isAiHookStep = !!currentRegularQuestion?.aiHook;
+  const isContinuationStep = isAiHookStep;
+
+  // AI hook config (data-driven) with safe fallbacks to preserve current behavior
+  const aiCfg = currentRegularQuestion?.aiHook;
+  const hookTargetWord = aiCfg?.targetWord || (isSecondRegularStep ? 'chop' : (isFirstRegularStep ? 'ship' : (currentRegularQuestion?.word || '')));
+  const hookQuestionLine = aiCfg?.questionLine || (isFirstRegularStep ? 'What sound does it start with?' : 'What is that word?');
+  const hookBaseLine = aiCfg?.baseLine || (isFirstRegularStep
+    ? 'Across the water, something big glides toward Captain Asher.'
+    : 'From the vines, you hear a steady cutting sound ahead.');
+  const hookValidationWord = aiCfg?.validationWord || (isSecondRegularStep ? 'chop' : 'ship');
+  const hookIntent = aiCfg?.intent || (isFirstRegularStep ? 'sound' : 'spelling');
+
+  // Context helpers (centralized, but preserving existing behavior)
+  const buildContextText = (): string => {
+    return storyContext.join('\n');
+  };
+  const getLastEvent = (): string => {
+    if (isSecondRegularStep && validatedContinuation) return validatedContinuation;
+    return storyContext[storyContext.length - 1] || '';
+  };
+
+  // (Adventure mode state moved into AdventureMode component)
+
+  // (Adventure mode auto-scroll handled in AdventureMode)
+
+  // (Adventure mode audio setup handled in AdventureMode)
+
+  // (Adventure mode auto-play handled in AdventureMode)
+
+  // (Adventure image generation handled in AdventureMode)
+
+  // (Adventure TTS handled in AdventureMode)
+
+  // (Adventure messaging handled in AdventureMode)
+
+  // (Adventure mic handling moved into AdventureMode)
 
   const handlePhonemeSound = (phoneme: string) => {
     // Play the sound of the individual phoneme
@@ -194,6 +204,312 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
       
       window.speechSynthesis.speak(utterance);
     }
+  };
+
+  // Seed story context with the speech story (step 2) once
+  useEffect(() => {
+    const firstSpeech = speechQuestions && speechQuestions.length > 0 ? speechQuestions[0] : undefined;
+    if (storyContext.length === 0 && firstSpeech && firstSpeech.text) {
+      setStoryContext([firstSpeech.text]);
+    }
+  }, [speechQuestions, storyContext.length]);
+
+  // Reset AI hook state when entering a hook step (4 or 5) to force regeneration
+  useEffect(() => {
+    if (isAiHookStep) {
+      setHasGeneratedSummary(false);
+      setHasAutoplayedSummary(false);
+      setAiSummary('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAiHookStep, currentRegularQuestion?.id]);
+
+  // Preserve the learner's validated continuation when returning to Step 4 later
+  useEffect(() => {
+    if (isFirstRegularStep && validatedContinuation) {
+      setShowFeedback(true);
+      setIsCorrect(true);
+      setIsContinuationHidden(true);
+      setIsFeedbackRemoved(false);
+    }
+  }, [isFirstRegularStep, validatedContinuation]);
+
+  // Generate a brief story-forwarding hook (short sentences) when step 4/5 is active, only once unless retried
+  useEffect(() => {
+    const shouldSummarize = isAiHookStep && storyContext.length > 0 && !hasGeneratedSummary;
+    if (!shouldSummarize) return;
+    let cancelled = false;
+    const run = async () => {
+      try {
+        setIsSummaryLoading(true);
+        const targetWord = hookTargetWord;
+        const lastEvent = getLastEvent();
+        const questionEnding = hookQuestionLine;
+        const baseLine = hookBaseLine;
+        const contextText = buildContextText();
+        const messages = [
+          {
+            role: 'system',
+            content:
+              'You are a playful kids narrator for early readers. Make it fun and spoken to Asher (the player). Write 1–2 VERY SHORT sentences using simple K–2 words. CRITICAL RULE: If the target word is a character name (Clay, Shracker), do NOT have that character speak or introduce themselves. Use the OTHER character instead. Pattern: 1) A character notices the action. 2) Shracker gives Asher a friendly clue. If this step corresponds to "What is that word?", BEGIN with a tiny bridge (3–6 words) that naturally connects to the previous event. Adapt the base line to match the setting and use lively action/sound words. IMPORTANT: Do NOT include the provided question line; fold the task into Shracker\'s instruction to Asher. The UNSEEN target must matter next. STRICT RULES: Do NOT name, spell, rhyme, define, hint letters for, or use synonyms/descriptions of the target. If target is "clay", have Shracker speak, not Clay. If target is "shracker", have Clay speak, not Shracker. Return only the message.'
+          },
+          {
+            role: 'user',
+            content: `Current adventure history (most recent last):\n${contextText}\n\nMost recent event to bridge from:\n${lastEvent}\n\nTarget word for the next question: ${targetWord}\n\nBase line to adapt: ${baseLine}\n\nCRITICAL: If target word is "${targetWord}" and it's a character name, do NOT have that character speak! If target is "clay", only Shracker speaks. If target is "shracker", only Clay speaks.\n\nQuestion line (for reference only, do NOT output it verbatim): ${questionEnding}\n\nInstruction mapping: Always have the NON-TARGET character give the clue to Asher.`
+          }
+        ];
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages })
+        });
+        const data = await res.json();
+        if (!cancelled) {
+          setAiSummary(
+            data.reply || (isFirstRegularStep
+              ? '"Oh look! Something big glides over the waves," says Clay. "Here\'s a clue, Asher: spot it and select the sound it starts with," says Shracker.'
+              : '"Listen! A steady cutting sound comes from the vines," says Clay. "Here\'s a clue, Asher: name it and type the word," says Shracker.')
+          );
+          setHasGeneratedSummary(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setAiSummary(isFirstRegularStep
+            ? '"Oh look! Something big glides over the waves," says Clay. "Here\'s a clue, Asher: spot it and select the sound it starts with," says Shracker.'
+            : '"Listen! A steady cutting sound comes from the vines," says Clay. "Here\'s a clue, Asher: name it and type the word," says Shracker.');
+          setHasGeneratedSummary(true);
+        }
+      } finally {
+        if (!cancelled) setIsSummaryLoading(false);
+      }
+    };
+    void run();
+    return () => { cancelled = true; };
+  }, [isAiHookStep, isFirstRegularStep, hasGeneratedSummary, storyContext, validatedContinuation, isSecondRegularStep, hookTargetWord, hookQuestionLine, hookBaseLine]);
+
+  // Helper: ElevenLabs TTS
+  const playElevenTTS = async (text: string, voiceId?: string): Promise<HTMLAudioElement | null> => {
+    try {
+      // Always preempt any current audio before starting new
+      audioManager.stopAll();
+      const res = await fetch('/api/text-to-speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice_id: voiceId })
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const audio = new Audio(data.audioUrl as string);
+      audioManager.setActive(audio);
+      await audio.play().catch(() => undefined);
+      return audio;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleSummaryAudio = async () => {
+    if (!aiSummary) return;
+    // Toggle: stop existing audio
+    if (summaryAudioRef.current && !summaryAudioRef.current.paused) {
+      try { summaryAudioRef.current.pause(); summaryAudioRef.current.currentTime = 0; } catch {}
+      setIsSummarySpeaking(false);
+      return;
+    }
+    // Preempt any other audio before playing
+    audioManager.stopAll();
+    const textToSpeak = aiSummary.trim();
+    setIsSummarySpeaking(true);
+    const audio = await playElevenTTS(textToSpeak);
+    if (audio) {
+      summaryAudioRef.current = audio;
+      audio.onended = () => setIsSummarySpeaking(false);
+      audio.onerror = () => setIsSummarySpeaking(false);
+    } else {
+      setIsSummarySpeaking(false);
+    }
+  };
+
+  // When the continuation step becomes active (after correct answer), seed the header text
+  useEffect(() => {
+    if (isCorrect && isContinuationStep) {
+      const defaultLine = isFirstRegularStep
+        ? `Yay, "${hookTargetWord}" it is. What will you do with this ${hookTargetWord}? Let\'s include it in your story`
+        : `Awesome, let\'s keep the story going. Include the word "${hookTargetWord}" in what happens next!`;
+      setContinuationHeader(defaultLine);
+    }
+  }, [isCorrect, isContinuationStep, isFirstRegularStep]);
+
+  // Autoplay the continuation guidance once when the prompt row mounts (Step 4 & 5)
+  useEffect(() => {
+    if (isCorrect && isContinuationStep && !isContinuationHidden && !hasAutoplayedContPrompt) {
+      setHasAutoplayedContPrompt(true);
+      audioManager.stopAll();
+      const line = (continuationHeader || (isFirstRegularStep
+        ? `Yay, "${hookTargetWord}" it is. What will you do with this ${hookTargetWord}? Let\'s include it in your story`
+        : `Awesome, let\'s keep the story going. Include the word "${hookTargetWord}" in what happens next!`));
+      void playElevenTTS(line);
+    }
+  }, [isCorrect, isContinuationStep, isFirstRegularStep, isContinuationHidden, hasAutoplayedContPrompt, continuationHeader]);
+
+  // Step 0: On entering Step 4, stop any ongoing audio and autoplay summary
+  useEffect(() => {
+    if (isFirstRegularStep && aiSummary && !hasAutoplayedSummary) {
+      audioManager.stopAll();
+      const run = async () => {
+        const textToSpeak = aiSummary.trim();
+        await playElevenTTS(textToSpeak);
+        setHasAutoplayedSummary(true);
+      };
+      void run();
+    }
+  }, [isFirstRegularStep, aiSummary, hasAutoplayedSummary]);
+
+  // Evaluate continuation via AI with richer outcomes
+  type ContinuationEval = { status: 'valid' | 'invalid' | 'help'; message: string };
+  const validateContinuationWithAI = async (text: string): Promise<ContinuationEval> => {
+    try {
+      const targetWord = hookValidationWord;
+      const messages = [
+        { role: 'system', content: `You are Captain Asher's fun AI companion helping kids write their adventure story. Your job is to check if they used the target word "${targetWord}" in their sentence and respond naturally like a friendly narrator. 
+
+Respond as minified JSON: {"status":"valid|invalid|help","message":"<your response>"}
+
+RULES:
+- "valid": Only if the EXACT word "${targetWord}" appears as a standalone word (case-insensitive). Say something encouraging like "Perfect!" or "Great use of ${targetWord}!" 
+- "invalid": If they used a different word or misspelled it, gently point out what they wrote and what you need. Be specific: "I see you wrote '[their word]' but I need the word '${targetWord}'. Try again!"
+- "help": If they ask for help or seem stuck, give a creative prompt about what ${targetWord} could do in the adventure.
+
+Be conversational, not scripted. Acknowledge what they actually wrote. Keep responses under 25 words.` },
+        { role: 'user', content: `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue Captain Asher's adventure using the word "${targetWord}".` }
+      ];
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages })
+      });
+      const data = await res.json();
+      const raw: string = (data.reply || '').trim();
+      let parsed: ContinuationEval | null = null;
+      try { parsed = JSON.parse(raw) as ContinuationEval; } catch {}
+      if (parsed && parsed.status && parsed.message) return parsed;
+      // Fallback heuristic
+      if (new RegExp(`\\b${targetWord}\\b`, 'i').test(text)) {
+        return { status: 'valid', message: 'Great!' };
+      }
+      if (/help|hint|example|idk|don\'?t know/i.test(text)) {
+        return { status: 'help', message: `No worries! What if Captain Asher's ${targetWord} could take him somewhere amazing? Where might it go?` };
+      }
+      return { status: 'invalid', message: `Use the word “${targetWord}” in your sentence.` };
+    } catch {
+      const targetWord = hookValidationWord;
+      return { status: 'help', message: `Try using the word “${targetWord}”.` };
+    }
+  };
+
+  const handleSubmitContinuation = async () => {
+    const text = continuationInput.trim();
+    if (!text) return;
+      setValidationMessage('');
+    const result = await validateContinuationWithAI(text);
+    if (result.status === 'valid') {
+      setValidationMessage(result.message || 'Great!');
+      setValidatedContinuation(text);
+      setStoryContext(prev => [...prev, text]);
+      setContinuationInput('');
+      // Immediately animate out (no added wait, no praise TTS)
+        setIsContinuationHidden(true);
+      setIsFeedbackRemoved(false);
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+    } else if (result.status === 'invalid') {
+      setValidationMessage(result.message || 'Try again');
+      void playElevenTTS(result.message || 'Try again');
+    } else {
+      const msg = result.message || `No worries! What if Captain Asher\'s ${hookTargetWord} could take him somewhere amazing? Where might it go?`;
+      setValidationMessage(msg);
+      setContinuationHeader(msg);
+      void playElevenTTS(msg);
+    }
+  };
+
+  // Voice recording handlers for continuation input (no Whisper; live recognition only)
+  // Prefer Whisper: record audio and send to STT endpoint; also keep interim Web Speech in case
+  const startContinuationRecording = async () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    // Start interim recognition if available
+    let recognition: any = null;
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+    }
+    // Stop any playing audio before recording to avoid feedback
+    audioManager.stopAll();
+    // Start media recorder for Whisper
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = async () => {
+        try {
+          const blob = new Blob(chunks, { type: 'audio/webm' });
+          setIsContProcessing(true);
+          const formData = new FormData();
+          formData.append('audio', blob, 'continuation.webm');
+          const resp = await fetch('/api/speech-to-text', { method: 'POST', body: formData });
+          if (resp.ok) {
+            const data = await resp.json();
+            const text = (data.transcript || '').trim();
+            if (text) setContinuationInput(prev => (prev ? (prev + ' ' + text).trim() : text));
+          }
+        } catch {}
+        finally {
+          setIsContProcessing(false);
+          stream.getTracks().forEach(t => t.stop());
+        }
+      };
+      recorder.start();
+      setContMediaRecorder(recorder);
+    } catch (err) {
+      console.warn('Mic error for Whisper recording', err);
+    }
+    // Accumulate final chunks to avoid overwriting on pauses
+    let accumulated = continuationInput || '';
+    if (recognition) {
+      recognition.onresult = (event: any) => {
+        let interim = '';
+        let newFinal = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i];
+          if (res.isFinal) newFinal += res[0].transcript + ' ';
+          else interim += res[0].transcript;
+        }
+        if (newFinal) {
+          accumulated = (accumulated + ' ' + newFinal).replace(/\s+/g, ' ').trim() + ' ';
+        }
+        const display = (accumulated + interim).replace(/\s+/g, ' ').trim();
+        setContinuationInput(display);
+      };
+      recognition.onerror = () => { setIsContRecording(false); };
+      recognition.onend = () => { setIsContRecording(false); setContRecognition(null); };
+      recognition.start();
+      setContRecognition(recognition);
+    }
+    setIsContRecording(true);
+  };
+
+  const stopContinuationRecording = () => {
+    if (contRecognition) {
+      try { contRecognition.stop(); } catch {}
+      setContRecognition(null);
+    }
+    if (contMediaRecorder) {
+      try { contMediaRecorder.stop(); } catch {}
+      setContMediaRecorder(null);
+    }
+    setIsContRecording(false);
   };
 
   const handleOptionClick = (index: number) => {
@@ -522,9 +838,27 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
         const correct = selectedOption === currentRegularQuestion.correctAnswer;
         setIsCorrect(correct);
         setShowFeedback(true);
+        // Ensure feedback is visible
+        try { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); } catch {}
       }
     }
   };
+
+  // Audible confirmation on feedback for regular MCQ
+  useEffect(() => {
+    if (!showFeedback || !currentRegularQuestion || currentRegularQuestion.isSpelling) return;
+    // For AI hook steps, we already autoplay the continuation prompt; avoid duplicate audio
+    if (isAiHookStep) return;
+    const speak = async () => {
+      audioManager.stopAll();
+      if (isCorrect) {
+        await playElevenTTS('Great!');
+      } else {
+        await playElevenTTS('Not quite. Try again.');
+      }
+    };
+    void speak();
+  }, [showFeedback, isCorrect, currentRegularQuestion, isAiHookStep]);
 
   const handleTryAgain = () => {
     setSelectedOption(null);
@@ -539,7 +873,7 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestionIndex < totalQuestions - 1) {
+    if (currentQuestionIndex < totalSteps - 1) {
       // Move to next question
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedOption(null);
@@ -551,6 +885,12 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
       setTranscript('');
       setRealtimeTranscript('');
       setIsProcessing(false);
+      // Reset continuation UI state (but keep validatedContinuation for story context)
+      setIsContinuationHidden(false);
+      setHasAutoplayedContPrompt(false);
+      setContinuationHeader('');
+      setValidationMessage('');
+      setContinuationInput('');
     } else {
       // All questions completed
       onComplete?.();
@@ -641,17 +981,97 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(180deg, #f3e9ff 0%, #efe3ff 100%)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '32px 16px',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      position: 'relative'
-    }}>
+    <>
+      {/* CSS Animations and Speech Bubbles */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes sparkle {
+          0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+          50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+        }
+        
+        /* Speech bubble tails - AI on bottom left, User on bottom right */
+        .speech-bubble-ai::before {
+          content: '';
+          position: absolute;
+          left: -6px;
+          bottom: 12px;
+          width: 0;
+          height: 0;
+          border-style: solid;
+          border-width: 0 0 12px 12px;
+          border-color: transparent transparent rgba(255,255,255,0.98) transparent;
+          transform: rotate(45deg);
+        }
+        
+        .speech-bubble-ai::after {
+          content: '';
+          position: absolute;
+          left: -5px;
+          bottom: 13px;
+          width: 0;
+          height: 0;
+          border-style: solid;
+          border-width: 0 0 10px 10px;
+          border-color: transparent transparent rgba(255,255,255,0.9) transparent;
+          transform: rotate(45deg);
+          z-index: 1;
+        }
+        
+        .speech-bubble-student::before {
+          content: '';
+          position: absolute;
+          right: -6px;
+          bottom: 12px;
+          width: 0;
+          height: 0;
+          border-style: solid;
+          border-width: 12px 12px 0 0;
+          border-color: #FFFADB transparent transparent transparent;
+          transform: rotate(45deg);
+        }
+        
+        .speech-bubble-student::after {
+          content: '';
+          position: absolute;
+          right: -5px;
+          bottom: 13px;
+          width: 0;
+          height: 0;
+          border-style: solid;
+          border-width: 10px 10px 0 0;
+          border-color: rgba(255,245,205,0.9) transparent transparent transparent;
+          transform: rotate(45deg);
+          z-index: 1;
+        }
+
+        /* Subtle fade/slide animations for green box exit */
+        .fade-out { opacity: 0.7; transition: opacity 400ms ease; }
+        .slide-out { transform: translateX(20px); opacity: 0.0; transition: transform 450ms ease, opacity 450ms ease; }
+
+        /* Pop-in animation for the new user story card */
+        @keyframes pop-in {
+          0% { transform: translateY(8px) scale(0.98); opacity: 0; }
+          100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+      `}</style>
+      
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(180deg, #f3e9ff 0%, #efe3ff 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '32px 16px',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+        position: 'relative'
+      }}>
+      {/* Step 4: move the AI hook into the central prompt; hide top-left bubble */}
       {/* Progress indicator */}
       <div style={{
         position: 'absolute',
@@ -665,7 +1085,7 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
         color: '#374151',
         boxShadow: '0 3.2px 9.6px rgba(0,0,0,0.1)'
       }}>
-        Question {currentQuestionIndex + 1} of {totalQuestions}
+        Step {currentQuestionIndex + 1} of {totalSteps}
       </div>
       {/* Content area - different layouts for blending, speech vs regular questions */}
       {isBlendingQuestion && currentBlendingQuestion ? (
@@ -1466,35 +1886,70 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
             </div>
           </div>
         </>
+      ) : isAdventureMode ? (
+        <AdventureMode />
       ) : (
         <>
-          {/* Regular Question Prompt - moved above image */}
+          {/* Regular Question Prompt - moved above image; for step 4, show AI hook here */}
           {!isBlendingQuestion && !isSpeechQuestion && (
             <div style={{
-              textAlign: 'center',
-              marginBottom: '12.8px',
-              padding: '12.8px',
-              background: 'rgba(255, 255, 255, 0.9)',
-              borderRadius: '16px',
-              boxShadow: '0 3.2px 9.6px rgba(0,0,0,0.1)',
-              maxWidth: '520px',
-              margin: '0 auto 12.8px'
+              marginBottom: '28.8px',
+              padding: '16px 20px',
+              background: 'rgba(255, 255, 255, 0.98)',
+              borderRadius: '20px',
+              boxShadow: '0 12px 0 rgba(156,126,172,0.25), 0 12px 24px rgba(0,0,0,0.15)',
+              maxWidth: '720px',
+              margin: '0 auto 28.8px',
+              position: 'relative'
             }}>
-              <div style={{
-                fontSize: '19.2px',
-                fontWeight: '700',
-                color: '#1f2937',
-                marginBottom: '4.8px'
-              }}>
-                🎧 Listen to Captain Asher's word!
-              </div>
-              <div style={{
-                fontSize: '14.4px',
-                color: '#6b7280',
-                fontWeight: '500',
-              }}>
-                What sound does it start with?
-              </div>
+              {isAiHookStep ? (
+                <>
+                  <div style={{
+                    color: '#111827',
+                    lineHeight: 1.5,
+                    fontWeight: 400,
+                    fontSize: 20,
+                    textAlign: 'center',
+                    fontFamily: 'Quicksand, sans-serif'
+                  }}>
+                    {isSummaryLoading ? 'Creating…' : aiSummary}
+                  </div>
+                  {/* Audio button anchored bottom-right without affecting height */}
+                  <button
+                    onClick={handleSummaryAudio}
+                    title={isSummarySpeaking ? 'Stop' : 'Hear'}
+                    style={{
+                      position: 'absolute',
+                      right: 12,
+                      bottom: 8,
+                      width: 30,
+                      height: 30,
+                      borderRadius: 12,
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                      color: 'white',
+                      cursor: 'pointer',
+                      boxShadow: '0 6px 18px rgba(139, 92, 246, 0.30)'
+                    }}
+                  >
+                    🔊
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div style={{
+                    fontSize: '19.2px',
+                    fontWeight: '700',
+                    color: '#1f2937',
+                    marginBottom: '4.8px'
+                  }}>
+                    🎧 Listen to Captain Asher's word!
+                  </div>
+                  <div style={{ fontSize: '14.4px', color: '#6b7280', fontWeight: '500' }}>
+                    What sound does it start with?
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -1751,7 +2206,7 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
       )}
 
       {/* Feedback section - only for regular questions */}
-      {!isSpeechQuestion && showFeedback && (
+      {!isSpeechQuestion && showFeedback && !isFeedbackRemoved && (
         <div style={{
           marginTop: '40px',
           display: 'flex',
@@ -1759,53 +2214,170 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
           alignItems: 'center',
           gap: '20px'
         }}>
-          {/* Combined feedback + explanation container */}
+                    {/* Combined feedback + explanation container (compact) */}
           <div style={{
-            padding: '24px 28px',
+            padding: '16px 20px',
             borderRadius: '20px',
             background: isCorrect 
-              ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+              ? '#10b981'
               : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
             color: 'white',
             textAlign: 'center',
             boxShadow: isCorrect 
-              ? '0 8px 24px rgba(16, 185, 129, 0.3)'
+              ? '0 12px 0 rgba(156,126,172,0.25), 0 24px 64px rgba(0,0,0,0.15)'
               : '0 8px 24px rgba(239, 68, 68, 0.3)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '12px',
-            maxWidth: '760px'
+            gap: '10px',
+            maxWidth: '720px',
+            minWidth: '720px',
+            margin: '0 auto'
           }}>
             <div style={{
-              fontSize: '24px',
-              fontWeight: '800'
-            }}>
-              {isCorrect ? '🎉 Correct! Well done!' : '❌ Not quite right. Try again!'}
-            </div>
-            <div style={{
-              background: 'rgba(255,255,255,0.15)',
-              padding: '14px 18px',
-              borderRadius: '12px',
-              border: '1px solid rgba(255,255,255,0.35)',
               fontSize: '18px',
-              fontWeight: 600,
+              fontWeight: 700,
               lineHeight: 1.5,
               width: '100%'
-            }}>
-              {isCorrect 
+            }} className={isContinuationStep ? (isContinuationAnimating ? 'fade-out' : '') : ''}>
+              {/* Show user's response if validated for Step 4 only, otherwise show the CTA */}
+              {isCorrect && isContinuationStep && isContinuationHidden && validatedContinuation && isFirstRegularStep ? (
+                <div style={{
+                  fontFamily: 'Quicksand, sans-serif',
+                  fontWeight: 500,
+                  color: 'white',
+                  fontSize: '18px',
+                  lineHeight: 1.5
+                }}>
+                  {validatedContinuation}
+                </div>
+              ) : isCorrect && isContinuationStep
+                ? (
+                    <span>
+                      {validationMessage || continuationHeader || (hookIntent === 'sound'
+                        ? `Yay, "${hookTargetWord}" it is. What will you do with this ${hookTargetWord}? Let\'s include it in your story`
+                        : `Awesome, let\'s keep the story going. Include the word "${hookTargetWord}" in what happens next!`)}
+                      <button
+                        onClick={() => { 
+                          const line = validationMessage || continuationHeader || (hookIntent === 'sound'
+                            ? `Yay, "${hookTargetWord}" it is. What will you do with this ${hookTargetWord}? Let\'s include it in your story`
+                            : `Awesome, let\'s keep the story going. Include the word "${hookTargetWord}" in what happens next!`);
+                          void playElevenTTS(line);
+                        }}
+                        title="Hear"
+                        style={{
+                          marginLeft: 10,
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          border: '1px solid rgba(255,255,255,0.6)',
+                          background: 'rgba(255,255,255,0.25)',
+                          cursor: 'pointer'
+                        }}
+                      >🔊</button>
+                    </span>
+                  )
+              : isContinuationStep && validationMessage
+                ? (
+                    <span>
+                      {validationMessage}
+                      <button
+                        onClick={() => { void playElevenTTS(validationMessage); }}
+                        title="Hear"
+                        style={{
+                          marginLeft: 10,
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          border: '1px solid rgba(255,255,255,0.6)',
+                          background: 'rgba(255,255,255,0.25)',
+                          cursor: 'pointer'
+                        }}
+                      >🔊</button>
+                    </span>
+                  )
+              : isCorrect && !isContinuationStep
                 ? (currentRegularQuestion?.explanation || 'Great job!')
-                : (currentRegularQuestion?.isSpelling 
-                    ? 'Listen to the word and try spelling it again.'
-                    : `Listen to the word "${currentRegularQuestion?.word || 'this word'}" again. What sound do you hear at the beginning?`)}
+              : (currentRegularQuestion?.isSpelling
+                  ? 'Listen to the word and try spelling it again.'
+                  : `Listen to the word "${currentRegularQuestion?.word || 'this word'}" again. What sound do you hear at the beginning?`)}
             </div>
+
+            {/* Continuation input row (only while composing) */}
+            {isCorrect && isContinuationStep && !isContinuationHidden && (
+              <div style={{
+                marginTop: '12px',
+                width: '100%',
+                display: 'grid',
+                gridTemplateColumns: '1fr 52px 120px',
+                gap: '8px',
+                alignItems: 'center'
+              }}>
+                <textarea
+                  value={continuationInput}
+                  onChange={(e) => setContinuationInput(e.target.value)}
+                  placeholder="Type your 1–2 sentences here"
+                  rows={2}
+                  style={{
+                    width: '100%',
+                    borderRadius: 9999,
+                    border: '2px solid rgba(59,130,246,0.6)',
+                    padding: '10px 16px',
+                    resize: 'none',
+                    minHeight: '40px',
+                    maxHeight: '64px',
+                    outline: 'none',
+                    boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.6)'
+                  }}
+                />
+                {/* Mic button styled like step 3, immediately to the right */}
+                <button
+                  onClick={isContRecording ? stopContinuationRecording : startContinuationRecording}
+                  title={isContRecording ? 'Stop recording' : 'Speak'}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: '50%',
+                    background: isContRecording ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    border: '1px solid rgba(255,255,255,0.6)',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  {/* match Step 3 icon style */}
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" fill="white"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" fill="white"/>
+                  </svg>
+                </button>
+                <button
+                  onClick={handleSubmitContinuation}
+                  style={{
+                    minWidth: 120,
+                    height: 44,
+                    borderRadius: 9999,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%)',
+                    color: '#111827',
+                    border: '1px solid rgba(255,255,255,0.6)',
+                    cursor: 'pointer',
+                    fontWeight: 800,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  Submit
+                </button>
+              </div>
+            )}
+
+            {/* Removed separate white card - user response now shows inside green container */}
           </div>
 
-          {/* Action buttons */}
-          <div style={{
-            display: 'flex',
-            gap: '16px'
-          }}>
+          {/* Action buttons (no Next button when correct) */}
+          <div style={{ display: 'flex', gap: '16px' }}>
             {!isCorrect && (
               <button
                 onClick={handleTryAgain}
@@ -1836,45 +2408,60 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
               </button>
             )}
 
-            {isCorrect && (
-              <button
-                onClick={handleNextQuestion}
-                style={{
-                  minWidth: '140px',
-                  height: '50px',
-                  borderRadius: '16px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  color: 'white',
-                  boxShadow: '0 6px 20px rgba(16, 185, 129, 0.3)',
-                  transition: 'all 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.transform = 'scale(0.95)';
-                }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                }}
-              >
-                {currentQuestionIndex < totalQuestions - 1 ? '➡️ Next Question' : '🎉 Complete!'}
-              </button>
-            )}
+            {/* No next button here when correct to keep the box compact */}
           </div>
+
+          {/* Step 4 continuation experiment moved into green container above */}
         </div>
       )}
 
+      {/* Step-level Retry: top-right, left of Step x of y */}
+      {isFirstRegularStep && (
+        <button
+          onClick={() => {
+            setHasGeneratedSummary(false);
+            setHasAutoplayedSummary(false);
+            setAiSummary('');
+            setValidatedContinuation('');
+            setShowFeedback(false);
+            setIsCorrect(false);
+            setHasAutoplayedContPrompt(false);
+            setIsContinuationHidden(false);
+            setContinuationInput('');
+            setValidationMessage('');
+            setIsFeedbackRemoved(false);
+            // Remove the most recent continuation from story context if it matches
+            setStoryContext(prev => {
+              if (!validatedContinuation) return prev;
+              if (prev.length === 0) return prev;
+              const lastIdx = prev.length - 1;
+              return prev[lastIdx] === validatedContinuation ? prev.slice(0, lastIdx) : prev;
+            });
+          }}
+          title="Retry"
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '140px',
+            zIndex: 11,
+            minWidth: '96px',
+            height: '38.4px',
+            borderRadius: '12.8px',
+            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '12.8px',
+            fontWeight: 700,
+            boxShadow: '0 6.4px 19.2px rgba(245, 158, 11, 0.35)'
+          }}
+        >
+          ↻ Retry
+        </button>
+      )}
+
       {/* Global navigation - bottom right */}
-      <div style={{ position: 'absolute', bottom: '16px', right: '16px', display: 'flex', gap: '9.6px', zIndex: 10 }}>
+      <div style={{ position: 'fixed', bottom: '16px', right: '16px', display: 'flex', gap: '9.6px', zIndex: 10 }}>
         <button
           onClick={handlePreviousQuestion}
           disabled={currentQuestionIndex === 0}
@@ -1942,6 +2529,9 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
           Next ➡️
         </button>
       </div>
-    </div>
+      </div>
+
+      {/* Removed bottom-right speech bubble; user continuation now appears inline in the green box area */}
+    </>
   );
 }
