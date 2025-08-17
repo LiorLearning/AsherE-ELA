@@ -34,7 +34,8 @@ export const longAQuestions: Question[] = [
       intent: 'spelling',
       baseLine: 'A shimmering starlight doorway appears in the cavern wall. The baby alien points to the glowing opening.',
       questionLine: 'Listen and type the long a word for the opening.',
-      validationWord: 'gate'
+      validationWord: 'gate',
+      imagePrompt: 'Epic close-up of a glowing sci‑fi doorway in Sprinkle Chip Caverns on the Moon, purple rocks, sparkles drifting, friendly baby alien pointing, clearly shows a magical gate/door entrance; kid-safe, cinematic, vivid.'
     }
   },
   {
@@ -49,7 +50,8 @@ export const longAQuestions: Question[] = [
       intent: 'spelling',
       baseLine: 'To power the crystal switch, Sparkle must point the beam exactly at the center.',
       questionLine: 'Listen and type the long a word for what Sparkle must do.',
-      validationWord: 'aim'
+      validationWord: 'aim',
+      imagePrompt: 'Sparkle in a pink astronaut suit carefully aiming a glowing starlight beam at a crystal target inside a lunar cavern; focus on the "aiming" act (pose/hand/beam alignment).'
     }
   },
 ];
@@ -67,7 +69,8 @@ export const questions: Question[] = [
       intent: 'spelling',
       baseLine: 'With Earth safe, they drift through the silent dark toward the alien planet.',
       questionLine: 'Listen and type the long a word for where they are traveling.',
-      validationWord: 'space'
+      validationWord: 'space',
+      imagePrompt: 'Wide shot of Sparkle and friend floating in outer space with Earth glowing in the background, stars and nebulae; clearly conveys vast SPACE with kid-friendly wonder.'
     }
   },
   {
@@ -82,7 +85,8 @@ export const questions: Question[] = [
       intent: 'spelling',
       baseLine: 'The baby alien points at the safe hiding place in the Moon\'s rock.',
       questionLine: 'Listen and type the long a word for the hollow.',
-      validationWord: 'cave'
+      validationWord: 'cave',
+      imagePrompt: 'Moon cavern entrance glowing with crystals and stardust, Sparkle entering with small alien; composition highlights the CAVE mouth clearly.'
     }
   },
   {
@@ -97,7 +101,8 @@ export const questions: Question[] = [
       intent: 'spelling',
       baseLine: 'The baby alien leaves sparkly stardust behind them as they hurry to plan how to save the alien planet.',
       questionLine: 'Listen and type the long a word for a path left behind.',
-      validationWord: 'trail'
+      validationWord: 'trail',
+      imagePrompt: 'Curving TRAIL of glowing stardust footprints across lunar dust leading to Sparkle and the baby alien; the path shape is unmistakable.'
     }
   },
   {
@@ -112,7 +117,8 @@ export const questions: Question[] = [
       intent: 'spelling',
       baseLine: 'A soft blue light from Earth shines across the caverns as Sparkle lifts her pink visor.',
       questionLine: 'Listen and type the long a word for a thin beam of light.',
-      validationWord: 'ray'
+      validationWord: 'ray',
+      imagePrompt: 'Single thin RAY of soft blue light cutting through a dim crystal cavern toward Sparkle; composition emphasizes the beam as the subject.'
     }
   },
 ];
