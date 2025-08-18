@@ -27,8 +27,8 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   // Question data
   const questions: Question[] = regularQuestionsData;
   
-  // Flow order: adventure mode (step 1) -> speech -> long A questions -> adventure mode -> regular questions -> adventure mode (blending step removed)
-  const totalSteps = 1 + blendingQuestions.length + speechQuestions.length + longAQuestions.length + 1 + questions.length + 1;
+  // Flow order: adventure mode (step 1) -> long A questions -> speech -> adventure mode -> regular questions -> adventure mode (blending step removed)
+  const totalSteps = 1 + blendingQuestions.length + longAQuestions.length + speechQuestions.length + 1 + questions.length + 1;
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -243,16 +243,16 @@ Give a brief, friendly response that nudges them without giving the answer.`;
   // Determine current step type
   const isAdventureMode1 = currentQuestionIndex === 0;
   const isBlendingQuestion = currentQuestionIndex >= 1 && currentQuestionIndex < 1 + blendingQuestions.length;
-  const isSpeechQuestion = currentQuestionIndex >= 1 + blendingQuestions.length && currentQuestionIndex < 1 + blendingQuestions.length + speechQuestions.length;
-  const isLongAQuestion = currentQuestionIndex >= 1 + blendingQuestions.length + speechQuestions.length && currentQuestionIndex < 1 + blendingQuestions.length + speechQuestions.length + longAQuestions.length;
-  const isAdventureMode4 = currentQuestionIndex === (1 + blendingQuestions.length + speechQuestions.length + longAQuestions.length);
-  const isAdventureMode9 = currentQuestionIndex === (1 + blendingQuestions.length + speechQuestions.length + longAQuestions.length + 1 + questions.length);
+  const isLongAQuestion = currentQuestionIndex >= 1 + blendingQuestions.length && currentQuestionIndex < 1 + blendingQuestions.length + longAQuestions.length;
+  const isSpeechQuestion = currentQuestionIndex >= 1 + blendingQuestions.length + longAQuestions.length && currentQuestionIndex < 1 + blendingQuestions.length + longAQuestions.length + speechQuestions.length;
+  const isAdventureMode4 = currentQuestionIndex === (1 + blendingQuestions.length + longAQuestions.length + speechQuestions.length);
+  const isAdventureMode9 = currentQuestionIndex === (1 + blendingQuestions.length + longAQuestions.length + speechQuestions.length + 1 + questions.length);
   const isAdventureMode = isAdventureMode1 || isAdventureMode4 || isAdventureMode9;
   const currentBlendingQuestion = isBlendingQuestion ? blendingQuestions[currentQuestionIndex - 1] : null;
-  const currentSpeechQuestion = isSpeechQuestion ? speechQuestions[currentQuestionIndex - 1 - blendingQuestions.length] : null;
-  const currentLongAQuestion = isLongAQuestion ? longAQuestions[currentQuestionIndex - 1 - blendingQuestions.length - speechQuestions.length] : null;
+  const currentLongAQuestion = isLongAQuestion ? longAQuestions[currentQuestionIndex - 1 - blendingQuestions.length] : null;
+  const currentSpeechQuestion = isSpeechQuestion ? speechQuestions[currentQuestionIndex - 1 - blendingQuestions.length - longAQuestions.length] : null;
   const currentRegularQuestion = (!isBlendingQuestion && !isSpeechQuestion && !isLongAQuestion && !isAdventureMode)
-    ? questions[currentQuestionIndex - 1 - blendingQuestions.length - speechQuestions.length - longAQuestions.length - 1]
+    ? questions[currentQuestionIndex - 1 - blendingQuestions.length - longAQuestions.length - speechQuestions.length - 1]
     : null;
   // Continuation experiment flags (now data-driven via aiHook)
   const isFirstRegularStep = (!isBlendingQuestion && !isSpeechQuestion && !isLongAQuestion && !isAdventureMode && currentRegularQuestion?.id === 1);
@@ -652,28 +652,28 @@ Write one friendly nudge and then three natural-looking variants of the same wor
         const messages = [
           {
             role: 'system',
-            content: `You write Grade 2 read-aloud passages in a fun, silly, and playful style.
+            content: `You write Kindergarten read-aloud micro-passages that are fun, playful, and tightly tied to the child’s ongoing adventure. Your success lies in keeping the passage at the right difficulty level while also contextualising it perfectly to the adventure to keep it coherent and interesting.
 
-Strict requirements:
-1) 3–4 sentences (40–60 words total)
-2) Include these silent-e target words exactly: "huge", "time", "ride", "space", "place"
-3) Use short sentences, very simple words, and clear syntax (easy for Grade 2)
-4) Keep it vivid and funny through simple action and dialogue. Do NOT use sound effects or onomatopoeia (e.g., "boing", "whoosh", "zoom", "zooom"), no elongated spellings (e.g., "sooo", "waaa"), no stage directions, and no emojis.
-5) Use a casual, chatty narrator who sometimes talks directly to the reader
-6) Break ideas into short, punchy lines for easy read-aloud. 
-7) End with a gentle cliffhanger (≤ 8 words)
-8) Include a tiny, subtle bridge (3–6 words) that connects naturally to the most recent event from the adventure — make it feel organic, not a recap
-9) Plain text only. Do not use any Markdown or styling. Never use asterisks (*), underscores (_), tildes (~), or backticks (\`) anywhere in the output.
-10) Ensure accurate punctuation and grammar. 
-11) Include the target words as plain words inside sentences; do not style or wrap them. Only use quotation marks for spoken dialogue.
-12) Return only plain text with zero asterisks/underscores/backticks/tilde.
-13) Prefer high-frequency, decodable words appropriate for Grade 2; avoid tricky or irregular words unless in the target list; keep every sentence fully grammatical.
+Inputs you may reference:
+- Story snippets: the recent adventure turns below
+- Most recent event: the event provided below
+- Use simple aliases for complex names:
+  Sir Whiskerfluff → cat; treehouse/platform → deck; crystal cave → den; rocket/spaceship → jet; crystal/treasure → gem
 
-Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (white astronaut suit), and a baby alien guide.`
+Strict rules:
+0) Event anchoring: Build directly on the most recent event; include at least one concrete detail from it. Do not change the location/scene or introduce unrelated new objects.
+1) Audience/decodability: Kindergarten. Mostly CVC and common sight words. Strong short-e focus. Do not use difficult to speak words like bright etc., since this is a reading exercise for kindergarten students.
+2) Length: EXACTLY 5 lines; each line 5–6 words; total 25–30 words.
+4) Include these target words exactly: "red", "net", "get".
+5) Keep it lively.
+6) Name usage: You may use “Ally,” “princess,” and “cat.” Avoid other proper names.
+8) Clarity: Very short sentences; vary stems (do not repeat the same opening more than twice).
+9) Ending: Finish with a tiny hook / cliffhanger or next step (≤ 6 words), preferably a question.
+10) Output format: Return ONLY the 5 lines separated by newline characters. No titles, labels, or extra text.`
           },
           {
             role: 'user',
-            content: `Adventure context (most recent last):\n${contextText}\n\nMost recent event to bridge from:\n${lastEvent}\n\nWrite the passage now. Include a natural 3–6 word bridge somewhere that connects to the most recent event, keep Grade 2, 40–60 words, and include: huge, time, ride, space, place. End with a gentle cliffhanger question.`
+            content: `Adventure context (most recent last):\n${contextText}\n\nMost recent event to build on:\n${lastEvent}\n\nTarget words to include exactly: red, net, deck.\n\nWrite the passage now following the rules above. Use at least one concrete detail from the most recent event, stay in the same scene, and avoid unrelated new objects or places. Return only the five lines.`
           }
         ];
 
@@ -866,8 +866,8 @@ Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (
         const data = await res.json();
         if (!cancelled) {
           const summary = (data.reply || '').trim() || (isFirstRegularStep
-            ? '"Look! The silent dark stretches endlessly," whispers the baby alien. "Here\'s a clue, Sparkle: listen and type where we\'re traveling," glows her friend.'
-            : '"The caverns echo with mystery," says her friend. "Here\'s a clue, Sparkle: listen and type the magical word," glows the baby alien.');
+            ? '"Look! The silent dark stretches endlessly," whispers the glowing jellyfish. "Here\'s a clue, Ally: listen and type where we\'re traveling," glows Princess Piggy.'
+            : '"The caverns echo with mystery," says Princess Piggy. "Here\'s a clue, Ally: listen and type the magical word," glows the jellyfish.');
           setAiSummary(summary);
           try { setHookForStep('3', summary); } catch {}
           setHasGeneratedSummary(true);
@@ -875,8 +875,8 @@ Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (
       } catch {
         if (!cancelled) {
           setAiSummary(isFirstRegularStep
-            ? '"Look! The silent dark stretches endlessly," whispers the baby alien. "Here\'s a clue, Sparkle: listen and type where we\'re traveling," glows her friend.'
-            : '"The caverns echo with mystery," says her friend. "Here\'s a clue, Sparkle: listen and type the magical word," glows the baby alien.');
+            ? '"Look! The silent dark stretches endlessly," whispers the glowing jellyfish. "Here\'s a clue, Ally: listen and type where we\'re traveling," glows Princess Piggy.'
+            : '"The caverns echo with mystery," says Princess Piggy. "Here\'s a clue, Ally: listen and type the magical word," glows the jellyfish.');
           setHasGeneratedSummary(true);
         }
       } finally {
@@ -888,18 +888,24 @@ Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (
   }, [isAiHookStep, isFirstRegularStep, hasGeneratedSummary, storyContext, validatedContinuation, isSecondRegularStep, hookTargetWord, hookQuestionLine, hookBaseLine]);
 
   // Helper: ElevenLabs TTS
-  const playElevenTTS = async (text: string, voiceId?: string): Promise<HTMLAudioElement | null> => {
+  const playElevenTTS = async (text: string, voiceId?: string, speed?: number): Promise<HTMLAudioElement | null> => {
     try {
       // Always preempt any current audio before starting new
       audioManager.stopAll();
       const res = await fetch('/api/text-to-speech', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voice_id: voiceId })
+        body: JSON.stringify({ text, voice_id: voiceId, speed })
       });
       if (!res.ok) return null;
       const data = await res.json();
       const audio = new Audio(data.audioUrl as string);
+      
+      // Apply playback rate if speed is specified and different from 1.0
+      if (speed && speed !== 1.0) {
+        audio.playbackRate = speed;
+      }
+      
       audioManager.setActive(audio);
       audio.onended = () => {
         if (summaryAudioRef.current === audio) setIsSummarySpeaking(false);
@@ -1045,7 +1051,7 @@ Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (
     try {
       const targetWord = hookValidationWord;
       const messages = [
-        { role: 'system', content: `You are Sparkle's fun AI companion helping kids write their magical Moon adventure story. Your job is to check if they used the target word "${targetWord}" in their sentence and respond naturally like a friendly narrator. 
+        { role: 'system', content: `You are Ally's fun AI companion helping kids write their magical jellyfish jungle adventure story. Your job is to check if they used the target word "${targetWord}" in their sentence and respond naturally like a friendly narrator. 
 
 Respond as minified JSON: {"status":"valid|invalid|help","message":"<your response>"}
 
@@ -1055,7 +1061,7 @@ RULES:
 - "help": If they ask for help or seem stuck, give a creative prompt about what ${targetWord} could do in the adventure.
 
 Be conversational, not scripted. Acknowledge what they actually wrote. Keep responses under 25 words.` },
-        { role: 'user', content: `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue Sparkle's magical Moon adventure using the word "${targetWord}".` }
+        { role: 'user', content: `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue Ally's magical jellyfish jungle adventure using the word "${targetWord}".` }
       ];
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -1072,7 +1078,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
         return { status: 'valid', message: 'Great!' };
       }
       if (/help|hint|example|idk|don\'?t know/i.test(text)) {
-        return { status: 'help', message: `No worries! What if Sparkle's ${targetWord} could help her save the alien planet? How might she use it?` };
+        return { status: 'help', message: `No worries! What if Ally's ${targetWord} could help her explore the jellyfish jungle? How might she use it?` };
       }
       return { status: 'invalid', message: `Use the word "${targetWord}" in your sentence.` };
     } catch {
@@ -1119,7 +1125,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       setValidationMessage(result.message || 'Try again');
       void playElevenTTS(result.message || 'Try again');
     } else {
-      const msg = result.message || `No worries! What if Sparkle\'s ${hookTargetWord} could help her save the alien planet? How might she use it?`;
+      const msg = result.message || `No worries! What if Ally\'s ${hookTargetWord} could help her explore the jellyfish jungle? How might she use it?`;
       setValidationMessage(msg);
       setContinuationHeader(msg);
       void playElevenTTS(msg);
@@ -1998,7 +2004,11 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
 
     if (textToSpeak.trim()) {
       setIsSpeaking(true);
-      const audio = await playElevenTTS(textToSpeak);
+      // Use slower speed (75%) for CVC word pronunciation to help Kindergarten students hear clearly
+      const isWordQuestion = (isLongAQuestion && currentLongAQuestion) || (!isSpeechQuestion && !isBlendingQuestion && !isLongAQuestion && currentRegularQuestion);
+      const speed = isWordQuestion ? 0.75 : 1.0; // Slower for CVC words, normal for passages
+      
+      const audio = await playElevenTTS(textToSpeak, undefined, speed);
       if (audio) {
         audio.onended = () => setIsSpeaking(false);
         audio.onerror = () => setIsSpeaking(false);
@@ -2970,7 +2980,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                     <textarea
                       value={speechContinuationInput}
                       onChange={(e) => setSpeechContinuationInput(e.target.value)}
-                      placeholder="What happens next in Sparkle's adventure?"
+                      placeholder="What happens next in Ally's adventure?"
                       rows={2}
                       style={{
                         width: '100%',
@@ -3122,7 +3132,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                   color: '#1f2937',
                   marginBottom: '4.8px'
                 }}>
-                  🎧 Listen to Sparkle's word!
+                  🎧 Listen to Ally's word!
                 </div>
                 <div style={{ fontSize: '13px', color: '#6b7280', fontWeight: '500' }}>
                   Type the word you hear.
@@ -3396,7 +3406,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                     color: '#1f2937',
                     marginBottom: '4.8px'
                   }}>
-                    🎧 Listen to Sparkle's word!
+                    🎧 Listen to Ally's word!
                   </div>
                   <div style={{ fontSize: '14.4px', color: '#6b7280', fontWeight: '500' }}>
                     What sound does it start with?

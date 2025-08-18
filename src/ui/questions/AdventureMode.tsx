@@ -11,10 +11,10 @@ type Props = {
 };
 
 export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMessages: propAdventureMessages, onAdventureMessagesUpdate }: Props): JSX.Element {
-  const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat } = useStory();
+  const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat, setMetadata } = useStory();
   // Use parent-provided messages or default/local persisted
   const defaultMessages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }> = [
-    { role: 'ai' as const, text: "🎉 London! I'm bursting with excitement to continue our magical adventure! Sparkle just saved Earth with the Starlight Reverso Button and promised to save the alien planet too! 🌟✨ That group hug with the monster was amazing! Now I'm on the edge of my seat... what happens next in our cosmic rescue mission?" }
+    { role: 'ai' as const, text: "🌊✨ Irene! I'm so excited to continue our whimsical adventure in the floating jellyfish jungle! We just reunited after that amazing necklace rescue in the calm blue pool, and Ally got those delicious Milky Way candies from the Candy Rocket Shop! 🍬🚀 What magical discovery should we explore next in our enchanted treehouse?" }
   ];
   const [localAdventureMessages, setLocalAdventureMessages] = useState<Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>>(
     (storyState?.adventureMessages?.length ?? 0) > 0
@@ -45,15 +45,20 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     type?: string;
     protagonist?: string;
     sidekick?: string;
+    teammates?: string;
     villain?: string;
     goal?: string;
     setting?: string;
+    recentEvent?: string;
   }>({
-    type: 'magical space adventure',
-    protagonist: 'Sparkle (radiant, glittery pink superstar in pink astronaut suit)',
-    sidekick: 'friend in white astronaut suit',
-    setting: 'The Moon, Sprinkle Chip Caverns, near glowing Earth',
-    goal: 'just saved Earth with Starlight Reverso Button, now must save alien planet'
+    type: 'whimsical space adventure with magical creatures',
+    protagonist: 'Ally (brave explorer with black hair, brown eyes, wears a space helmet and jungle gear)',
+    sidekick: 'You (a glowing white box jellyfish that speaks jellyfish language, swims in water)',
+    teammates: 'Princess (elegant pink lady with tiara), 17 white cats with bows walked by royal couple',
+    setting: 'Floating jellyfish jungle with calm blue pool, trees, magical guests, and jungle treehouse with leafy walls, vines, telescope platforms, star maps on ceiling',
+    goal: 'whimsical discovery and candy adventure - just reunited after necklace rescue and candy shopping at Candy Rocket Shop',
+    villain: 'None active (story focused on whimsical discovery)',
+    recentEvent: 'Ally reached Candy Rocket Shop, bought Milky Way candies with stranger help, reunited with jellyfish You after necklace rescue in pool, imaginary candy gator appeared but was not real'
   });
   const ADVENTURE_IMAGE_OVERLAY_OPACITY = 0.45;
   const adventureScrollRef = useRef<HTMLDivElement | null>(null);
@@ -69,6 +74,16 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
   const hasUserGestureRef = useRef<boolean>(false);
   // Track which message text the current audio corresponds to for reliable toggling
   const currentAdventureAudioLabelRef = useRef<string | null>(null);
+
+  // Sync adventure context with story metadata for QuestionPanel image generation
+  useEffect(() => {
+    setMetadata({
+      protagonist: currentAdventure.protagonist,
+      sidekick: currentAdventure.sidekick,
+      setting: currentAdventure.setting,
+      goal: currentAdventure.goal
+    });
+  }, [currentAdventure, setMetadata]);
 
   // Helper function to analyze responses and update adventure state
   const updateAdventureContext = (userMessage: string, aiResponse: string) => {
@@ -238,7 +253,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
         const response = await fetch('/api/text-to-speech', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: cleanText })
+          body: JSON.stringify({ text: cleanText, speed: 1.0 }) // Normal speed for adventure content
         });
         if (!response.ok) {
           let upstream = 'unknown';
@@ -337,8 +352,8 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     if (!text) return;
     if (text.toLowerCase() === 'image' || text.toLowerCase() === 'create image' || text.toLowerCase().startsWith('create image')) {
       const imagePrompt = text.toLowerCase() === 'image' || text.toLowerCase() === 'create image'
-        ? 'Sparkle in her pink astronaut suit on a magical space adventure with sparkles and whimsy'
-        : text.replace(/^create image\s*/i, '').trim() || 'Sparkle in her pink astronaut suit on a magical space adventure with sparkles and whimsy';
+        ? 'Ally in space helmet and jungle gear with glowing white box jellyfish companion in floating jellyfish jungle with vibrant colors and whimsical elements'
+        : text.replace(/^create image\s*/i, '').trim() || 'Ally in space helmet and jungle gear with glowing white box jellyfish companion in floating jellyfish jungle with vibrant colors and whimsical elements';
       updateAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 ${text}` }]);
       onAdventureMessage?.(text);
       setAdventureInput('');
@@ -417,11 +432,11 @@ Adventure State: ${adventureState === 'new' ? 'NEW_ADVENTURE' : adventureState =
 
 Current Adventure Context: ${JSON.stringify(currentAdventure)}
 
-Student Profile (London): Loves animals, jungles, Barbies, baby tigers, and magical adventures. Prefers realistic-cartoon blend with bright fantasy elements, sparkles, whimsy, and stylized magical charm.
+Student Profile (Irene): Loves space adventures and Space Piggies. Prefers realistic art with vibrant colors and whimsical, imaginative elements. Enjoys magical creature companions and candy-themed adventures in fantastical settings.
 
 Character Creation: When creating sidekicks/characters, let me choose names with suggestions, offer trait lists (funny, optimistic, resilient, etc.), and ask me to describe appearance for image creation.
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or London. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses magical and whimsical to match London's interests.`
+Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Irene. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses magical and whimsical to match Irene's interests in space adventures and cute creatures.`
         },
         ...currentMessages
           .slice(-30)

@@ -3,10 +3,10 @@ import { BlendingQuestion, SpeechQuestion, Question } from './types';
 export const blendingQuestions: BlendingQuestion[] = [
   {
     id: 1,
-    word: 'Sparkle',
+    word: 'Ally',
     imageUrl: '✨👩‍🚀',
-    phonemes: ['sp', 'ar', 'k', 'le'],
-    explanation: "Blend the sounds sp-ar-k-le to make 'Sparkle'!",
+    phonemes: ['A', 'l', 'ly'],
+    explanation: "Blend the sounds A-l-ly to make 'Ally'!",
   },
 ];
 
@@ -14,9 +14,9 @@ export const speechQuestions: SpeechQuestion[] = [
   {
     id: 1,
     text:
-      "Amazing! Sparkle just saved Earth AND the alien planet! The grateful aliens threw a huge celebration with sparkles everywhere. Now it's time to explore their magical world. Sparkle and her friend ride on the back of a gentle space whale through purple clouds. Below them, they see a massive crystal cave filled with glowing treasure. 'Let's make this place our new home base!' says Sparkle excitedly. But suddenly, they notice strange smoke rising from a distant mountain...",
+      "Amazing! Ally just discovered the magical Candy Rocket Shop in the floating jellyfish jungle! The glowing box jellyfish threw a huge celebration with sparkles everywhere. Now it's time to explore their enchanted treehouse. Ally and Princess Piggy ride on the back of a gentle space whale through purple clouds. Below them, they see a massive crystal cave filled with glowing treasure. 'Let's make this place our new home base!' says Ally excitedly. But suddenly, they notice strange smoke rising from a distant mountain...",
     imageUrl: '✨🌙👽💎🌍',
-    expectedWords: ['huge', 'time', 'ride', 'space', 'place'],
+    expectedWords: ['red', 'net', 'get'],
     explanation: 'Fantastic reading! You captured all the exciting silent e words in the celebration adventure.',
   },
 ];
@@ -24,34 +24,34 @@ export const speechQuestions: SpeechQuestion[] = [
 export const longAQuestions: Question[] = [
   {
     id: 1,
-    word: 'gate',
-    imageUrl: '🚪✨',
+    word: 'jet',
+    imageUrl: '🚀✨',
     isSpelling: true,
-    correctAnswer: 'gate',
-    explanation: 'A shimmering starlight "gate" opens - the long a sound with silent e!',
+    correctAnswer: 'jet',
+    explanation: 'Ally\'s rocket "jet" zooms through the clouds - the short e sound in the middle!',
     aiHook: {
-      targetWord: 'gate',
+      targetWord: 'jet',
       intent: 'spelling',
-      baseLine: 'A shimmering starlight doorway appears in the cavern wall. The baby alien points to the glowing opening.',
-      questionLine: 'Listen and type the long a word for the opening.',
-      validationWord: 'gate',
-      imagePrompt: 'Epic close-up of a glowing sci‑fi doorway in Sprinkle Chip Caverns on the Moon, purple rocks, sparkles drifting, friendly baby alien pointing, clearly shows a magical gate/door entrance; kid-safe, cinematic, vivid.'
+      baseLine: 'Ally\'s speedy rocket ship zooms through the purple clouds toward the jellyfish jungle.',
+      questionLine: 'Listen and type the short e word for the fast flying machine.',
+      validationWord: 'jet',
+      imagePrompt: 'Ally\'s sleek rocket JET flying through purple clouds with sparkles trailing behind, jellyfish jungle visible below; clearly shows a rocket ship in flight.'
     }
   },
   {
     id: 2,
-    word: 'aim',
-    imageUrl: '🎯⚡',
+    word: 'hen',
+    imageUrl: '🐔✨',
     isSpelling: true,
-    correctAnswer: 'aim',
-    explanation: 'Sparkle must "aim" the beam exactly - the long a sound with ai!',
+    correctAnswer: 'hen',
+    explanation: 'A friendly space "hen" lays glowing eggs - the short e sound in the middle!',
     aiHook: {
-      targetWord: 'aim',
+      targetWord: 'hen',
       intent: 'spelling',
-      baseLine: 'To power the crystal switch, Sparkle must point the beam exactly at the center.',
-      questionLine: 'Listen and type the long a word for what Sparkle must do.',
-      validationWord: 'aim',
-      imagePrompt: 'Sparkle in a pink astronaut suit carefully aiming a glowing starlight beam at a crystal target inside a lunar cavern; focus on the "aiming" act (pose/hand/beam alignment).'
+      baseLine: 'A magical feathered friend in the treehouse lays sparkly eggs for their adventure snacks.',
+      questionLine: 'Listen and type the short e word for the egg-laying bird.',
+      validationWord: 'hen',
+      imagePrompt: 'Friendly space HEN with glowing feathers sitting in a nest in the jungle treehouse, sparkly eggs visible, magical atmosphere; composition highlights the hen clearly.'
     }
   },
 ];
@@ -59,66 +59,66 @@ export const longAQuestions: Question[] = [
 export const questions: Question[] = [
   {
     id: 1,
-    word: 'space',
-    imageUrl: '🌌🚀',
+    word: 'map',
+    imageUrl: '🗺️✨',
     isSpelling: true,
-    correctAnswer: 'space',
-    explanation: 'They drift through silent "space" - the long a sound with silent e!',
+    correctAnswer: 'map',
+    explanation: 'Ally uses a treasure "map" - the short a sound in the middle!',
     aiHook: {
-      targetWord: 'space',
+      targetWord: 'map',
       intent: 'spelling',
-      baseLine: 'With Earth safe, they drift through the silent dark toward the alien planet.',
-      questionLine: 'Listen and type the long a word for where they are traveling.',
-      validationWord: 'space',
-      imagePrompt: 'Wide shot of Sparkle and friend floating in outer space with Earth glowing in the background, stars and nebulae; clearly conveys vast SPACE with kid-friendly wonder.'
+      baseLine: 'Ally unfolds an ancient treasure guide to find the crystal cave hidden in the jungle.',
+      questionLine: 'Listen and type the short a word for what shows the way.',
+      validationWord: 'map',
+      imagePrompt: 'Close-up of Ally holding an ancient glowing treasure MAP with jungle paths and crystal cave marked, magical sparkles around the edges; clearly shows a folded map with adventure markings.'
     }
   },
   {
     id: 2,
-    word: 'cave',
-    imageUrl: '🕳️✨',
+    word: 'jam',
+    imageUrl: '🍓✨',
     isSpelling: true,
-    correctAnswer: 'cave',
-    explanation: 'Sparkle and her friend step into a glowing "cave" - the long a sound with silent e!',
+    correctAnswer: 'jam',
+    explanation: 'Princess Piggy loves strawberry "jam" - the short a sound in the middle!',
     aiHook: {
-      targetWord: 'cave',
+      targetWord: 'jam',
       intent: 'spelling',
-      baseLine: 'The baby alien points at the safe hiding place in the Moon\'s rock.',
-      questionLine: 'Listen and type the long a word for the hollow.',
-      validationWord: 'cave',
-      imagePrompt: 'Moon cavern entrance glowing with crystals and stardust, Sparkle entering with small alien; composition highlights the CAVE mouth clearly.'
+      baseLine: 'Princess Piggy spreads the sweet strawberry treat on her space crackers during snack time.',
+      questionLine: 'Listen and type the short a word for the sweet spread.',
+      validationWord: 'jam',
+      imagePrompt: 'Princess Piggy in elegant pink dress with tiara spreading strawberry JAM on crackers in the jungle treehouse, jar of jam clearly visible with sparkly label; focus on the jam jar.'
     }
   },
   {
     id: 3,
-    word: 'trail',
-    imageUrl: '✨🛤️',
+    word: 'cat',
+    imageUrl: '🐱👑',
     isSpelling: true,
-    correctAnswer: 'trail',
-    explanation: 'The baby alien leaves a sparkly "trail" - the long a sound with ai!',
+    correctAnswer: 'cat',
+    explanation: 'The royal "cat" guides them through the jungle - the short a sound in the middle!',
     aiHook: {
-      targetWord: 'trail',
+      targetWord: 'cat',
       intent: 'spelling',
-      baseLine: 'The baby alien leaves sparkly stardust behind them as they hurry to plan how to save the alien planet.',
-      questionLine: 'Listen and type the long a word for a path left behind.',
-      validationWord: 'trail',
-      imagePrompt: 'Curving TRAIL of glowing stardust footprints across lunar dust leading to Sparkle and the baby alien; the path shape is unmistakable.'
+      baseLine: 'One of the 17 white feline friends with a pink bow leads Ally toward the magical treehouse.',
+      questionLine: 'Listen and type the short a word for the furry guide.',
+      validationWord: 'cat',
+      imagePrompt: 'Elegant white CAT with pink bow and royal collar leading Ally through the floating jellyfish jungle, treehouse visible in background; composition highlights the cat as the guide.'
     }
   },
   {
     id: 4,
-    word: 'ray',
-    imageUrl: '🌟💙',
+    word: 'hat',
+    imageUrl: '👩‍🚀✨',
     isSpelling: true,
-    correctAnswer: 'ray',
-    explanation: 'A soft blue "ray" of light from Earth - the long a sound with ay!',
+    correctAnswer: 'hat',
+    explanation: 'Ally puts on her space "hat" - the short a sound in the middle!',
     aiHook: {
-      targetWord: 'ray',
+      targetWord: 'hat',
       intent: 'spelling',
-      baseLine: 'A soft blue light from Earth shines across the caverns as Sparkle lifts her pink visor.',
-      questionLine: 'Listen and type the long a word for a thin beam of light.',
-      validationWord: 'ray',
-      imagePrompt: 'Single thin RAY of soft blue light cutting through a dim crystal cavern toward Sparkle; composition emphasizes the beam as the subject.'
+      baseLine: 'Ally adjusts the protective headgear before exploring the mysterious alien planet.',
+      questionLine: 'Listen and type the short a word for what protects her head.',
+      validationWord: 'hat',
+      imagePrompt: 'Close-up of Ally putting on her space helmet HAT with jungle gear, glowing visor reflecting the jellyfish jungle; clearly shows the helmet as headwear.'
     }
   },
 ];
