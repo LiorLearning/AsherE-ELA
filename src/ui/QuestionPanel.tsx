@@ -3848,13 +3848,13 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
               ) : null}
             </div>
 
-            {/* Continuation input row with dual icon CTAs */}
+            {/* Continuation input row with mic and icon CTAs */}
             {isCorrect && isContinuationStep && !isContinuationHidden && (
               <div style={{
                 marginTop: '12px',
                 width: '100%',
                 display: 'grid',
-                gridTemplateColumns: '1fr 44px 44px',
+                gridTemplateColumns: '1fr 44px 44px 44px',
                 gap: '8px',
                 alignItems: 'center'
               }}>
@@ -3879,6 +3879,39 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                     boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.6)'
                   }}
                 />
+                {/* Microphone button for speech input */}
+                <button
+                  onClick={isContRecording ? stopContinuationRecording : startContinuationRecording}
+                  title={isContRecording ? "Stop recording" : "Record your response"}
+                  aria-label={isContRecording ? "Stop recording" : "Record your response"}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: '50%',
+                    background: isContRecording 
+                      ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' 
+                      : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    border: '1px solid rgba(255,255,255,0.6)',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: isContRecording 
+                      ? '0 4px 12px rgba(239, 68, 68, 0.3)' 
+                      : '0 2px 8px rgba(59, 130, 246, 0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {isContRecording ? (
+                    <div style={{ width: 12, height: 12, background: 'white', borderRadius: 2 }} />
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" fill="white"/>
+                      <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" fill="white"/>
+                    </svg>
+                  )}
+                </button>
                 {/* Icon CTA: Create Image */}
                 <button
                   onClick={startImageFromContinuation}

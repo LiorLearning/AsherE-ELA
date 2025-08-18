@@ -357,6 +357,8 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
       updateAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 ${text}` }]);
       onAdventureMessage?.(text);
       setAdventureInput('');
+      // Reset accumulated speech recognition text after submission
+      adventureAccumulatedRef.current = '';
       updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Creating your adventure image...', isLoading: true }]);
       try {
         const response = await fetch('/api/image', {
@@ -407,6 +409,8 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     appendStoryMessage({ role: 'student', text });
     onAdventureMessage?.(text);
     setAdventureInput('');
+    // Reset accumulated speech recognition text after submission
+    adventureAccumulatedRef.current = '';
     updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Thinking about your adventure...', isLoading: true }]);
     try {
       const currentMessages = adventureMessages.filter(m => !m.isLoading && !m.isImage);
