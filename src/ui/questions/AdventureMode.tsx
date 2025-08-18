@@ -35,6 +35,9 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
   const [adventureInput, setAdventureInput] = useState('');
   const [isAdventureRecording, setIsAdventureRecording] = useState(false);
   const [adventureSpeechRecognition, setAdventureSpeechRecognition] = useState<any>(null);
+  // Keep accumulated transcript across interim/final events and potential auto-restarts
+  const adventureAccumulatedRef = useRef<string>('');
+  const adventureRecordingRef = useRef<boolean>(false);
   
   // Adventure state management
   const [adventureState, setAdventureState] = useState<'new' | 'ongoing' | 'character_creation'>('ongoing');
@@ -64,6 +67,8 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
   const audioCacheRef = useRef<Map<string, string>>(new Map());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hasUserGestureRef = useRef<boolean>(false);
+  // Track which message text the current audio corresponds to for reliable toggling
+  const currentAdventureAudioLabelRef = useRef<string | null>(null);
 
   // Helper function to analyze responses and update adventure state
   const updateAdventureContext = (userMessage: string, aiResponse: string) => {
@@ -118,6 +123,14 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     return () => {
       window.removeEventListener('pointerdown', markGesture as () => void);
       window.removeEventListener('keydown', markGesture as () => void);
+      // Ensure audio stops when component unmounts
+      try {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+      } catch {}
+      try { audioManager.stopAll(); } catch {}
     };
   }, []);
 
@@ -204,10 +217,18 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
 
   const playAIResponse = async (messageIndex: number, text: string) => {
     try {
+      const cleanText = text.replace(/[🎉🚀🌙🌄✨😊]/g, '').trim();
+      // If this same message is already playing, treat this call as a toggle to stop
+      const active = audioManager.getActive?.() as HTMLAudioElement | null;
+      if (active && currentAdventureAudioLabelRef.current === cleanText && !active.paused && !active.ended) {
+        try { active.pause(); active.currentTime = 0; } catch {}
+        currentAdventureAudioLabelRef.current = null;
+        setPlayingAudio(prev => prev === messageIndex ? null : prev);
+        return;
+      }
       // Ensure only one audio plays at a time globally
       audioManager.stopAll();
       setAudioLoading(messageIndex);
-      const cleanText = text.replace(/[🎉🚀🌙🌄✨😊]/g, '').trim();
       if (!cleanText) {
         setAudioLoading(null);
         return;
@@ -234,10 +255,23 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
         const audio = audioRef.current ?? new Audio();
         audioRef.current = audio;
         audio.src = audioUrl;
-        audio.onended = () => setPlayingAudio(prev => prev === messageIndex ? null : prev);
-        audio.onerror = () => setPlayingAudio(prev => prev === messageIndex ? null : prev);
-        audio.onabort = () => setPlayingAudio(prev => prev === messageIndex ? null : prev);
-        audio.onpause = () => setPlayingAudio(prev => prev === messageIndex ? null : prev);
+        currentAdventureAudioLabelRef.current = cleanText;
+        audio.onended = () => {
+          setPlayingAudio(prev => prev === messageIndex ? null : prev);
+          if (currentAdventureAudioLabelRef.current === cleanText) currentAdventureAudioLabelRef.current = null;
+        };
+        audio.onerror = () => {
+          setPlayingAudio(prev => prev === messageIndex ? null : prev);
+          if (currentAdventureAudioLabelRef.current === cleanText) currentAdventureAudioLabelRef.current = null;
+        };
+        audio.onabort = () => {
+          setPlayingAudio(prev => prev === messageIndex ? null : prev);
+          if (currentAdventureAudioLabelRef.current === cleanText) currentAdventureAudioLabelRef.current = null;
+        };
+        audio.onpause = () => {
+          setPlayingAudio(prev => prev === messageIndex ? null : prev);
+          if (currentAdventureAudioLabelRef.current === cleanText) currentAdventureAudioLabelRef.current = null;
+        };
         // Register as the active audio; this will stop any other playing audio
         audioManager.setActive(audio);
         try {
@@ -249,6 +283,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
               void audio.play().catch(err => {
                 console.error('Deferred audio play failed:', err);
                 setPlayingAudio(prev => prev === messageIndex ? null : prev);
+                if (currentAdventureAudioLabelRef.current === cleanText) currentAdventureAudioLabelRef.current = null;
               });
             };
             window.addEventListener('pointerdown', resumeOnGesture, { once: true });
@@ -259,6 +294,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
         } catch (playError) {
           console.error('Audio play failed:', playError);
           setPlayingAudio(prev => prev === messageIndex ? null : prev);
+          if (currentAdventureAudioLabelRef.current === cleanText) currentAdventureAudioLabelRef.current = null;
         }
       } else {
         throw new Error('No audio URL returned');
@@ -271,16 +307,23 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
   };
 
   const toggleAIResponse = async (messageIndex: number, text: string) => {
-    // If this message is currently playing, toggle off
-    if (playingAudio === messageIndex) {
+    const cleanText = text.replace(/[🎉🚀🌙🌄✨😊]/g, '').trim();
+    const el = audioRef.current;
+    const active = audioManager.getActive?.() as HTMLAudioElement | null;
+    const isGlobalActiveThis = !!active && active === el && !active.paused && !active.ended;
+    const isThisMessageActive = isGlobalActiveThis || currentAdventureAudioLabelRef.current === cleanText || (!!el && !el.paused && !el.ended && currentAdventureAudioLabelRef.current === cleanText);
+    // If this exact message's audio is currently playing, stop it
+    if (isThisMessageActive || playingAudio === messageIndex) {
       try {
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.currentTime = 0;
+        const toStop = active && active === el ? active : el;
+        if (toStop) {
+          toStop.pause();
+          toStop.currentTime = 0;
+          try { toStop.src = ''; toStop.load(); } catch {}
         }
       } catch {}
+      currentAdventureAudioLabelRef.current = null;
       setPlayingAudio(null);
-      // Also clear global active audio
       audioManager.stopAll();
       return;
     }
@@ -357,7 +400,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
           role: 'system',
           content: `Role & Perspective: Be my loyal sidekick in an imaginative adventure for children aged 8–14. Speak in the first person as my companion.
 
-Tone: Friendly, encouraging, and light-hearted, with humor and kid-friendly language. Ask only one question at a time. Keep responses under 80 words.
+Tone: Friendly, encouraging, and light-hearted, with humor and kid-friendly language. Ask only one question at a time. Keep responses under 80 words. Keep the output to exactly 2–3 short lines, using explicit newline characters (\n) at natural pauses for clean formatting.
 
 Goal: Create fast-paced, mission-oriented adventures with lovable characters, thrilling twists, and cliffhangers. Keep me eager for the next scene and encourage multiple missions to inspire a love for storytelling.
 
@@ -381,7 +424,7 @@ Character Creation: When creating sidekicks/characters, let me choose names with
 Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or London. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses magical and whimsical to match London's interests.`
         },
         ...currentMessages
-          .slice(-4)
+          .slice(-30)
           .map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text })),
         { role: 'user', content: text }
       ];
@@ -428,6 +471,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
   const toggleAdventureMic = () => {
     if (isAdventureRecording) {
       setIsAdventureRecording(false);
+      adventureRecordingRef.current = false;
       if (adventureSpeechRecognition) {
         adventureSpeechRecognition.stop();
         setAdventureSpeechRecognition(null);
@@ -443,21 +487,44 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+    // Initialize accumulator with any existing typed input so we never "reset"
+    adventureAccumulatedRef.current = adventureInput ? (adventureInput.trim() + ' ') : '';
     recognition.onresult = (event: any) => {
-      let text = '';
+      let interimTranscript = '';
+      let newFinalTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
-        text += result[0].transcript;
+        if (result.isFinal) {
+          newFinalTranscript += result[0].transcript + ' ';
+        } else {
+          interimTranscript += result[0].transcript;
+        }
       }
-      setAdventureInput(text);
+      if (newFinalTranscript) {
+        adventureAccumulatedRef.current += newFinalTranscript;
+      }
+      const displayTranscript = (adventureAccumulatedRef.current + interimTranscript).trim();
+      setAdventureInput(displayTranscript);
     };
     recognition.onend = () => {
-      setIsAdventureRecording(false);
-      setAdventureSpeechRecognition(null);
+      // Auto-restart if user hasn't explicitly stopped, to avoid losing context on long pauses
+      if (adventureRecordingRef.current) {
+        try { recognition.start(); } catch {}
+      } else {
+        setIsAdventureRecording(false);
+        setAdventureSpeechRecognition(null);
+      }
+    };
+    recognition.onerror = () => {
+      // Attempt to recover from transient errors while recording is intended to continue
+      if (adventureRecordingRef.current) {
+        try { recognition.start(); } catch {}
+      }
     };
     recognition.start();
     setAdventureSpeechRecognition(recognition);
     setIsAdventureRecording(true);
+    adventureRecordingRef.current = true;
   };
 
   return (
@@ -485,7 +552,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                   {m.isLoading ? (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 16, gap: 12 }}>
                       <div style={{ width: 40, height: 40, border: '3px solid rgba(139,92,246,0.2)', borderTop: '3px solid #8b5cf6', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#6b7280', textAlign: 'center', fontFamily: 'Quicksand, sans-serif' }}>{m.text}</div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: '#6b7280', textAlign: 'center', fontFamily: 'Quicksand, sans-serif' }}>{m.text}</div>
                       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#8b5cf6', animation: 'sparkle 1.5s ease-in-out infinite' }} />
                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#8b5cf6', animation: 'sparkle 1.5s ease-in-out infinite 0.3s' }} />
@@ -495,7 +562,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                   ) : m.isImage ? (
                     <div style={{ position: 'relative' }}>
                       {m.text && m.text !== 'IMAGE_GENERATED' && (
-                        <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', textAlign: 'center', fontFamily: 'Quicksand, sans-serif', marginBottom: 8 }}>{m.text}</div>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', textAlign: 'center', fontFamily: 'Quicksand, sans-serif', marginBottom: 8 }}>{m.text}</div>
                       )}
                       <img src={m.imageUrl || bg1Url} alt={m.imageUrl ? 'Generated adventure image' : 'Adventure Scene'}
                         onClick={() => { if (m.imageUrl) { setFullscreenImageUrl(m.imageUrl); setShowFullscreenImage(true); } else { setShowFullscreenImage(true); } }}
@@ -506,7 +573,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                       <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 500, }}>🔍 {m.imageUrl ? 'Click to open' : 'Click to expand'}</div>
                     </div>
                   ) : (
-                    <span style={{ fontFamily: 'Quicksand, sans-serif', fontSize: 15, fontWeight: 500, lineHeight: 1.4 }}>{m.text}</span>
+                    <span style={{ fontFamily: 'Quicksand, sans-serif', fontSize: 17, fontWeight: 500, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</span>
                   )}
                   {m.role === 'ai' && !m.isLoading && !m.isImage ? (
                     <button onClick={() => void toggleAIResponse(i, m.text)} disabled={audioLoading === i}
@@ -544,14 +611,15 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.95)', padding: '8px 12px', borderRadius: 20, gap: 10, border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                 <input value={adventureInput} onChange={(e) => setAdventureInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void sendAdventureMessage(); }} placeholder="Message..."
-                  style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#111827', fontSize: 16, fontWeight: 400, fontFamily: 'Quicksand, sans-serif' }} />
+                  style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#111827', fontSize: 17, fontWeight: 400, fontFamily: 'Quicksand, sans-serif' }} />
                 <button onClick={() => void generateAdventureImage()} aria-label="Generate Image" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(16,185,129,0.3)', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Generate image from your message">🌄</button>
                 {adventureState !== 'new' && (
                   <button onClick={() => {
                     setAdventureState('new');
                     setCurrentAdventure({});
-                    updateAdventureMessages(() => [{ role: 'ai', text: "🎉 Hey there, brave adventurer! I'm your loyal sidekick, ready for an epic quest! What kind of adventure gets you excited - sports, animals, space, or something totally different? Let's create an amazing story together! 🚀✨" }]);
-                    resetStory();
+                    const greeting = "🎉 Hey there, brave adventurer! I'm your loyal sidekick, ready for an epic quest! What kind of adventure gets you excited - sports, animals, space, or something totally different? Let's create an amazing story together! 🚀✨";
+                    updateAdventureMessages(prev => [...prev, { role: 'ai', text: greeting }]);
+                    appendStoryMessage({ role: 'ai', text: greeting });
                   }} aria-label="New Adventure" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(245,158,11,0.3)', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Start a new adventure">🎪</button>
                 )}
                 <button onClick={() => void sendAdventureMessage()} aria-label="Send" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(139,92,246,0.3)', background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>▲</button>

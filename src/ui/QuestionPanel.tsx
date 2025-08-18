@@ -71,8 +71,15 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   const summaryAudioRef = useRef<HTMLAudioElement | null>(null);
   // Track current ad-hoc ElevenLabs playback label for toggle buttons
   const currentElevenLabelRef = useRef<string | null>(null);
+  // Track last autoplayed speech passage to avoid replays
+  const lastAutoplayedSpeechPassageRef = useRef<string | null>(null);
   const [hasAutoplayedSummary, setHasAutoplayedSummary] = useState<boolean>(false);
   const [hasGeneratedSummary, setHasGeneratedSummary] = useState<boolean>(false);
+  // Long A specific passage state
+  const [longAPassage, setLongAPassage] = useState<string>('');
+  const [hasGeneratedLongAPassage, setHasGeneratedLongAPassage] = useState<boolean>(false);
+  const [hasAutoplayedLongAPassage, setHasAutoplayedLongAPassage] = useState<boolean>(false);
+  const [isLongAPassageLoading, setIsLongAPassageLoading] = useState<boolean>(false);
   const [summaryRefreshCount, setSummaryRefreshCount] = useState<number>(0);
   const [continuationInput, setContinuationInput] = useState<string>('');
   const [validationMessage, setValidationMessage] = useState<string>(''); // AI 1-2 word reply
@@ -163,7 +170,47 @@ Give a brief, friendly response that nudges them without giving the answer.`;
     const foundWords = expectedWords.filter(word => lowerTranscript.includes(word.toLowerCase()));
     const requiredWords = Math.max(3, Math.ceil(expectedWords.length * 0.6));
     
+    console.log('🎯 Speech success check:', {
+      transcript: lowerTranscript,
+      expectedWords,
+      foundWords,
+      requiredWords,
+      success: foundWords.length >= requiredWords
+    });
+    
     return foundWords.length >= requiredWords;
+  };
+
+
+
+  // Generate AI hint for speech (without auto-playing)
+  const generateSpeechHint = async (transcript: string) => {
+    if (!currentSpeechQuestion) return;
+    
+    try {
+      setIsSpeechHintLoading(true);
+      const sys = 'You are a friendly, concise reading coach for kids. Be specific, warm, and brief (max 15 words). Do not scold. Nudge user to try again and read entire passage.';
+      const user = `The child read: "${transcript}". Target passage focuses on these key words: ${currentSpeechQuestion.expectedWords.join(', ')}. Give one natural-sounding hint that nudges them to read entire passage including 2–3 of those words next time.`;
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [
+          { role: 'system', content: sys },
+          { role: 'user', content: user }
+        ] })
+      });
+      const d = await r.json();
+      const hint = (d?.reply || '').trim();
+      const finalHint = hint || `Try to include words like ${currentSpeechQuestion.expectedWords.slice(0,3).join(', ')}.`;
+      setSpeechHint(finalHint);
+      console.log('💾 Generated AI hint (not auto-playing):', finalHint);
+    } catch {
+      const finalHint = `Try to include words like ${currentSpeechQuestion.expectedWords.slice(0,3).join(', ')}.`;
+      setSpeechHint(finalHint);
+      console.log('💾 Generated fallback AI hint (not auto-playing):', finalHint);
+    } finally {
+      setIsSpeechHintLoading(false);
+    }
   };
   const [currentPhonemeIndex, setCurrentPhonemeIndex] = useState(-1); // -1 means no highlight
   const [blendingTranscript, setBlendingTranscript] = useState<string>('');
@@ -611,7 +658,7 @@ Strict requirements:
 1) 3–4 sentences (40–60 words total)
 2) Include these silent-e target words exactly: "huge", "time", "ride", "space", "place"
 3) Use short sentences, very simple words, and clear syntax (easy for Grade 2)
-4) Make it vivid, exciting, and funny — add kid-friendly humor, sound effects, and use emojis where naturally fit.
+4) Keep it vivid and funny through simple action and dialogue. Do NOT use sound effects or onomatopoeia (e.g., "boing", "whoosh", "zoom", "zooom"), no elongated spellings (e.g., "sooo", "waaa"), no stage directions, and no emojis.
 5) Use a casual, chatty narrator who sometimes talks directly to the reader
 6) Break ideas into short, punchy lines for easy read-aloud. 
 7) End with a gentle cliffhanger (≤ 8 words)
@@ -620,6 +667,7 @@ Strict requirements:
 10) Ensure accurate punctuation and grammar. 
 11) Include the target words as plain words inside sentences; do not style or wrap them. Only use quotation marks for spoken dialogue.
 12) Return only plain text with zero asterisks/underscores/backticks/tilde.
+13) Prefer high-frequency, decodable words appropriate for Grade 2; avoid tricky or irregular words unless in the target list; keep every sentence fully grammatical.
 
 Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (white astronaut suit), and a baby alien guide.`
           },
@@ -661,20 +709,101 @@ Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (
 
   // Do not seed static passage into story context; keep context sourced from Step 1 and user additions only
 
-  // Automatic feedback for speech questions when transcript is ready
+  // Generate Long A specific passage for step 3 (gate question)
   useEffect(() => {
-    if (isSpeechQuestion && transcript && !isRecording && !isProcessing && !hasAutoplayedSpeechPrompt) {
-      const isSuccess = checkSpeechSuccess(transcript);
-      setSpeechSuccess(isSuccess);
+    if (!isLongAQuestion || !currentLongAQuestion || hasGeneratedLongAPassage) return;
+    if (!storyContext.length) return;
+
+    let cancelled = false;
+    const generateLongAPassage = async () => {
+      try {
+        setIsLongAPassageLoading(true);
+        const contextText = storyContext.join('\n');
+        const lastEvent = getLastEvent();
+        const targetWord = currentLongAQuestion.word; // "gate"
+        const baseLine = currentLongAQuestion.aiHook?.baseLine || 'A shimmering starlight doorway appears in the cavern wall.';
+        
+        const messages = [
+          {
+            role: 'system',
+            content: 'You are a super fun, playful narrator for Grade 2 readers. Continue the story in 2–3 short sentences (30–45 words).\n\nHard rules:\n- Build directly on the most recent event; stay in the given scene. No new proper nouns or places.\n- The learner must spell an unseen target word. Do NOT say, define, rhyme, hint letters, show blanks/letter count, or use synonyms of that word.\n- End with a very short, in-world invite to spell (5–7 words).\n\nStyle guidance:\n- Include a brief 3–6 word bridge from the last event.\n- Use 1-2 small emojis if they fit naturally.\n- Keep the tone warm and adventurous with occasional gentle silliness.\n- If suitable, include light physical comedy but don\'t overdo it—avoid multiple movements or excessive sound effects in one passage.\n- Fold the task naturally into the scene\'s dialogue or narration (e.g., "its name," "the entrance," "what we need to pass through").\n- Dont use blanks.\n\nReturn only the story text.'
+          },
+          {
+            role: 'user',
+            content: `Adventure history (most recent last):\n${contextText}\n\nMost recent event to bridge from:\n${lastEvent}\n\nBase line to adapt:\n${baseLine}\n\nUnseen target word (do NOT say it):\n${targetWord}`
+          }
+        ];
+
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages })
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        
+        if (!cancelled) {
+          const passage = data.reply || baseLine;
+          setLongAPassage(passage);
+          setHasGeneratedLongAPassage(true);
+          setIsLongAPassageLoading(false);
+        }
+      } catch (error) {
+        console.error('Error generating Long A passage:', error);
+        if (!cancelled && currentLongAQuestion) {
+          // Fallback to base line
+          const fallback = currentLongAQuestion.aiHook?.baseLine || 'A shimmering starlight doorway appears in the cavern wall. The baby alien points to the glowing opening.';
+          setLongAPassage(fallback);
+          setHasGeneratedLongAPassage(true);
+          setIsLongAPassageLoading(false);
+        }
+      }
+    };
+
+    void generateLongAPassage();
+    return () => { cancelled = true; };
+  }, [isLongAQuestion, currentLongAQuestion, hasGeneratedLongAPassage, storyContext]);
+
+  // Autoplay the Long A passage once it becomes available
+  useEffect(() => {
+    if (!isLongAQuestion || !hasGeneratedLongAPassage || hasAutoplayedLongAPassage) return;
+    const passage = longAPassage?.trim();
+    if (!passage) return;
+    
+    try { audioManager.stopAll(); } catch {}
+    setHasAutoplayedLongAPassage(true);
+    setTimeout(() => { void playElevenTTS(passage); }, 300);
+  }, [isLongAQuestion, hasGeneratedLongAPassage, hasAutoplayedLongAPassage, longAPassage]);
+
+  // Note: Speech question (step 2) does not autoplay - student needs to read it themselves
+
+  // Automatic feedback for speech questions once evaluation is finalized
+  useEffect(() => {
+    console.log('🔍 Auto-feedback effect triggered:', {
+      isSpeechQuestion,
+      hasSpeechEvaluated,
+      isRecording,
+      isProcessing,
+      hasAutoplayedSpeechPrompt,
+      speechSuccess,
+      transcript: transcript?.slice(0, 50) + '...'
+    });
+    
+    if (isSpeechQuestion && hasSpeechEvaluated && !isRecording && !isProcessing && !hasAutoplayedSpeechPrompt) {
+      console.log('✅ Auto-feedback conditions met, setting hasAutoplayedSpeechPrompt=true');
       setHasAutoplayedSpeechPrompt(true);
-      
+
       const speak = async () => {
         audioManager.stopAll();
-        if (isSuccess) {
+        if (speechSuccess) {
+          console.log('🎉 Speaking success message and setting showSpeechContinuation=true');
           await playElevenTTS('Awesome! You read the story beautifully. What do you think happens next in the adventure?');
+          console.log('🔄 Setting showSpeechContinuation=true');
           setShowSpeechContinuation(true);
           try { appendEvent(`User's story addition from reading: ${transcript.slice(0, 160)}`); } catch {}
         } else {
+          console.log('❌ Speaking failure message');
           await playElevenTTS('Good try! Try reading more of the story clearly.');
         }
       };
@@ -683,7 +812,7 @@ Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (
         void speak();
       }, 500);
     }
-  }, [isSpeechQuestion, transcript, isRecording, isProcessing, hasAutoplayedSpeechPrompt]);
+  }, [isSpeechQuestion, hasSpeechEvaluated, speechSuccess, isRecording, isProcessing, hasAutoplayedSpeechPrompt, transcript]);
 
   // Reset AI hook state when entering a hook step (4 or 5) to force regeneration
   useEffect(() => {
@@ -787,6 +916,31 @@ Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (
   };
 
   const handleSummaryAudio = async () => {
+    // For Long A questions, use Long A passage instead of aiSummary
+    if (isLongAQuestion) {
+      if (!longAPassage) return;
+      // Toggle: stop existing audio
+      if (summaryAudioRef.current && !summaryAudioRef.current.paused) {
+        try { summaryAudioRef.current.pause(); summaryAudioRef.current.currentTime = 0; } catch {}
+        setIsSummarySpeaking(false);
+        return;
+      }
+      // Preempt any other audio before playing
+      audioManager.stopAll();
+      const textToSpeak = longAPassage.trim();
+      setIsSummarySpeaking(true);
+      const audio = await playElevenTTS(textToSpeak);
+      if (audio) {
+        summaryAudioRef.current = audio;
+        audio.onended = () => setIsSummarySpeaking(false);
+        audio.onerror = () => setIsSummarySpeaking(false);
+      } else {
+        setIsSummarySpeaking(false);
+      }
+      return;
+    }
+
+    // For regular questions, use aiSummary
     if (!aiSummary) return;
     // Toggle: stop existing audio
     if (summaryAudioRef.current && !summaryAudioRef.current.paused) {
@@ -872,9 +1026,9 @@ Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (
     }
   }, [isCorrect, isContinuationStep, isContinuationHidden, hasAutoplayedContPrompt, continuationHeader]);
 
-  // Step 0: On entering Step 4, stop any ongoing audio and autoplay summary
+  // Autoplay AI-generated summary for all regular questions with aiHook when entering step
   useEffect(() => {
-    if (isFirstRegularStep && aiSummary && !hasAutoplayedSummary) {
+    if (isAiHookStep && aiSummary && !hasAutoplayedSummary && currentRegularQuestion) {
       audioManager.stopAll();
       const run = async () => {
         const textToSpeak = aiSummary.trim();
@@ -883,7 +1037,7 @@ Scene: A magical Moon adventure with Sparkle (pink astronaut suit), her friend (
       };
       void run();
     }
-  }, [isFirstRegularStep, aiSummary, hasAutoplayedSummary]);
+  }, [isAiHookStep, aiSummary, hasAutoplayedSummary, currentRegularQuestion]);
 
   // Evaluate continuation via AI with richer outcomes
   type ContinuationEval = { status: 'valid' | 'invalid' | 'help'; message: string };
@@ -1437,20 +1591,22 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
+        const blob = new Blob(chunks, { type: 'audio/webm' });
         setAudioBlob(blob);
         stream.getTracks().forEach(track => track.stop());
         // Auto-process to simplify UI (no separate submit needed)
         processAudio(blob);
       };
 
-      // Start recording with time slices to ensure continuous capture
-      recorder.start(1000); // 1 second chunks
+      // Start recording as single continuous stream (like other working steps)
+      recorder.start();
       setMediaRecorder(recorder);
       setIsRecording(true);
       setTranscript('');
       setRealtimeTranscript('');
+      console.log('🔄 Resetting hasSpeechEvaluated=false and hasAutoplayedSpeechPrompt=false');
       setHasSpeechEvaluated(false);
+      setHasAutoplayedSpeechPrompt(false);
 
       // Start real-time speech recognition
       startRealtimeSpeechRecognition();
@@ -1559,78 +1715,55 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
     setIsProcessing(true);
     
     try {
-      // Use the accumulated real-time transcript as base
-      let finalTranscript = realtimeTranscript.trim();
-      
-      // Always try to get a high-quality transcript from OpenAI Whisper for final evaluation
+      // Rely exclusively on OpenAI Whisper for evaluation
       console.log('Processing with OpenAI Whisper for final transcript...');
       const formData = new FormData();
-      formData.append('audio', blobToProcess, 'recording.wav');
+      formData.append('audio', blobToProcess, 'recording.webm');
 
-      // Use relative path for Vercel API routes
-      const response = await fetch('/api/speech-to-text', {
+      const response = await fetch('http://localhost:3000/api/speech-to-text', {
         method: 'POST',
         body: formData,
       });
 
       if (response.ok) {
         const result = await response.json();
-        if (result.transcript && result.transcript.trim().length > 0) {
-          // Use Whisper result if it's substantially longer or if real-time was empty
-          if (!finalTranscript || result.transcript.trim().length > finalTranscript.length * 0.8) {
-            finalTranscript = result.transcript.trim();
-            console.log('Using OpenAI Whisper transcript:', finalTranscript);
-          } else {
-            console.log('Using accumulated real-time transcript (more complete):', finalTranscript);
-          }
-        } else if (!finalTranscript) {
-          console.log('Both Whisper and real-time transcripts are empty');
+        const whisperTranscript = result.transcript?.trim() || '';
+        console.log('✅ Whisper transcript received:', whisperTranscript);
+        
+        // Evaluate immediately with Whisper result (no debouncing needed)
+        setTranscript(whisperTranscript);
+        const success = checkSpeechSuccess(whisperTranscript);
+        console.log('🔬 Whisper-only evaluation:', {
+          transcript: whisperTranscript,
+          success,
+          expectedWords: currentSpeechQuestion?.expectedWords
+        });
+        
+        setSpeechSuccess(success);
+        
+        // Generate hint if needed (but don't auto-play)
+        if (!success && currentSpeechQuestion) {
+          generateSpeechHint(whisperTranscript);
+        } else {
+          setSpeechHint('');
         }
-        setTranscript(finalTranscript);
+        
+        console.log('📝 Setting hasSpeechEvaluated=true (Whisper-only)');
+        setHasSpeechEvaluated(true);
+        setIsProcessing(false);
       } else {
-        // Use real-time transcript if API call failed
-        setTranscript(finalTranscript);
-        console.log('API failed, using accumulated real-time transcript:', finalTranscript);
-      }
-      // After we set transcript, compute success and hint
-      const success = checkSpeechSuccess(finalTranscript);
-      setSpeechSuccess(success);
-      if (!success && currentSpeechQuestion) {
-        // Generate AI coaching line
-        try {
-          setIsSpeechHintLoading(true);
-          const sys = 'You are a friendly, concise reading coach for kids. Be specific, warm, and brief (max 15 words). Do not scold. Nudge user to try again and read entire passage.';
-          const user = `The child read: "${finalTranscript}". Target passage focuses on these key words: ${currentSpeechQuestion.expectedWords.join(', ')}. Give one natural-sounding hint that nudges them to read entire passage including 2–3 of those words next time.`;
-          const r = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: [
-              { role: 'system', content: sys },
-              { role: 'user', content: user }
-            ] })
-          });
-          const d = await r.json();
-          const hint = (d?.reply || '').trim();
-          const finalHint = hint || `Try to include words like ${currentSpeechQuestion.expectedWords.slice(0,3).join(', ')}.`;
-          setSpeechHint(finalHint);
-          // Autoplay hint with ElevenLabs and allow toggle later
-          try { audioManager.stopAll(); currentElevenLabelRef.current = finalHint; await playElevenTTS(finalHint); } catch {}
-        } catch {
-          const finalHint = `Try to include words like ${currentSpeechQuestion.expectedWords.slice(0,3).join(', ')}.`;
-          setSpeechHint(finalHint);
-          try { audioManager.stopAll(); currentElevenLabelRef.current = finalHint; await playElevenTTS(finalHint); } catch {}
-        } finally {
-          setIsSpeechHintLoading(false);
-        }
-      } else {
-        setSpeechHint('');
+        // Whisper failed - don't evaluate, ask user to retry
+        const errorData = await response.text();
+        console.error('❌ Whisper API failed:', response.status, errorData);
+        setIsProcessing(false);
+        alert('Speech recognition failed. Please try recording again.');
+        return;
       }
     } catch (error) {
-      console.error('Error processing audio:', error);
-      alert('Error processing audio. Please try again.');
-    } finally {
+      console.error('❌ Error processing audio:', error);
       setIsProcessing(false);
-      setHasSpeechEvaluated(true);
+      alert('Speech recognition failed. Please try recording again.');
+      return;
     }
   };
 
@@ -1743,6 +1876,20 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
 
   // Reset step-level UI state on step change to prevent bleed-through (e.g., green container, old inputs)
   useEffect(() => {
+    // Stop any audio from previous step
+    try { audioManager.stopAll(); } catch {}
+    try {
+      if (summaryAudioRef.current) {
+        summaryAudioRef.current.pause();
+        summaryAudioRef.current.currentTime = 0;
+      }
+    } catch {}
+    setIsSummarySpeaking(false);
+    currentElevenLabelRef.current = null;
+    setHasAutoplayedLongAPassage(false);
+    setHasGeneratedLongAPassage(false);
+    setLongAPassage('');
+    setIsLongAPassageLoading(false);
     setShowFeedback(false);
     setIsCorrect(false);
     setSelectedOption(null);
@@ -2732,7 +2879,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
               {(hasSpeechEvaluated && !isRecording) && (
                 <div style={{
                   padding: '20px 24px',
-                  background: transcript && checkSpeechSuccess(transcript)
+                  background: hasSpeechEvaluated && speechSuccess
                     ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
                     : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                   color: 'white',
@@ -2751,9 +2898,9 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                     <span style={{ fontSize: 18 }}>
                       {isSpeechHintLoading
                         ? 'Thinking…'
-                        : (speechHint && !checkSpeechSuccess(transcript) ? speechHint : '')}
+                        : (speechHint && hasSpeechEvaluated && !speechSuccess ? speechHint : '')}
                     </span>
-                    {speechHint && !isSpeechHintLoading && !checkSpeechSuccess(transcript) && (
+                    {speechHint && !isSpeechHintLoading && hasSpeechEvaluated && !speechSuccess && (
                       <button
                         onClick={async () => {
                           const label = String(speechHint || '').trim();
@@ -2944,7 +3091,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                   textAlign: 'center',
                   fontFamily: 'Quicksand, sans-serif'
                 }}>
-                  {isSummaryLoading ? 'Creating…' : aiSummary}
+                  {isLongAPassageLoading ? 'Creating…' : longAPassage}
                 </div>
                 {/* Audio button anchored bottom-right without affecting height */}
                 <button
