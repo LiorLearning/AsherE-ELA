@@ -14,7 +14,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
   const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat, setMetadata } = useStory();
   // Use parent-provided messages or default/local persisted
   const defaultMessages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }> = [
-    { role: 'ai' as const, text: "🌊✨ Irene! I'm so excited to continue our whimsical adventure in the floating jellyfish jungle! We just reunited after that amazing necklace rescue in the calm blue pool, and Ally got those delicious Milky Way candies from the Candy Rocket Shop! 🍬🚀 What magical discovery should we explore next in our enchanted treehouse?" }
+    { role: 'ai' as const, text: "📚✨ Gregory! I'm thrilled to continue our mystical adventure in the Library of Time! Kaida just solved the diphthong puzzles and safely landed after falling through the glowing hole. The wise owl awaits with a new riddle, and the swirling timelines in your cloak pulse with ancient magic! 🦉⏳ What mysterious knowledge should we seek next in these echoing halls?" }
   ];
   const [localAdventureMessages, setLocalAdventureMessages] = useState<Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>>(
     (storyState?.adventureMessages?.length ?? 0) > 0
@@ -51,14 +51,14 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     setting?: string;
     recentEvent?: string;
   }>({
-    type: 'whimsical space adventure with magical creatures',
-    protagonist: 'Ally (brave explorer with black hair, brown eyes, wears a space helmet and jungle gear)',
-    sidekick: 'You (a glowing white box jellyfish that speaks jellyfish language, swims in water)',
-    teammates: 'Princess (elegant pink lady with tiara), 17 white cats with bows walked by royal couple',
-    setting: 'Floating jellyfish jungle with calm blue pool, trees, magical guests, and jungle treehouse with leafy walls, vines, telescope platforms, star maps on ceiling',
-    goal: 'whimsical discovery and candy adventure - just reunited after necklace rescue and candy shopping at Candy Rocket Shop',
-    villain: 'None active (story focused on whimsical discovery)',
-    recentEvent: 'Ally reached Candy Rocket Shop, bought Milky Way candies with stranger help, reunited with jellyfish You after necklace rescue in pool, imaginary candy gator appeared but was not real'
+    type: 'mystical library adventure with time magic and ancient knowledge',
+    protagonist: 'Kaida Stormscroll (boy, male librarian\'s apprentice with dark hair, cloak of swirling past timelines, and floating spellbooks)',
+    sidekick: 'None introduced yet',
+    teammates: 'None included in this adventure',
+    setting: 'Library of Time – misty, ancient structure with glowing books, echoing halls, and time-bent magic',
+    goal: 'escape the cursed fate and unravel the mysteries of time magic while solving puzzles and riddles',
+    villain: 'The Archivillain – a corrupted book spirit twisting stories to trap heroes in doomed fates',
+    recentEvent: 'Kaida discovered a cursed book bearing his name predicting his end by sunset, cut its spine, entered a shadowy world, faced a boy version of himself, solved diphthong word puzzles, fell into a glowing hole, and landed safely as a glowing owl offered a new riddle'
   });
   const ADVENTURE_IMAGE_OVERLAY_OPACITY = 0.45;
   const adventureScrollRef = useRef<HTMLDivElement | null>(null);
@@ -91,7 +91,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     const lowerAI = aiResponse.toLowerCase();
     
     // Check for interest-based adventure selection
-    const interests = ['animals', 'jungles', 'barbies', 'tigers', 'magic', 'space', 'sparkles', 'sports', 'movies', 'dinosaurs', 'robots', 'pirates', 'knights', 'ninjas'];
+    const interests = ['anime', 'pokemon', 'gaming', 'smash bros', 'magic', 'library', 'time', 'books', 'dragons', 'ninjas', 'heroes', 'battles', 'adventure', 'mystical'];
     const selectedInterest = interests.find(interest => lowerUser.includes(interest));
     
     if (selectedInterest && adventureState === 'new') {
@@ -352,8 +352,8 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     if (!text) return;
     if (text.toLowerCase() === 'image' || text.toLowerCase() === 'create image' || text.toLowerCase().startsWith('create image')) {
       const imagePrompt = text.toLowerCase() === 'image' || text.toLowerCase() === 'create image'
-        ? 'Ally in space helmet and jungle gear with glowing white box jellyfish companion in floating jellyfish jungle with vibrant colors and whimsical elements'
-        : text.replace(/^create image\s*/i, '').trim() || 'Ally in space helmet and jungle gear with glowing white box jellyfish companion in floating jellyfish jungle with vibrant colors and whimsical elements';
+        ? 'Kaida Stormscroll (boy) in librarian robes with dark hair and cloak of swirling timelines, surrounded by floating spellbooks in the mystical Library of Time with golden magical light and ancient atmosphere'
+        : text.replace(/^create image\s*/i, '').trim() || 'Kaida Stormscroll (boy) in librarian robes with dark hair and cloak of swirling timelines, surrounded by floating spellbooks in the mystical Library of Time with golden magical light and ancient atmosphere';
       updateAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 ${text}` }]);
       onAdventureMessage?.(text);
       setAdventureInput('');
@@ -414,6 +414,12 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Thinking about your adventure...', isLoading: true }]);
     try {
       const currentMessages = adventureMessages.filter(m => !m.isLoading && !m.isImage);
+      
+      // Include story events (like continuation messages from questions) for better context
+      const storyEventsContext = storyState?.storyEvents?.length > 0 
+        ? `\n\nPrevious Story Events:\n${storyState.storyEvents.slice(-10).join('\n')}`
+        : '';
+      
       const conversationMessages = [
         {
           role: 'system',
@@ -425,7 +431,7 @@ Goal: Create fast-paced, mission-oriented adventures with lovable characters, th
 
 Ongoing Adventure: Show excitement, prompt me for what happens next, and occasionally suggest 1–2 creative ideas to spark the next turn.
 
-New Adventure: Ask about my interests (sports, animals, movies, space, etc.). Offer:
+New Adventure: Ask about my interests (anime, gaming, mystical adventures, time magic, etc.). Offer:
 - Interest-based adventure (protagonist + villain + clear goal)
 - Another interest-based adventure
 - "Create-your-own" adventure (I invent the setting, sidekick, and villain)
@@ -434,13 +440,13 @@ Use rich plots, lovable characters, and suspenseful cliffhangers.
 
 Adventure State: ${adventureState === 'new' ? 'NEW_ADVENTURE' : adventureState === 'character_creation' ? 'CHARACTER_CREATION' : 'ONGOING_ADVENTURE'}
 
-Current Adventure Context: ${JSON.stringify(currentAdventure)}
+Current Adventure Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
-Student Profile (Irene): Loves space adventures and Space Piggies. Prefers realistic art with vibrant colors and whimsical, imaginative elements. Enjoys magical creature companions and candy-themed adventures in fantastical settings.
+Student Profile (Gregory): Loves Super Smash Bros. Ultimate, Pokémon, anime (One Piece, Naruto, Dragon Ball, My Hero Academia, Demon Slayer, Jujutsu Kaisen), and Avatar: The Last Airbender. Prefers realistic cartoon-anime fusion art with glowing effects, soft shadows, and dramatic lighting. Enjoys mystical library adventures with time magic and ancient knowledge themes.
 
 Character Creation: When creating sidekicks/characters, let me choose names with suggestions, offer trait lists (funny, optimistic, resilient, etc.), and ask me to describe appearance for image creation.
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Irene. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses magical and whimsical to match Irene's interests in space adventures and cute creatures.`
+Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Gregory. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses mystical and dramatic to match Gregory's interests in anime, gaming, and magical library adventures with time manipulation themes.`
         },
         ...currentMessages
           .slice(-30)
@@ -477,13 +483,13 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
         if (loadingIndex !== -1) {
           newMessages[loadingIndex] = {
             role: 'ai',
-            text: 'Wow, that sounds like an exciting adventure! 🚀 Tell me more about what Captain Asher should do next!',
+            text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Kaida should do next!',
             isLoading: false
           } as any;
         }
         return newMessages;
       });
-      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! 🚀 Tell me more about what Captain Asher should do next!' });
+      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Kaida should do next!' });
     }
   };
 
@@ -597,7 +603,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                   {m.role === 'ai' && !m.isLoading && !m.isImage ? (
                     <button onClick={() => void toggleAIResponse(i, m.text)} disabled={audioLoading === i}
                       style={{ position: 'absolute', right: 8, bottom: 6, width: 20, height: 20, borderRadius: 10, border: 'none', background: playingAudio === i ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', cursor: audioLoading === i ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, boxShadow: '0 2px 6px rgba(0,0,0,0.2)', transition: 'all 0.2s ease', opacity: audioLoading === i ? 0.6 : 1 }}
-                      title={audioLoading === i ? 'Loading audio...' : playingAudio === i ? 'Stop' : 'Listen to Captain Asher'}
+                      title={audioLoading === i ? 'Loading audio...' : playingAudio === i ? 'Stop' : 'Listen to story'}
                       onMouseEnter={(e) => { if (audioLoading !== i) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.1)'; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
                     >{audioLoading === i ? '⋯' : playingAudio === i ? '🔴' : '🔊'}</button>
@@ -636,7 +642,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                   <button onClick={() => {
                     setAdventureState('new');
                     setCurrentAdventure({});
-                    const greeting = "🎉 Hey there, brave adventurer! I'm your loyal sidekick, ready for an epic quest! What kind of adventure gets you excited - sports, animals, space, or something totally different? Let's create an amazing story together! 🚀✨";
+                    const greeting = "🎉 Hey there, brave adventurer! I'm your loyal sidekick, ready for an epic quest! What kind of adventure gets you excited - anime battles, mystical libraries, time magic, or something totally different? Let's create an amazing story together! ✨📚";
                     updateAdventureMessages(prev => [...prev, { role: 'ai', text: greeting }]);
                     appendStoryMessage({ role: 'ai', text: greeting });
                   }} aria-label="New Adventure" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(245,158,11,0.3)', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Start a new adventure">🎪</button>

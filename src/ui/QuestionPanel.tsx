@@ -262,12 +262,12 @@ Give a brief, friendly response that nudges them without giving the answer.`;
 
   // AI hook config (data-driven) with safe fallbacks to preserve current behavior
   const aiCfg = currentRegularQuestion?.aiHook || currentLongAQuestion?.aiHook;
-  const hookTargetWord = aiCfg?.targetWord || (isSecondRegularStep ? 'cave' : (isFirstRegularStep ? 'space' : (currentRegularQuestion?.word || currentLongAQuestion?.word || '')));
+  const hookTargetWord = aiCfg?.targetWord || (isSecondRegularStep ? 'tome' : (isFirstRegularStep ? 'scroll' : (currentRegularQuestion?.word || currentLongAQuestion?.word || '')));
   const hookQuestionLine = aiCfg?.questionLine || (isFirstRegularStep ? 'Listen and type the word' : 'Listen and type the word');
   const hookBaseLine = aiCfg?.baseLine || (isFirstRegularStep
-    ? 'With Earth safe, they drift through the silent dark toward the alien planet.'
-    : 'The caverns echo with mystery as they continue their mission.');
-  const hookValidationWord = aiCfg?.validationWord || (isSecondRegularStep ? 'cave' : (isFirstRegularStep ? 'space' : (currentLongAQuestion?.word || 'word')));
+    ? 'With ancient knowledge gained, Kaida moves deeper into the mystical library corridors.'
+    : 'The library echoes with whispered secrets as Kaida continues his quest for wisdom.');
+  const hookValidationWord = aiCfg?.validationWord || (isSecondRegularStep ? 'tome' : (isFirstRegularStep ? 'scroll' : (currentLongAQuestion?.word || 'word')));
   const hookIntent = aiCfg?.intent || (isFirstRegularStep ? 'spelling' : 'spelling');
 
   // Context helpers (centralized, but preserving existing behavior)
@@ -350,7 +350,7 @@ Give a brief, friendly response that nudges them without giving the answer.`;
     const base = params.baseLine || '';
     const ask = params.questionLine || '';
     // Keep short; /api/image will wrap with kid-safe epic style
-    return `Clear, unmistakable depiction of the word "${word}" inside our magical space adventure. Context: ${context || base}. Hint from tutor: ${ask}. Ensure the subject visually communicates "${word}" at a glance.`;
+    return `Clear, unmistakable depiction of the word "${word}" inside our mystical Library of Time adventure. Context: ${context || base}. Hint from tutor: ${ask}. Ensure the subject visually communicates "${word}" at a glance.`;
   };
 
   const ensureQuestionImage = async (key: string, explicitPrompt?: string) => {
@@ -658,15 +658,15 @@ Inputs you may reference:
 - Story snippets: the recent adventure turns below
 - Most recent event: the event provided below
 - Use simple aliases for complex names:
-  Sir Whiskerfluff → cat; treehouse/platform → deck; crystal cave → den; rocket/spaceship → jet; crystal/treasure → gem
+  Wise Guardian → owl; mystical chamber → hall; ancient archive → den; magical light → glow; knowledge/wisdom → lore
 
 Strict rules:
 0) Event anchoring: Build directly on the most recent event; include at least one concrete detail from it. Do not change the location/scene or introduce unrelated new objects.
-1) Audience/decodability: Kindergarten. Mostly CVC and common sight words. Strong short-e focus. Do not use difficult to speak words like bright etc., since this is a reading exercise for kindergarten students.
+1) Audience/decodability: Kindergarten. Mostly CVC and common sight words. Strong silent e focus (long a words). Do not use difficult to speak words like bright etc., since this is a reading exercise for kindergarten students.
 2) Length: EXACTLY 5 lines; each line 5–6 words; total 25–30 words.
-4) Include these target words exactly: "red", "net", "get".
+4) Include these target words exactly: "gate", "wise", "make", "shine".
 5) Keep it lively.
-6) Name usage: You may use “Ally,” “princess,” and “cat.” Avoid other proper names.
+6) Name usage: You may use "Kaida," "owl," and "cat." Avoid other proper names.
 8) Clarity: Very short sentences; vary stems (do not repeat the same opening more than twice).
 9) Ending: Finish with a tiny hook / cliffhanger or next step (≤ 6 words), preferably a question.
 10) Output format: Return ONLY the 5 lines separated by newline characters. No titles, labels, or extra text.`
@@ -866,8 +866,8 @@ Strict rules:
         const data = await res.json();
         if (!cancelled) {
           const summary = (data.reply || '').trim() || (isFirstRegularStep
-            ? '"Look! The silent dark stretches endlessly," whispers the glowing jellyfish. "Here\'s a clue, Ally: listen and type where we\'re traveling," glows Princess Piggy.'
-            : '"The caverns echo with mystery," says Princess Piggy. "Here\'s a clue, Ally: listen and type the magical word," glows the jellyfish.');
+            ? '"Look! The misty corridors stretch endlessly," whispers the glowing owl. "Here\'s a clue, Kaida: listen and type where we\'re traveling," echoes through the ancient halls.'
+            : '"The archives echo with mystery," says the wise owl. "Here\'s a clue, Kaida: listen and type the magical word," resonates through the library.');
           setAiSummary(summary);
           try { setHookForStep('3', summary); } catch {}
           setHasGeneratedSummary(true);
@@ -875,8 +875,8 @@ Strict rules:
       } catch {
         if (!cancelled) {
           setAiSummary(isFirstRegularStep
-            ? '"Look! The silent dark stretches endlessly," whispers the glowing jellyfish. "Here\'s a clue, Ally: listen and type where we\'re traveling," glows Princess Piggy.'
-            : '"The caverns echo with mystery," says Princess Piggy. "Here\'s a clue, Ally: listen and type the magical word," glows the jellyfish.');
+            ? '"Look! The misty corridors stretch endlessly," whispers the glowing owl. "Here\'s a clue, Kaida: listen and type where we\'re traveling," echoes through the ancient halls.'
+            : '"The archives echo with mystery," says the wise owl. "Here\'s a clue, Kaida: listen and type the magical word," resonates through the library.');
           setHasGeneratedSummary(true);
         }
       } finally {
@@ -1051,17 +1051,17 @@ Strict rules:
     try {
       const targetWord = hookValidationWord;
       const messages = [
-        { role: 'system', content: `You are Ally's fun AI companion helping kids write their magical jellyfish jungle adventure story. Your job is to check if they used the target word "${targetWord}" in their sentence and respond naturally like a friendly narrator. 
+        { role: 'system', content: `You are Kaida's fun AI companion helping kids write their mystical Library of Time adventure story. Your job is to check if they used the target word "${targetWord}" in their sentence and respond naturally like a friendly narrator. 
 
 Respond as minified JSON: {"status":"valid|invalid|help","message":"<your response>"}
 
 RULES:
-- "valid": Only if the EXACT word "${targetWord}" appears as a standalone word (case-insensitive). Say something encouraging like "Perfect!" or "Great use of ${targetWord}!" 
-- "invalid": If they used a different word or misspelled it, gently point out what they wrote and what you need. Be specific: "I see you wrote '[their word]' but I need the word '${targetWord}'. Try again!"
+- "valid": If the word "${targetWord}" appears in any form (case-insensitive) - including within contractions, compound words, or with punctuation. Say something encouraging like "Perfect!" or "Great use of ${targetWord}!" 
+- "invalid": If they used a completely different word or clearly misspelled it, gently point out what they wrote and what you need. Be specific: "I see you wrote '[their word]' but I need the word '${targetWord}'. Try again!"
 - "help": If they ask for help or seem stuck, give a creative prompt about what ${targetWord} could do in the adventure.
 
 Be conversational, not scripted. Acknowledge what they actually wrote. Keep responses under 25 words.` },
-        { role: 'user', content: `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue Ally's magical jellyfish jungle adventure using the word "${targetWord}".` }
+        { role: 'user', content: `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue Kaida's mystical Library of Time adventure using the word "${targetWord}".` }
       ];
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -1071,17 +1071,62 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       const data = await res.json();
       const raw: string = (data.reply || '').trim();
       let parsed: ContinuationEval | null = null;
-      try { parsed = JSON.parse(raw) as ContinuationEval; } catch {}
+      
+      // Enhanced JSON parsing with better error handling
+      try { 
+        parsed = JSON.parse(raw) as ContinuationEval; 
+      } catch (parseError) {
+        console.log('JSON parse failed for AI response:', raw, 'Error:', parseError);
+        // Try to extract status and message from malformed JSON
+        const statusMatch = raw.match(/"status"\s*:\s*"(valid|invalid|help)"/i);
+        const messageMatch = raw.match(/"message"\s*:\s*"([^"]+)"/i);
+        if (statusMatch && messageMatch && statusMatch[1] && messageMatch[1]) {
+          parsed = { status: statusMatch[1] as 'valid' | 'invalid' | 'help', message: messageMatch[1] };
+          console.log('Recovered from malformed JSON:', parsed);
+        }
+      }
+      
       if (parsed && parsed.status && parsed.message) return parsed;
-      // Fallback heuristic
-      if (new RegExp(`\\b${targetWord}\\b`, 'i').test(text)) {
+      
+      // Enhanced fallback validation - more flexible word detection
+      const normalizedText = text.toLowerCase().replace(/[^\w\s]/g, ' '); // Replace punctuation with spaces
+      const normalizedTargetWord = targetWord.toLowerCase();
+      
+      // Check if target word appears anywhere in the normalized text
+      if (normalizedText.includes(normalizedTargetWord)) {
         return { status: 'valid', message: 'Great!' };
       }
+      
+      // Check for common misspellings or similar words
+      const words = normalizedText.split(/\s+/);
+      const similarWord = words.find(word => {
+        // Check if word is very similar (allowing for minor typos)
+        const minLength = Math.min(word.length, normalizedTargetWord.length);
+        if (minLength < 2) return false;
+        
+        // Simple similarity check - allow 1 character difference for words > 2 chars
+        let differences = 0;
+        const maxDifferences = normalizedTargetWord.length > 2 ? 1 : 0;
+        
+        for (let i = 0; i < Math.max(word.length, normalizedTargetWord.length); i++) {
+          if (word[i] !== normalizedTargetWord[i]) {
+            differences++;
+            if (differences > maxDifferences) return false;
+          }
+        }
+        return differences <= maxDifferences;
+      });
+      
+      if (similarWord) {
+        return { status: 'valid', message: 'Great!' };
+      }
+      
       if (/help|hint|example|idk|don\'?t know/i.test(text)) {
-        return { status: 'help', message: `No worries! What if Ally's ${targetWord} could help her explore the jellyfish jungle? How might she use it?` };
+        return { status: 'help', message: `No worries! What if Kaida's ${targetWord} could help him explore the mystical library? How might he use it?` };
       }
       return { status: 'invalid', message: `Use the word "${targetWord}" in your sentence.` };
-    } catch {
+    } catch (error) {
+      console.error('Validation error:', error);
       const targetWord = hookValidationWord;
       return { status: 'help', message: `Try using the word "${targetWord}"` };
     }
@@ -1100,7 +1145,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       // Immediately animate out (no added wait, no praise TTS)
         setIsContinuationHidden(true);
       setIsFeedbackRemoved(false);
-      try { appendEvent(`User's continuation (Step 3): ${text}`); } catch {}
+      try { appendEvent(`User's continuation (Step 3): ${text}`); } catch {} // Store for AdventureMode story summaries
       try { setPendingAdventureChat(text); } catch {}
       // Auto-advance to Step 4 after a short beat
       // Reset step-level UI state to avoid bleed into Step 4
@@ -1125,7 +1170,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       setValidationMessage(result.message || 'Try again');
       void playElevenTTS(result.message || 'Try again');
     } else {
-      const msg = result.message || `No worries! What if Ally\'s ${hookTargetWord} could help her explore the jellyfish jungle? How might she use it?`;
+      const msg = result.message || `No worries! What if Kaida\'s ${hookTargetWord} could help him explore the mystical library? How might he use it?`;
       setValidationMessage(msg);
       setContinuationHeader(msg);
       void playElevenTTS(msg);
@@ -1202,7 +1247,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
     } else {
       const text = continuationInput.trim();
       if (text) {
-        try { appendEvent(`User's continuation (Step 3): ${text}`); } catch {}
+        try { appendEvent(`User's continuation (Step 3): ${text}`); } catch {} // Store for AdventureMode story summaries
         setValidatedContinuation(text);
         setStoryContext(prev => [...prev, text]);
         try { setPendingAdventureChat(text); } catch {}
@@ -2980,7 +3025,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                     <textarea
                       value={speechContinuationInput}
                       onChange={(e) => setSpeechContinuationInput(e.target.value)}
-                      placeholder="What happens next in Ally's adventure?"
+                      placeholder="What happens next in Kaida's adventure?"
                       rows={2}
                       style={{
                         width: '100%',
@@ -3132,7 +3177,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                   color: '#1f2937',
                   marginBottom: '4.8px'
                 }}>
-                  🎧 Listen to Ally's word!
+                  🎧 Listen to Kaida's word!
                 </div>
                 <div style={{ fontSize: '13px', color: '#6b7280', fontWeight: '500' }}>
                   Type the word you hear.
@@ -3406,7 +3451,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                     color: '#1f2937',
                     marginBottom: '4.8px'
                   }}>
-                    🎧 Listen to Ally's word!
+                    🎧 Listen to Kaida's word!
                   </div>
                   <div style={{ fontSize: '14.4px', color: '#6b7280', fontWeight: '500' }}>
                     What sound does it start with?
