@@ -3,12 +3,14 @@ import { ChatPanel } from './ChatPanel';
 import { ImagePanel } from './ImagePanel';
 import { QuestionPanel } from './QuestionPanel';
 import { LandingPage } from './LandingPage';
+import { PictureBook } from './PictureBook';
 import { Button } from './components/Button';
 
 export function App(): JSX.Element {
   // Landing page state
   const [showLandingPage, setShowLandingPage] = useState(true);
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
+  const [storyMode, setStoryMode] = useState<'adventure' | 'picture-book'>('picture-book');
 
   // Practice loop state (placeholder assets, no DALL·E)
   const [chapter, setChapter] = useState<1 | 2>(1);
@@ -79,9 +81,10 @@ export function App(): JSX.Element {
   }, [imageUrl, showWin, startChapter, chapterImages, progress]);
 
   // Landing page handlers
-  const handleSelectStory = useCallback((storyId: string) => {
-    console.log('Selected story:', storyId);
+  const handleSelectStory = useCallback((storyId: string, mode: 'adventure' | 'picture-book' = 'picture-book') => {
+    console.log('Selected story:', storyId, 'mode:', mode);
     setSelectedStoryId(storyId);
+    setStoryMode(mode);
     setShowLandingPage(false);
   }, []);
 
@@ -90,6 +93,94 @@ export function App(): JSX.Element {
     setSelectedStoryId('new-story');
     setShowLandingPage(false);
   }, []);
+
+  const handleBackToLibrary = useCallback(() => {
+    setShowLandingPage(true);
+    setSelectedStoryId(null);
+    setStoryMode('picture-book');
+  }, []);
+
+  // Picture book data
+  const stellaStoryPages = useMemo(() => [
+    {
+      id: 'page-1',
+      pageNumber: 1,
+      text: 'In a quiet forest full of mist and magic, lived a girl named Stella. She wore ragged clothes and had only one friend—a tiny frog in a mossy leaf poncho.',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-2',
+      pageNumber: 2,
+      text: 'One morning, the frog hopped away into the trees. Stella followed, calling out—but he was gone.',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-3',
+      pageNumber: 3,
+      text: 'Just then, a glowing lantern floated down from the sky. Inside was a shimmering map… pointing the way to her lost friend.',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-4',
+      pageNumber: 4,
+      text: 'Stella set off on the path. She spotted a chicken guarding some shiny eggs. She tried to catch them with a net, but they vanished with a puff!',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-5',
+      pageNumber: 5,
+      text: 'In the nest, she found only a wiggly bug. She sighed, ate it, and declared, "No more eggs for me!"',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-6',
+      pageNumber: 6,
+      text: 'Suddenly, a single egg appeared in the nest. Stella gently returned it to the chicken, who clucked happily and danced away.',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-7',
+      pageNumber: 7,
+      text: 'High above, a jet zoomed through the sky. A woman in fancy clothes tossed something out—Stella gasped!',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-8',
+      pageNumber: 8,
+      text: 'It was a tiny brown dog! Stella raced forward and caught him just in time. "You\'re safe," she whispered.',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-9',
+      pageNumber: 9,
+      text: 'She named him Robber. He wagged his tail and trotted beside her, brave and proud.',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-10',
+      pageNumber: 10,
+      text: 'As they walked deeper into the forest, something blinked at them from the grass... A second frog—smaller than a pebble—peeked out and gave a tiny croak.',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-11',
+      pageNumber: 11,
+      text: 'Stella scooped him up gently. "You\'re coming with us too," she smiled. Now she had Robber... and two frog friends.',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-12',
+      pageNumber: 12,
+      text: 'The glowing map shimmered again—revealing a new path. With her animal friends by her side, Stella took a deep breath... and stepped into the unknown.',
+      imageUrl: undefined
+    },
+    {
+      id: 'page-13',
+      pageNumber: 13,
+      text: 'Chapter 2\n\n to be continued',
+      imageUrl: undefined
+    }
+  ], []);
 
   function onAnswer(): void {
     const q = questions[questionIndex];
@@ -142,71 +233,123 @@ export function App(): JSX.Element {
     );
   }
 
-  return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: `${isChatOpen ? '420px' : '0px'} 1fr`,
-      gridTemplateRows: '100%',
-      height: '100%',
-      width: '100%',
-      transition: 'grid-template-columns 200ms ease'
-    }}>
-      {/* Chat column */}
-      <div
-        id="chat-panel"
-        aria-hidden={!isChatOpen}
-        style={{
-          borderRight: isChatOpen ? '1px solid #E5E7EB' : 'none',
-          background: '#FFFFFF',
-          overflow: 'hidden',
-          pointerEvents: isChatOpen ? 'auto' : 'none'
-        }}
-      >
-        {isChatOpen && <ChatPanel onGenerateImage={handleGenerate} />}
-      </div>
-      {/* Main column */}
-      <div style={{ position: 'relative' }}>
-        {/* Toggle chat arrow */}
-        <button
-          onClick={() => setIsChatOpen(v => !v)}
-          aria-controls="chat-panel"
-          aria-expanded={isChatOpen}
+  // Show picture book for Stella story (when mode is picture-book)
+  if (selectedStoryId === 'stella-tiny-frog' && storyMode === 'picture-book') {
+    return (
+      <PictureBook
+        title="Stella and the Tiny Frog"
+        author="by Irene Logue, 2nd grade"
+        pages={stellaStoryPages}
+        onBack={handleBackToLibrary}
+      />
+    );
+  }
+  
+  // Show adventure mode for Stella story (when mode is adventure) or new story creation
+  if (selectedStoryId === 'stella-tiny-frog' && storyMode === 'adventure' || selectedStoryId === 'new-story') {
+    return (
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: `${isChatOpen ? '420px' : '0px'} 1fr`,
+        gridTemplateRows: '100%',
+        height: '100%',
+        width: '100%',
+        transition: 'grid-template-columns 200ms ease'
+      }}>
+        {/* Chat column */}
+        <div
+          id="chat-panel"
+          aria-hidden={!isChatOpen}
           style={{
-            position: 'absolute',
-            top: '50%',
-            left: 8,
-            transform: 'translateY(-50%)',
-            zIndex: 20,
-            width: 44,
-            height: 44,
-            borderRadius: 9999,
-            background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-            color: 'white',
-            border: '2px solid rgba(255,255,255,0.6)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
+            borderRight: isChatOpen ? '1px solid #E5E7EB' : 'none',
+            background: '#FFFFFF',
+            overflow: 'hidden',
+            pointerEvents: isChatOpen ? 'auto' : 'none'
           }}
-          onMouseDown={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(0.95)'; }}
-          onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
-          title={isChatOpen ? 'Collapse chat' : 'Expand chat'}
-          aria-label={isChatOpen ? 'Collapse chat' : 'Expand chat'}
         >
-          <span style={{ fontSize: 20, lineHeight: 1 }}>
-            {isChatOpen ? '◀' : '▶'}
-          </span>
-        </button>
+          {isChatOpen && <ChatPanel onGenerateImage={handleGenerate} />}
+        </div>
+        {/* Main column */}
+        <div style={{ position: 'relative' }}>
+          {/* Back to Library button */}
+          <button
+            onClick={handleBackToLibrary}
+            style={{
+              position: 'absolute',
+              top: 16,
+              left: 16,
+              zIndex: 20,
+              padding: '8px 16px',
+              borderRadius: 8,
+              background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: 500,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              fontFamily: 'Quicksand, system-ui, sans-serif'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            📚 Back to Library
+          </button>
+          
+          {/* Toggle chat arrow */}
+          <button
+            onClick={() => setIsChatOpen(v => !v)}
+            aria-controls="chat-panel"
+            aria-expanded={isChatOpen}
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: 8,
+              transform: 'translateY(-50%)',
+              zIndex: 20,
+              width: 44,
+              height: 44,
+              borderRadius: 9999,
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.6)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
+            }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(0.95)'; }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
+            title={isChatOpen ? 'Collapse chat' : 'Expand chat'}
+            aria-label={isChatOpen ? 'Collapse chat' : 'Expand chat'}
+          >
+            <span style={{ fontSize: 20, lineHeight: 1 }}>
+              {isChatOpen ? '◀' : '▶'}
+            </span>
+          </button>
 
-        <QuestionPanel
-          onComplete={() => {
-            console.log('All questions completed!');
-            // Handle completion logic here
-          }}
-        />
+          <QuestionPanel
+            onComplete={() => {
+              console.log('All questions completed!');
+              // Handle completion logic here
+            }}
+          />
+        </div>
       </div>
+    );
+  }
+
+  // Fallback - should not reach here normally
+  return (
+    <div style={{ padding: 20, textAlign: 'center' }}>
+      <h2>Story not found</h2>
+      <button onClick={handleBackToLibrary}>Back to Library</button>
     </div>
   );
 }

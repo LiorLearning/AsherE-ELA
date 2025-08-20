@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Create exciting, adventurous images that kids will love while maintaining safety
-    const enhancedPrompt = `Create an epic, high-quality image for an exciting space adventure story: ${prompt}. Style: dynamic and cinematic with vibrant colors, dramatic lighting, and amazing details. Make it look awesome and thrilling - the kind of image kids would want as their wallpaper. Include epic sci-fi elements, cool technology, alien worlds, space battles, or magical creatures as appropriate. Keep all content completely family-friendly with no nudity, no sexual content, and no suggestive or romantic posing. Absolutely avoid sexualized bodies or clothing (no cleavage, lingerie, swimwear, exposed midriff, or tight/transparent outfits); characters are depicted in fully modest attire suitable for kids. No kissing, flirting, or adult themes. Focus on adventure, heroism, friendship, and epic moments. Strictly avoid text on the images.`
+    const enhancedPrompt = `Create an epic, high-quality image: ${prompt}. Style: dynamic and cinematic with vibrant colors, dramatic lighting, and amazing details. Make it look awesome and thrilling - the kind of image kids would want as their wallpaper. Keep all content completely family-friendly with no nudity, no sexual content, and no suggestive or romantic posing. Absolutely avoid sexualized bodies or clothing (no cleavage, lingerie, swimwear, exposed midriff, or tight/transparent outfits); characters are depicted in fully modest attire suitable for kids. No kissing, flirting, or adult themes. Focus on adventure, heroism, friendship, and epic magical moments. Strictly avoid text on the images.`
 
     // First, try the original prompt
     try {
@@ -76,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         })
 
         const sanitizedPrompt = sanitizationResponse.choices[0]?.message?.content?.trim() || prompt
-        const sanitizedEnhancedPrompt = `Create an epic, high-quality image for an exciting space adventure story: ${sanitizedPrompt}. Style: dynamic and cinematic with vibrant colors, dramatic lighting, and amazing details. Make it look awesome and thrilling - the kind of image kids would want as their wallpaper. Include epic sci-fi elements, cool technology, alien worlds, space battles, or magical creatures as appropriate. Keep all content completely family-friendly with no nudity, sexual content, or inappropriate material whatsoever. Focus on adventure, heroism, friendship, and epic moments. Strictly avoid text on the images.`
+        const sanitizedEnhancedPrompt = `Create an epic, high-quality image: ${sanitizedPrompt}. Style: dynamic and cinematic with vibrant colors, dramatic lighting, and amazing details. Make it look awesome and thrilling - the kind of image kids would want as their wallpaper. Keep all content completely family-friendly with no nudity, sexual content, or inappropriate material whatsoever. Focus on adventure, heroism, friendship, and epic magical moments. Strictly avoid text on the images.`
 
         // Try again with sanitized prompt
         const retryResponse = await openai.images.generate({

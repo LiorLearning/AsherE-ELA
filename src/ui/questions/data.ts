@@ -3,10 +3,10 @@ import { BlendingQuestion, SpeechQuestion, Question } from './types';
 export const blendingQuestions: BlendingQuestion[] = [
   {
     id: 1,
-    word: 'Kaida',
-    imageUrl: '✨📚',
-    phonemes: ['K', 'ai', 'da'],
-    explanation: "Blend the sounds K-ai-da to make 'Kaida'!",
+    word: 'Stella',
+    imageUrl: '🌟🌲',
+    phonemes: ['St', 'e', 'lla'],
+    explanation: "Blend the sounds St-e-lla to make 'Stella'!",
   },
 ];
 
@@ -14,44 +14,44 @@ export const speechQuestions: SpeechQuestion[] = [
   {
     id: 1,
     text:
-      "Kaida found a magical gate blocking his path in the library's secret chamber. The wise librarian appeared beside him with a gentle smile. 'You must make the correct choice to open this gate,' she explained carefully. 'Speak the magic words and watch it shine with brilliant light.' Kaida nodded bravely, touched the gate gently, and whispered the ancient spell. Suddenly, the gate began to shine brightly, opening to reveal floating books beyond.",
-    imageUrl: '✨🚪📚💎🌟',
-    expectedWords: ['gate', 'wise', 'make', 'shine'],
-    explanation: 'Excellent reading! You found all the silent e words in Kaida\'s magical library adventure.',
+      "Stella found a big stick on the forest path. She picked it up and gave it a quick hit against a tree. The stick made a loud sound that echoed through the woods.",
+    imageUrl: '🌲🪵✨',
+    expectedWords: ['big', 'stick', 'hit'],
+    explanation: 'Great job! You found all the short i CVC words in Stella\'s forest adventure.',
   },
 ];
 
 export const longAQuestions: Question[] = [
   {
     id: 1,
-    word: 'name',
-    imageUrl: '📜✨',
+    word: 'log',
+    imageUrl: '🪵✨',
     isSpelling: true,
-    correctAnswer: 'name',
-    explanation: 'Kaida\'s magical "name" glows on the ancient scroll - the long a sound with silent e at the end!',
+    correctAnswer: 'log',
+    explanation: 'A fallen "log" creates a bridge across the stream - the short o sound in the middle!',
     aiHook: {
-      targetWord: 'name',
+      targetWord: 'log',
       intent: 'spelling',
-      baseLine: 'Kaida discovers his identity written in golden letters on an enchanted library registry.',
-      questionLine: 'Listen and type the long a word with silent e for what you are called.',
-      validationWord: 'name',
-      imagePrompt: 'Ancient glowing scroll showing Kaida\'s NAME written in golden magical letters in the mystical library, floating books and magical atmosphere visible; clearly shows the name on parchment.'
+      baseLine: 'Stella discovers a fallen tree trunk that serves as a natural bridge over the magical stream.',
+      questionLine: 'Listen and type the short o CVC word for a piece of fallen wood.',
+      validationWord: 'log',
+      imagePrompt: 'Fallen LOG serving as a bridge over a magical glowing stream in the enchanted forest, with Stella approaching it and mystical light emanating from the water; clearly shows the wooden log bridge.'
     }
   },
   {
     id: 2,
-    word: 'lake',
-    imageUrl: '🏞️✨',
+    word: 'fox',
+    imageUrl: '🦊✨',
     isSpelling: true,
-    correctAnswer: 'lake',
-    explanation: 'A mystical "lake" of shimmering knowledge surrounds the library - the long a sound with silent e at the end!',
+    correctAnswer: 'fox',
+    explanation: 'A wise "fox" appears to guide Stella through the forest - the short o sound in the middle!',
     aiHook: {
-      targetWord: 'lake',
+      targetWord: 'fox',
       intent: 'spelling',
-      baseLine: 'Kaida gazes upon the magical waters that reflect ancient wisdom around the library tower.',
-      questionLine: 'Listen and type the long a word with silent e for the body of water.',
-      validationWord: 'lake',
-      imagePrompt: 'Mystical glowing LAKE surrounding the library tower with reflections of magical knowledge in the water, floating books visible above the lake; composition highlights the magical lake clearly.'
+      baseLine: 'A clever forest fox with glowing amber eyes emerges from behind the magical mushrooms to help Stella.',
+      questionLine: 'Listen and type the short o CVC word for the forest animal with a bushy tail.',
+      validationWord: 'fox',
+      imagePrompt: 'Wise magical FOX with glowing amber eyes emerging from behind glowing mushrooms in the enchanted forest, floating lanterns in background; clearly shows the forest fox as Stella\'s guide.'
     }
   },
 ];
@@ -59,66 +59,66 @@ export const longAQuestions: Question[] = [
 export const questions: Question[] = [
   {
     id: 1,
-    word: 'cake',
-    imageUrl: '🎂✨',
+    word: 'sit',
+    imageUrl: '🍄✨',
     isSpelling: true,
-    correctAnswer: 'cake',
-    explanation: 'A magical "cake" with sparkles - the long a sound with silent e at the end!',
+    correctAnswer: 'sit',
+    explanation: 'Stella can "sit" on the magical mushroom to rest - the short i sound in the middle!',
     aiHook: {
-      targetWord: 'cake',
+      targetWord: 'sit',
       intent: 'spelling',
-      baseLine: 'Kaida discovers a mystical birthday celebration in the library with a glowing dessert.',
-      questionLine: 'Listen and type the long a word with silent e for the sweet treat.',
-      validationWord: 'cake',
-      imagePrompt: 'Magical glowing CAKE with sparkles and candles in the mystical library, floating books in background; clearly shows a decorated cake with magical properties.'
+      baseLine: 'Stella finds a perfect glowing mushroom to rest upon during her forest adventure.',
+      questionLine: 'Listen and type the short i CVC word for resting on something.',
+      validationWord: 'sit',
+      imagePrompt: 'Stella sitting peacefully on a large glowing mushroom in the enchanted forest, floating lanterns and magical atmosphere around her; clearly shows the action of sitting.'
     }
   },
   {
     id: 2,
-    word: 'make',
-    imageUrl: '🔨✨',
+    word: 'big',
+    imageUrl: '🌳✨',
     isSpelling: true,
-    correctAnswer: 'make',
-    explanation: 'Kaida can "make" magical spells - the long a sound with silent e at the end!',
+    correctAnswer: 'big',
+    explanation: 'The ancient tree is very "big" and tall - the short i sound in the middle!',
     aiHook: {
-      targetWord: 'make',
+      targetWord: 'big',
       intent: 'spelling',
-      baseLine: 'Kaida crafts powerful enchantments using ancient tools and mystical ingredients.',
-      questionLine: 'Listen and type the long a word with silent e for creating something.',
-      validationWord: 'make',
-      imagePrompt: 'Kaida using magical tools to MAKE enchantments in the library workshop, glowing crafting materials visible; composition shows the act of creating magic.'
+      baseLine: 'Stella gazes up at the enormous ancient tree that towers above the misty forest.',
+      questionLine: 'Listen and type the short i CVC word for something very large.',
+      validationWord: 'big',
+      imagePrompt: 'Stella looking up at a massive BIG ancient tree in the enchanted forest, emphasizing the enormous size with floating lanterns for scale; clearly shows the gigantic tree.'
     }
   },
   {
     id: 3,
-    word: 'take',
-    imageUrl: '👋✨',
+    word: 'run',
+    imageUrl: '🏃‍♀️✨',
     isSpelling: true,
-    correctAnswer: 'take',
-    explanation: 'Kaida will "take" the ancient book - the long a sound with silent e at the end!',
+    correctAnswer: 'run',
+    explanation: 'Stella must "run" quickly through the misty path - the short u sound in the middle!',
     aiHook: {
-      targetWord: 'take',
+      targetWord: 'run',
       intent: 'spelling',
-      baseLine: 'Kaida reaches for a glowing tome from the highest shelf in the enchanted library.',
-      questionLine: 'Listen and type the long a word with silent e for grabbing something.',
-      validationWord: 'take',
-      imagePrompt: 'Kaida reaching to TAKE a glowing ancient book from a high mystical library shelf, magical light emanating from the book; focus on the action of taking.'
+      baseLine: 'Stella moves swiftly along the glowing forest path as magical creatures watch from the shadows.',
+      questionLine: 'Listen and type the short u CVC word for moving quickly on foot.',
+      validationWord: 'run',
+      imagePrompt: 'Stella running quickly along a glowing path in the enchanted forest, motion lines showing speed, magical creatures watching from shadows; clearly shows the action of running.'
     }
   },
   {
     id: 4,
-    word: 'game',
-    imageUrl: '🎮✨',
+    word: 'sun',
+    imageUrl: '☀️✨',
     isSpelling: true,
-    correctAnswer: 'game',
-    explanation: 'The library has a magical "game" of riddles - the long a sound with silent e at the end!',
+    correctAnswer: 'sun',
+    explanation: 'The golden "sun" breaks through the forest canopy - the short u sound in the middle!',
     aiHook: {
-      targetWord: 'game',
+      targetWord: 'sun',
       intent: 'spelling',
-      baseLine: 'Enchanted playing pieces float around Kaida as he solves mystical puzzles.',
-      questionLine: 'Listen and type the long a word with silent e for a fun activity.',
-      validationWord: 'game',
-      imagePrompt: 'Magical floating GAME pieces and puzzle elements around Kaida in the mystical library, glowing riddles visible; composition highlights the magical game elements.'
+      baseLine: 'Magical golden sunbeams pierce through the misty forest canopy, illuminating Stella\'s path with warm light.',
+      questionLine: 'Listen and type the short u CVC word for the bright light in the sky.',
+      validationWord: 'sun',
+      imagePrompt: 'Golden SUN rays breaking through the magical forest canopy and illuminating Stella\'s path, warm light filtering through leaves and mist; clearly shows sunbeams in the enchanted forest.'
     }
   },
 ];

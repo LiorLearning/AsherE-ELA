@@ -2,13 +2,13 @@ import React from 'react';
 import { Button } from './components/Button';
 
 type Props = {
-  onSelectStory?: (storyId: string) => void;
+  onSelectStory?: (storyId: string, mode?: 'adventure' | 'picture-book') => void;
   onCreateNewStory?: () => void;
 };
 
 export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Element {
-  const handleStorySelect = (storyId: string) => {
-    onSelectStory?.(storyId);
+  const handleStorySelect = (storyId: string, mode?: 'adventure' | 'picture-book') => {
+    onSelectStory?.(storyId, mode);
   };
 
   const handleCreateNew = () => {
@@ -32,13 +32,13 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       pages: undefined
     },
     {
-      id: 'echo-library',
-      title: 'Echo in the Library of Time',
-      author: 'by Gregory, 3rd grade',
-      pages: '3 pages',
-      emoji: '📚',
-      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252F106-Gregory%252F20250819_152705.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
-      color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+      id: 'stella-tiny-frog',
+      title: 'Stella and the Tiny Frog',
+      author: 'by Irene, 2nd grade',
+      pages: '15 pages',
+      emoji: '🐸',
+      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fdubeus2fv4wzz.cloudfront.net%252Fimages%252F20250819_154510_image.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+      color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
       isCreateNew: false
     }
   ];
@@ -65,6 +65,71 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
     }
   ];
+
+  const AuthorLevelBadge = () => {
+    const currentLevel = 2;
+    const nextLevel = currentLevel + 1;
+    const currentTitle = 'Story Scribbler';
+    const upcomingTitle = 'Plot Weaver';
+    const progressToNext = 0.35; // 35% toward next level
+
+    const ringBackground = `conic-gradient(#10b981 ${Math.round(progressToNext * 100)}%, #e5e7eb ${Math.round(progressToNext * 100)}%)`;
+
+    return (
+      <div style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 16,
+        padding: '16px 20px',
+        borderRadius: 16,
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+        border: '1px solid #e5e7eb',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.06)'
+      }}>
+        {/* Circular level indicator */}
+        <div style={{
+          width: 72,
+          height: 72,
+          borderRadius: '50%',
+          background: ringBackground,
+          display: 'grid',
+          placeItems: 'center'
+        }}>
+          <div style={{
+            width: 56,
+            height: 56,
+            borderRadius: '50%',
+            background: '#fff',
+            display: 'grid',
+            placeItems: 'center',
+            color: '#10b981',
+            fontWeight: 800,
+            fontSize: 22
+          }}>
+            {currentLevel}
+          </div>
+        </div>
+        {/* Textual level info */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'left' }}>
+          <div style={{
+            fontSize: 18,
+            fontWeight: 700,
+            color: '#111827',
+            fontFamily: 'Quicksand, system-ui, sans-serif'
+          }}>
+            You're a {currentTitle}!
+          </div>
+          <div style={{
+            fontSize: 16,
+            color: '#6b7280',
+            fontWeight: 600
+          }}>
+            Level {nextLevel}: {upcomingTitle} (write 2 more chapters)
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const StoryCard = ({ 
     title, 
@@ -321,7 +386,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       }}>
         {/* Welcome Header */}
         <div style={{
-          textAlign: 'center',
+          textAlign: 'left',
           marginBottom: 20
         }}>
           <h1 style={{
@@ -332,8 +397,11 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
             fontFamily: 'Quicksand, system-ui, sans-serif',
             textShadow: '0 2px 4px rgba(0,0,0,0.05)'
           }}>
-            📚 Welcome back, Gregory the author!
+            📚 Welcome back, Irene!
           </h1>
+          <div style={{ marginTop: 16 }}>
+            <AuthorLevelBadge />
+          </div>
         </div>
 
         {/* Continue Your Story Section */}
@@ -373,9 +441,9 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
                 imageUrl={story.imageUrl}
                 author={story.author}
                 pages={story.pages}
-                showPublishButton={story.id === 'echo-library'}
+                showPublishButton={story.id === 'stella-tiny-frog'}
                 onPublish={() => handlePublishStory(story.id)}
-                onClick={() => story.isCreateNew ? handleCreateNew() : handleStorySelect(story.id)}
+                onClick={() => story.isCreateNew ? handleCreateNew() : handleStorySelect(story.id, 'adventure')}
               />
             ))}
           </div>
@@ -418,7 +486,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
                 author={story.author}
                 pages={story.pages}
                 badge={story.badge}
-                onClick={() => handleStorySelect(story.id)}
+                onClick={() => handleStorySelect(story.id, 'picture-book')}
               />
             ))}
           </div>

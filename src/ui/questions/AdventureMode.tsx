@@ -14,7 +14,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
   const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat, setMetadata } = useStory();
   // Use parent-provided messages or default/local persisted
   const defaultMessages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }> = [
-    { role: 'ai' as const, text: "📚✨ Gregory! I'm thrilled to continue our mystical adventure in the Library of Time! Kaida just solved the diphthong puzzles and safely landed after falling through the glowing hole. The wise owl awaits with a new riddle, and the swirling timelines in your cloak pulse with ancient magic! 🦉⏳ What mysterious knowledge should we seek next in these echoing halls?" }
+    { role: 'ai' as const, text: "🌲✨ Stella! I'm excited to continue our magical forest adventure! You just caught a falling dog from a jet and found a second tiny frog who joined our team. The glowing map shimmers again, revealing a new path deeper into the misty forest! 🗺️🐸 What should we explore next in these whispering woods?" }
   ];
   const [localAdventureMessages, setLocalAdventureMessages] = useState<Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>>(
     (storyState?.adventureMessages?.length ?? 0) > 0
@@ -51,14 +51,14 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     setting?: string;
     recentEvent?: string;
   }>({
-    type: 'mystical library adventure with time magic and ancient knowledge',
-    protagonist: 'Kaida Stormscroll (boy, male librarian\'s apprentice with dark hair, cloak of swirling past timelines, and floating spellbooks)',
-    sidekick: 'None introduced yet',
-    teammates: 'None included in this adventure',
-    setting: 'Library of Time – misty, ancient structure with glowing books, echoing halls, and time-bent magic',
-    goal: 'escape the cursed fate and unravel the mysteries of time magic while solving puzzles and riddles',
-    villain: 'The Archivillain – a corrupted book spirit twisting stories to trap heroes in doomed fates',
-    recentEvent: 'Kaida discovered a cursed book bearing his name predicting his end by sunset, cut its spine, entered a shadowy world, faced a boy version of himself, solved diphthong word puzzles, fell into a glowing hole, and landed safely as a glowing owl offered a new riddle'
+    type: 'magical forest adventure with whimsical creatures and mysterious paths',
+    protagonist: 'Stella (20-year-old girl with brown hair and brown eyes, wears rusty ragged clothes; kind, brave, and curious)',
+    sidekick: 'Tiny Frog (wears a mossy leaf poncho, fits in her palm, loyal and full of surprises)',
+    teammates: 'Robber (small brown chihuahua with big eyes and a brave heart), second tiny frog companion',
+    setting: 'A misty, magical forest filled with whispering trees, glowing mushrooms, secret paths, floating lanterns, and mysterious nests',
+    goal: 'explore the magical forest, help creatures in need, and follow the glowing map to discover new adventures',
+    villain: 'Jet Lady (secretly poor, hides her truth behind riches; abandoned her dog to avoid vet costs—might return with a new plan or secret mission)',
+    recentEvent: 'Stella returned a lost egg to a magical chicken, earned its trust, caught a falling dog (Robber) from a jet, found a second tiny frog who joined her team, and now the glowing map reveals a new path deeper into the forest'
   });
   const ADVENTURE_IMAGE_OVERLAY_OPACITY = 0.45;
   const adventureScrollRef = useRef<HTMLDivElement | null>(null);
@@ -91,7 +91,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     const lowerAI = aiResponse.toLowerCase();
     
     // Check for interest-based adventure selection
-    const interests = ['anime', 'pokemon', 'gaming', 'smash bros', 'magic', 'library', 'time', 'books', 'dragons', 'ninjas', 'heroes', 'battles', 'adventure', 'mystical'];
+    const interests = ['space', 'magical creatures', 'animals', 'candy', 'whimsical', 'forest', 'adventure', 'magic', 'creatures', 'fantasy', 'nature', 'mystical'];
     const selectedInterest = interests.find(interest => lowerUser.includes(interest));
     
     if (selectedInterest && adventureState === 'new') {
@@ -351,9 +351,43 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     console.log('sendAdventureMessage called with text:', text);
     if (!text) return;
     if (text.toLowerCase() === 'image' || text.toLowerCase() === 'create image' || text.toLowerCase().startsWith('create image')) {
-      const imagePrompt = text.toLowerCase() === 'image' || text.toLowerCase() === 'create image'
-        ? 'Kaida Stormscroll (boy) in librarian robes with dark hair and cloak of swirling timelines, surrounded by floating spellbooks in the mystical Library of Time with golden magical light and ancient atmosphere'
-        : text.replace(/^create image\s*/i, '').trim() || 'Kaida Stormscroll (boy) in librarian robes with dark hair and cloak of swirling timelines, surrounded by floating spellbooks in the mystical Library of Time with golden magical light and ancient atmosphere';
+      // Build context-aware image prompt
+      const userImageRequest = text.toLowerCase() === 'image' || text.toLowerCase() === 'create image'
+        ? 'Current adventure scene with characters'
+        : text.replace(/^create image\s*/i, '').trim() || 'Current adventure scene with characters';
+      
+      // Get story context and adventure state
+      const storyEventsContext = storyState?.storyEvents?.length > 0 
+        ? storyState.storyEvents.slice(-5).join('. ')
+        : '';
+      
+      const recentMessages = adventureMessages.filter(m => !m.isLoading && !m.isImage).slice(-3);
+      const conversationContext = recentMessages.map(m => `${m.role}: ${m.text}`).join('. ');
+      
+      // Build comprehensive prompt with story context
+      let imagePrompt = '';
+      if (storyEventsContext || conversationContext || currentAdventure?.setting) {
+        const contextParts = [];
+        
+        if (currentAdventure?.setting) {
+          contextParts.push(`Adventure setting: ${currentAdventure.setting}`);
+        }
+        
+        if (storyEventsContext) {
+          contextParts.push(`Recent story events: ${storyEventsContext}`);
+        }
+        
+        if (conversationContext) {
+          contextParts.push(`Recent conversation: ${conversationContext}`);
+        }
+        
+        const contextText = contextParts.join('. ');
+        imagePrompt = `${contextText}. User's image request: ${userImageRequest}. Create an image showing Stella (20-year-old girl with brown hair and brown eyes in rusty ragged clothes), Tiny Frog (in mossy leaf poncho), and Robber (brown chihuahua) in this magical forest adventure scene.`;
+      } else {
+        // Fallback with basic context
+        imagePrompt = `${userImageRequest}. Show Stella (20-year-old girl with brown hair and brown eyes in rusty ragged clothes) with Tiny Frog in mossy leaf poncho and Robber the brown chihuahua in a misty magical forest with glowing mushrooms, floating lanterns, and whispering trees.`;
+      }
+      
       updateAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 ${text}` }]);
       onAdventureMessage?.(text);
       setAdventureInput('');
@@ -431,7 +465,7 @@ Goal: Create fast-paced, mission-oriented adventures with lovable characters, th
 
 Ongoing Adventure: Show excitement, prompt me for what happens next, and occasionally suggest 1–2 creative ideas to spark the next turn.
 
-New Adventure: Ask about my interests (anime, gaming, mystical adventures, time magic, etc.). Offer:
+New Adventure: Ask about my interests (space adventures, magical creatures, whimsical stories, forest magic, etc.). Offer:
 - Interest-based adventure (protagonist + villain + clear goal)
 - Another interest-based adventure
 - "Create-your-own" adventure (I invent the setting, sidekick, and villain)
@@ -442,11 +476,11 @@ Adventure State: ${adventureState === 'new' ? 'NEW_ADVENTURE' : adventureState =
 
 Current Adventure Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
-Student Profile (Gregory): Loves Super Smash Bros. Ultimate, Pokémon, anime (One Piece, Naruto, Dragon Ball, My Hero Academia, Demon Slayer, Jujutsu Kaisen), and Avatar: The Last Airbender. Prefers realistic cartoon-anime fusion art with glowing effects, soft shadows, and dramatic lighting. Enjoys mystical library adventures with time magic and ancient knowledge themes.
+Student Profile (Irene): Loves space adventures, magical creatures, whimsical and imaginative stories, animals, and candy-themed settings. Prefers realistic art with vibrant colors and whimsical touches (e.g., glowing mushrooms, magical creatures, floating lights). Enjoys magical forest adventures with mysterious creatures and enchanted settings.
 
 Character Creation: When creating sidekicks/characters, let me choose names with suggestions, offer trait lists (funny, optimistic, resilient, etc.), and ask me to describe appearance for image creation.
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Gregory. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses mystical and dramatic to match Gregory's interests in anime, gaming, and magical library adventures with time manipulation themes.`
+Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Irene. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses whimsical and magical to match Irene's interests in space adventures, magical creatures, and enchanted forest settings with vibrant, imaginative elements.`
         },
         ...currentMessages
           .slice(-30)
@@ -483,13 +517,13 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
         if (loadingIndex !== -1) {
           newMessages[loadingIndex] = {
             role: 'ai',
-            text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Kaida should do next!',
+            text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Stella should do next!',
             isLoading: false
           } as any;
         }
         return newMessages;
       });
-      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Kaida should do next!' });
+      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Stella should do next!' });
     }
   };
 
@@ -614,10 +648,10 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
               ))}
             </div>
 
-            {/* Quick adventure options - show when starting new adventure */}
+                          {/* Quick adventure options - show when starting new adventure */}
             {adventureState === 'new' && adventureMessages.length <= 2 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12, justifyContent: 'center' }}>
-                {['🦁 Animals', '🌿 Jungles', '💖 Barbies', '🐅 Tigers', '✨ Magic', '🚀 Space'].map((option) => (
+                {['🚀 Space', '🦄 Magical Creatures', '🍭 Candy Adventures', '🌲 Forest Magic', '✨ Whimsical Tales', '🐾 Animal Friends'].map((option) => (
                   <button key={option} onClick={() => {
                     const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
                     setAdventureInput(`I love ${interest} adventures!`);
@@ -642,7 +676,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                   <button onClick={() => {
                     setAdventureState('new');
                     setCurrentAdventure({});
-                    const greeting = "🎉 Hey there, brave adventurer! I'm your loyal sidekick, ready for an epic quest! What kind of adventure gets you excited - anime battles, mystical libraries, time magic, or something totally different? Let's create an amazing story together! ✨📚";
+                    const greeting = "🎉 Hey there, brave adventurer! I'm your loyal sidekick, ready for an epic quest! What kind of adventure gets you excited - space journeys, magical creatures, enchanted forests, or something totally different? Let's create an amazing story together! ✨🌟";
                     updateAdventureMessages(prev => [...prev, { role: 'ai', text: greeting }]);
                     appendStoryMessage({ role: 'ai', text: greeting });
                   }} aria-label="New Adventure" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(245,158,11,0.3)', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Start a new adventure">🎪</button>
