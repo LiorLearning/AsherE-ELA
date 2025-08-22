@@ -105,25 +105,25 @@ export function App(): JSX.Element {
     {
       id: 'page-1',
       pageNumber: 1,
-      text: 'In a quiet forest full of mist and magic, lived a girl named Stella. She wore ragged clothes and had only one friend—a tiny frog in a mossy leaf poncho.',
+      text: 'In a magical bakery full of sparkles and sweet aromas, lived a girl named London. She wore short dresses with stars and hearts and had her best friend—Sparkle, who loved to bake cupcakes.',
       imageUrl: undefined
     },
     {
       id: 'page-2',
       pageNumber: 2,
-      text: 'One morning, the frog hopped away into the trees. Stella followed, calling out—but he was gone.',
+      text: 'One morning, Sparkle ran off to the ingredient storage. London followed, calling out—but she was gone.',
       imageUrl: undefined
     },
     {
       id: 'page-3',
       pageNumber: 3,
-      text: 'Just then, a glowing lantern floated down from the sky. Inside was a shimmering map… pointing the way to her lost friend.',
+      text: 'Just then, a glowing golden whisk floated down from above. Inside was a shimmering recipe… pointing the way to her lost friend.',
       imageUrl: undefined
     },
     {
       id: 'page-4',
       pageNumber: 4,
-      text: 'Stella set off on the path. She spotted a chicken guarding some shiny eggs. She tried to catch them with a net, but they vanished with a puff!',
+      text: 'London set off through the bakery. She spotted a magical muffin guarding some rainbow cupcakes. She tried to catch them with her hands, but they vanished with a puff!',
       imageUrl: undefined
     },
     {
@@ -135,43 +135,43 @@ export function App(): JSX.Element {
     {
       id: 'page-6',
       pageNumber: 6,
-      text: 'Suddenly, a single egg appeared in the nest. Stella gently returned it to the chicken, who clucked happily and danced away.',
+      text: 'Suddenly, a single cupcake appeared on the display. London gently placed it back, and the magical muffin giggled happily and danced away.',
       imageUrl: undefined
     },
     {
       id: 'page-7',
       pageNumber: 7,
-      text: 'High above, a jet zoomed through the sky. A woman in fancy clothes tossed something out—Stella gasped!',
+      text: 'High above, through the bakery window, a delivery drone zoomed by. Someone in a hood tossed something out—London gasped!',
       imageUrl: undefined
     },
     {
       id: 'page-8',
       pageNumber: 8,
-      text: 'It was a tiny brown dog! Stella raced forward and caught him just in time. "You\'re safe," she whispered.',
+      text: 'It was a tiny cookie! London raced forward and caught it just in time. "You\'re safe," she whispered.',
       imageUrl: undefined
     },
     {
       id: 'page-9',
       pageNumber: 9,
-      text: 'She named him Robber. He wagged his tail and trotted beside her, brave and proud.',
+      text: 'She named the cookie Helper. It sparkled and floated beside her, magical and bright.',
       imageUrl: undefined
     },
     {
       id: 'page-10',
       pageNumber: 10,
-      text: 'As they walked deeper into the forest, something blinked at them from the grass... A second frog—smaller than a pebble—peeked out and gave a tiny croak.',
+      text: 'As they walked deeper into the bakery, something blinked at them from behind the cupcakes... Their Skydiver Brother—smaller than expected—peeked out and gave a tiny chirp.',
       imageUrl: undefined
     },
     {
       id: 'page-11',
       pageNumber: 11,
-      text: 'Stella scooped him up gently. "You\'re coming with us too," she smiled. Now she had Robber... and two frog friends.',
+      text: 'London welcomed him warmly. "You\'re joining our baking team too," she smiled. Now she had her cookie friend... and Skydiver Brother.',
       imageUrl: undefined
     },
     {
       id: 'page-12',
       pageNumber: 12,
-      text: 'The glowing map shimmered again—revealing a new path. With her animal friends by her side, Stella took a deep breath... and stepped into the unknown.',
+      text: 'The glowing recipe shimmered again—revealing a new ingredient. With her baking friends by her side, London took a deep breath... and stepped into the unknown kitchen.',
       imageUrl: undefined
     },
     {
@@ -233,19 +233,19 @@ export function App(): JSX.Element {
     );
   }
 
-  // Show picture book for Stella story (when mode is picture-book)
+  // Show picture book for London story (when mode is picture-book)
   if (selectedStoryId === 'stella-tiny-frog' && storyMode === 'picture-book') {
     return (
       <PictureBook
-        title="Stella and the Tiny Frog"
-        author="by Irene Logue, 2nd grade"
+        title="London and the Magical Bakery"
+        author="by London, 2nd grade"
         pages={stellaStoryPages}
         onBack={handleBackToLibrary}
       />
     );
   }
   
-  // Show adventure mode for Stella story (when mode is adventure) or new story creation
+  // Show adventure mode for London story (when mode is adventure) or new story creation
   if (selectedStoryId === 'stella-tiny-frog' && storyMode === 'adventure' || selectedStoryId === 'new-story') {
     return (
       <div style={{

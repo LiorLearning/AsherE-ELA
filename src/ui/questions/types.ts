@@ -19,6 +19,8 @@ export type Question = {
   isSpelling?: boolean; // Optional flag for spelling questions
   isSpacing?: boolean; // Optional flag for spacing questions
   isSorting?: boolean; // Optional flag for sorting questions
+  isFillBlank?: boolean; // Optional flag for fill-in-the-blank questions
+  fillBlankPattern?: string; // Pattern like "r__n" for fill-in-the-blank
   options?: string[]; // Optional answer choices for multiple choice questions
   sortingWords?: string[]; // Words to be sorted
   sortingBins?: string[]; // Bin labels for sorting

@@ -269,8 +269,8 @@ Give a brief, friendly response that nudges them without giving the answer.`;
   const hookTargetWord = aiCfg?.targetWord || (isSecondRegularStep ? 'map' : (isFirstRegularStep ? 'path' : (currentRegularQuestion?.word || currentLongAQuestion?.word || '')));
   const hookQuestionLine = aiCfg?.questionLine || (isFirstRegularStep ? 'Listen and type the word' : 'Listen and type the word');
   const hookBaseLine = aiCfg?.baseLine || (isFirstRegularStep
-    ? 'With forest wisdom gained, Stella moves deeper into the magical woodland paths.'
-    : 'The forest whispers with ancient secrets as Stella continues her quest through the enchanted trees.');
+    ? 'With baking wisdom gained, London moves deeper into the magical bakery paths.'
+    : 'The bakery whispers with ancient recipes as London continues her quest through the enchanted kitchen.');
   const hookValidationWord = aiCfg?.validationWord || (isSecondRegularStep ? 'map' : (isFirstRegularStep ? 'path' : (currentLongAQuestion?.word || 'word')));
   const hookIntent = aiCfg?.intent || (isFirstRegularStep ? 'spelling' : 'spelling');
 
@@ -372,7 +372,7 @@ Give a brief, friendly response that nudges them without giving the answer.`;
     }
     
     // Keep short; /api/image will wrap with kid-safe epic style
-    return `Clear, unmistakable depiction of the word "${word}" inside our magical forest adventure. ${contextText}. Educational hint: ${ask}. Ensure the subject visually communicates "${word}" at a glance while fitting seamlessly into the ongoing story.`;
+    return `Clear, unmistakable depiction of the word "${word}" inside our magical bakery adventure. ${contextText}. Educational hint: ${ask}. Ensure the subject visually communicates "${word}" at a glance while fitting seamlessly into the ongoing story.`;
   };
 
   const ensureQuestionImage = async (key: string, explicitPrompt?: string) => {
@@ -702,7 +702,7 @@ Inputs you may reference:
 - Story snippets: the recent adventure turns below
 - Most recent event: the event provided below
 - Use simple aliases for complex names:
-  Wise Guardian → Tiny Frog; mystical chamber → forest clearing; ancient archive → magical grove; magical light → glow; knowledge/wisdom → forest wisdom
+  Wise Guardian → Sparkle; mystical chamber → bakery kitchen; ancient archive → magical recipe book; magical light → glow; knowledge/wisdom → baking wisdom
 
 Strict rules:
 0) Event anchoring: Build directly on the most recent event; include at least one concrete detail from it. Do not change the location/scene or introduce unrelated new objects.
@@ -710,7 +710,7 @@ Strict rules:
 2) Length: EXACTLY 5 lines; each line 5–6 words; total 25–30 words.
 4) Include these target words exactly: "big", "stick", "hit".
 5) Keep it lively.
-6) Name usage: You may use "Stella," "Tiny Frog," and "Robber." Avoid other proper names.
+6) Name usage: You may use "London," "Sparkle," and "Skydiver Brother." Avoid other proper names.
 8) Clarity: Very short sentences; vary stems (do not repeat the same opening more than twice).
 9) Ending: Finish with a tiny hook / cliffhanger or next step (≤ 6 words), preferably a question.
 10) Output format: Return ONLY the 5 lines separated by newline characters. No titles, labels, or extra text.`
@@ -916,8 +916,8 @@ Strict rules:
         const data = await res.json();
         if (!cancelled) {
           const summary = (data.reply || '').trim() || (isFirstRegularStep
-            ? '"Look! The misty forest paths stretch endlessly," whispers Tiny Frog. "Here\'s a clue, Stella: listen and type where we\'re traveling," echoes through the enchanted woods.'
-            : '"The forest whispers with magic," says Tiny Frog. "Here\'s a clue, Stella: listen and type the magical word," resonates through the glowing trees.');
+            ? '"Look! The sparkling bakery paths stretch endlessly," whispers Sparkle. "Here\'s a clue, London: listen and type where we\'re traveling," echoes through the enchanted kitchen.'
+            : '"The bakery whispers with magic," says Sparkle. "Here\'s a clue, London: listen and type the magical word," resonates through the glowing ovens.');
           setAiSummary(summary);
           try { setHookForStep('3', summary); } catch {}
           setHasGeneratedSummary(true);
@@ -925,8 +925,8 @@ Strict rules:
       } catch {
         if (!cancelled) {
           setAiSummary(isFirstRegularStep
-            ? '"Look! The misty forest paths stretch endlessly," whispers Tiny Frog. "Here\'s a clue, Stella: listen and type where we\'re traveling," echoes through the enchanted woods.'
-            : '"The forest whispers with magic," says Tiny Frog. "Here\'s a clue, Stella: listen and type the magical word," resonates through the glowing trees.');
+            ? '"Look! The sparkling bakery paths stretch endlessly," whispers Sparkle. "Here\'s a clue, London: listen and type where we\'re traveling," echoes through the enchanted kitchen.'
+            : '"The bakery whispers with magic," says Sparkle. "Here\'s a clue, London: listen and type the magical word," resonates through the glowing ovens.');
           setHasGeneratedSummary(true);
         }
       } finally {
@@ -1109,7 +1109,7 @@ Strict rules:
       
       let validationInstructions: string;
       if (isCurrentLongASorting && sortingWords.length > 0) {
-        validationInstructions = `You are Stella's fun AI companion helping kids write their magical forest adventure story. Your job is to check if they used one of these sorting words: ${sortingWords.join(', ')} in their sentence and respond naturally like a friendly narrator. 
+        validationInstructions = `You are London's fun AI companion helping kids write their magical bakery adventure story. Your job is to check if they used one of these sorting words: ${sortingWords.join(', ')} in their sentence and respond naturally like a friendly narrator. 
 
 Respond as minified JSON: {"status":"valid|invalid|help","message":"<your response>"}
 
@@ -1117,7 +1117,7 @@ RULES:
 - "valid": If ANY of these words (${sortingWords.join(', ')}) appears in any form (case-insensitive) - including within contractions, compound words, or with punctuation. Say something encouraging like "Perfect!" or "Great use of [word they used]!" 
 - "invalid": If they used a completely different word or clearly misspelled it, gently point out what they wrote and what you need. Be specific: "I see you wrote '[their word]' but I need one of these words: ${sortingWords.join(', ')}. Try again!"`;
       } else {
-        validationInstructions = `You are Stella's fun AI companion helping kids write their magical forest adventure story. Your job is to check if they used the target word "${hookValidationWord}" in their sentence and respond naturally like a friendly narrator. 
+        validationInstructions = `You are London's fun AI companion helping kids write their magical bakery adventure story. Your job is to check if they used the target word "${hookValidationWord}" in their sentence and respond naturally like a friendly narrator. 
 
 Respond as minified JSON: {"status":"valid|invalid|help","message":"<your response>"}
 
@@ -1132,8 +1132,8 @@ RULES:
 
 Be conversational, not scripted. Acknowledge what they actually wrote. Keep responses under 25 words.` },
         { role: 'user', content: isCurrentLongASorting && sortingWords.length > 0 
-          ? `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue Stella's magical forest adventure using one of these words: ${sortingWords.join(', ')}.`
-          : `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue Stella's magical forest adventure using the word "${hookValidationWord}".` }
+          ? `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue London's magical bakery adventure using one of these words: ${sortingWords.join(', ')}.`
+          : `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue London's magical bakery adventure using the word "${hookValidationWord}".` }
       ];
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -1229,9 +1229,9 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       
       if (/help|hint|example|idk|don\'?t know/i.test(text)) {
         if (isCurrentLongASorting && sortingWords.length > 0) {
-          return { status: 'help', message: `No worries! Pick one of these words and tell what Stella might do: ${sortingWords.join(', ')}` };
+          return { status: 'help', message: `No worries! Pick one of these words and tell what London might do: ${sortingWords.join(', ')}` };
         } else {
-          return { status: 'help', message: `No worries! What if Stella's ${hookValidationWord} could help her explore the magical forest? How might she use it?` };
+          return { status: 'help', message: `No worries! What if London's ${hookValidationWord} could help her explore the magical bakery? How might she use it?` };
         }
       }
       
@@ -1296,9 +1296,9 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       
       let defaultHelpMsg: string;
       if (isCurrentLongASorting && sortingWords.length > 0) {
-        defaultHelpMsg = `No worries! Pick one of these words and tell what Stella might do: ${sortingWords.join(', ')}`;
+        defaultHelpMsg = `No worries! Pick one of these words and tell what London might do: ${sortingWords.join(', ')}`;
       } else {
-        defaultHelpMsg = `No worries! What if Stella's ${hookTargetWord} could help her explore the magical forest? How might she use it?`;
+        defaultHelpMsg = `No worries! What if London's ${hookTargetWord} could help her explore the magical bakery? How might she use it?`;
       }
       
       const msg = result.message || defaultHelpMsg;
@@ -1361,7 +1361,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       }
       
       const contextText = contextParts.join('. ');
-      contextualPrompt = `${contextText}. User's image request: ${rawPrompt}. Create an image that fits seamlessly into this ongoing magical forest adventure story.`;
+      contextualPrompt = `${contextText}. User's image request: ${rawPrompt}. Create an image that fits seamlessly into this ongoing magical bakery adventure story.`;
     }
     
     try {
@@ -2023,6 +2023,33 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
         } else {
           setIncorrectHint('');
         }
+      } else if (currentLongAQuestion.isFillBlank) {
+        // For fill-in-the-blank questions, reconstruct the complete word from pattern and user input
+        const pattern = currentLongAQuestion.fillBlankPattern || '';
+        let reconstructedWord = '';
+        let inputIndex = 0;
+        
+        for (const char of pattern) {
+          if (char === '_') {
+            reconstructedWord += spellingInput[inputIndex] || '';
+            inputIndex++;
+          } else {
+            reconstructedWord += char;
+          }
+        }
+        
+        const correct = reconstructedWord.toLowerCase().trim() === (currentLongAQuestion.correctAnswer as string).toLowerCase();
+        setIsCorrect(correct);
+        setShowFeedback(true);
+        if (!correct) {
+          void generateIncorrectHint({
+            targetWord: String(currentLongAQuestion.correctAnswer || currentLongAQuestion.word || ''),
+            studentAnswer: reconstructedWord,
+            theme: 'adventure'
+          });
+        } else {
+          setIncorrectHint('');
+        }
       } else if (selectedOption !== null) {
         // For long A multiple choice questions, check the selected option
         const correct = selectedOption === currentLongAQuestion.correctAnswer;
@@ -2040,6 +2067,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
           setIncorrectHint('');
         }
       }
+
     } else if (currentRegularQuestion) {
       if (currentRegularQuestion.isSpelling) {
         // For spelling questions, check the input text
@@ -2050,6 +2078,33 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
           void generateIncorrectHint({
             targetWord: String(currentRegularQuestion.correctAnswer || currentRegularQuestion.word || ''),
             studentAnswer: spellingInput,
+            theme: 'adventure'
+          });
+        } else {
+          setIncorrectHint('');
+        }
+      } else if (currentRegularQuestion.isFillBlank) {
+        // For fill-in-the-blank questions, reconstruct the complete word from pattern and user input
+        const pattern = currentRegularQuestion.fillBlankPattern || '';
+        let reconstructedWord = '';
+        let inputIndex = 0;
+        
+        for (const char of pattern) {
+          if (char === '_') {
+            reconstructedWord += spellingInput[inputIndex] || '';
+            inputIndex++;
+          } else {
+            reconstructedWord += char;
+          }
+        }
+        
+        const correct = reconstructedWord.toLowerCase().trim() === (currentRegularQuestion.correctAnswer as string).toLowerCase();
+        setIsCorrect(correct);
+        setShowFeedback(true);
+        if (!correct) {
+          void generateIncorrectHint({
+            targetWord: String(currentRegularQuestion.correctAnswer || currentRegularQuestion.word || ''),
+            studentAnswer: reconstructedWord,
             theme: 'adventure'
           });
         } else {
@@ -3211,7 +3266,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                     <textarea
                       value={speechContinuationInput}
                       onChange={(e) => setSpeechContinuationInput(e.target.value)}
-                      placeholder="What happens next in Stella's adventure?"
+                      placeholder="What happens next in London's adventure?"
                       rows={2}
                       style={{
                         width: '100%',
@@ -3363,7 +3418,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                   color: '#1f2937',
                   marginBottom: '4.8px'
                 }}>
-                  🎧 Listen to Stella's word!
+                  🎧 Listen to London's word!
                 </div>
                 <div style={{ fontSize: '13px', color: '#6b7280', fontWeight: '500' }}>
                   Type the word you hear.
@@ -3701,6 +3756,98 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                 ))}
               </div>
             </div>
+          ) : currentLongAQuestion.isFillBlank ? (
+            /* Fill-in-the-blank interface for long A questions */
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '20px',
+              marginTop: '12px'
+            }}>
+              <div style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#374151',
+                textAlign: 'center'
+              }}>
+                🎯 Fill in the missing letters:
+              </div>
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                justifyContent: 'center'
+              }}>
+                {(currentLongAQuestion.fillBlankPattern || '').split('').map((char, index) => {
+                  const isBlank = char === '_';
+                  const blankIndex = (currentLongAQuestion.fillBlankPattern || '').slice(0, index).split('_').length - 1;
+                  
+                  return isBlank ? (
+                    <input
+                      key={index}
+                      type="text"
+                      aria-label={`Missing letter ${blankIndex + 1}`}
+                      maxLength={1}
+                      value={spellingInput[blankIndex] || ''}
+                      onChange={(e) => {
+                        const newInput = spellingInput.split('');
+                        newInput[blankIndex] = e.target.value.toLowerCase();
+                        setSpellingInput(newInput.join(''));
+                        // Auto-focus next blank input
+                        const allInputs = Array.from(e.currentTarget.parentElement?.children || [])
+                          .filter(el => el.tagName === 'INPUT') as HTMLInputElement[];
+                        const currentInputIndex = allInputs.indexOf(e.currentTarget);
+                        if (e.target.value && currentInputIndex < allInputs.length - 1) {
+                          allInputs[currentInputIndex + 1]?.focus();
+                        }
+                      }}
+                      style={{
+                        width: '48px',
+                        height: '56px',
+                        fontSize: '22px',
+                        fontWeight: '700',
+                        textAlign: 'center',
+                        border: '3px solid #e0e0e0',
+                        borderRadius: '10px',
+                        background: 'white',
+                        color: '#374151',
+                        outline: 'none',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.border = '3px solid #8b5cf6';
+                        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.1)';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.border = '3px solid #e0e0e0';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div
+                      key={index}
+                      style={{
+                        width: '48px',
+                        height: '56px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '22px',
+                        fontWeight: '700',
+                        borderRadius: '10px',
+                        background: '#f1f5f9',
+                        border: '3px solid #e2e8f0',
+                        color: '#64748b'
+                      }}
+                    >
+                      {char}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           ) : (
             /* Spelling input interface for non-sorting long A questions */
           <div style={{
@@ -3835,7 +3982,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                     color: '#1f2937',
                     marginBottom: '4.8px'
                   }}>
-                    🎧 Listen to Stella's word!
+                    🎧 Listen to London's word!
                   </div>
                   <div style={{ fontSize: '14.4px', color: '#6b7280', fontWeight: '500' }}>
                     What sound does it start with?
@@ -4112,9 +4259,12 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       {!isSpeechQuestion && !isBlendingQuestion && !showFeedback && (currentRegularQuestion || currentLongAQuestion) && (
         (currentLongAQuestion && currentLongAQuestion.isSorting) 
           ? Object.values(sortingAnswers).flat().length >= (currentLongAQuestion.sortingWords?.length || 0)
-          : ((currentRegularQuestion && currentRegularQuestion.isSpelling) || (currentLongAQuestion && currentLongAQuestion.isSpelling)
-            ? spellingInput.length >= Math.min(3, ((currentRegularQuestion?.correctAnswer || currentLongAQuestion?.correctAnswer) as string).length)
-            : selectedOption !== null)
+          : ((currentRegularQuestion && (currentRegularQuestion.isSpelling || currentRegularQuestion.isFillBlank)) || 
+             (currentLongAQuestion && (currentLongAQuestion.isSpelling || currentLongAQuestion.isFillBlank)))
+            ? (currentLongAQuestion?.isFillBlank 
+                ? spellingInput.length >= 2  // For fill-in-the-blank, need at least 2 letters (ai)
+                : spellingInput.length >= Math.min(3, ((currentRegularQuestion?.correctAnswer || currentLongAQuestion?.correctAnswer) as string).length))
+            : selectedOption !== null
       ) && (
         <div style={{
           marginTop: '32px',

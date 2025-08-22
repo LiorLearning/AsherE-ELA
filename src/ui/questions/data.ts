@@ -3,10 +3,10 @@ import { BlendingQuestion, SpeechQuestion, Question } from './types';
 export const blendingQuestions: BlendingQuestion[] = [
   {
     id: 1,
-    word: 'Stella',
-    imageUrl: '🌟🌲',
-    phonemes: ['St', 'e', 'lla'],
-    explanation: "Blend the sounds St-e-lla to make 'Stella'!",
+    word: 'London',
+    imageUrl: '🧁⭐',
+    phonemes: ['L', 'o', 'n', 'd', 'o', 'n'],
+    explanation: "Blend the sounds L-o-n-d-o-n to make 'London'!",
   },
 ];
 
@@ -14,10 +14,10 @@ export const speechQuestions: SpeechQuestion[] = [
   {
     id: 1,
     text:
-      "Stella found a big stick on the forest path. She picked it up and gave it a quick hit against a tree. The stick made a loud sound that echoed through the woods.",
-    imageUrl: '🌲🪵✨',
-    expectedWords: ['big', 'stick', 'hit'],
-    explanation: 'Great job! You found all the short i CVC words in Stella\'s forest adventure.',
+      "London found a big whisk in the bakery kitchen. She picked it up and gave it a quick hit against a mixing bowl. The whisk made a loud sound that echoed through the magical bakery.",
+    imageUrl: '🧁🥄✨',
+    expectedWords: ['big', 'whisk', 'hit'],
+    explanation: 'Great job! You found all the short i CVC words in London\'s bakery adventure.',
   },
 ];
 
@@ -28,51 +28,53 @@ export const longAQuestions: Question[] = [
     imageUrl: '🔤✨',
     isSorting: true,
     correctAnswer: {
-      'ay': ['may', 'gray'],
-      'a_e': ['cave', 'shake']
+      'ai': ['rain', 'train'],
+      'a_e': ['cake', 'make']
     },
-    explanation: 'Perfect! You sorted the magical word-stones by their long A patterns - ay and a_e!',
-    sortingWords: ['may', 'cave', 'shake', 'gray'],
-    sortingBins: ['ay', 'a_e'],
+    explanation: 'Perfect! You sorted the magical word-stones by their long A patterns - ai and a_e!',
+    sortingWords: ['rain', 'cake', 'make', 'train'],
+    sortingBins: ['ai', 'a_e'],
     aiHook: {
       targetWord: 'long A patterns',
       intent: 'sorting',
-      baseLine: 'Deep in the enchanted forest, Stella discovers an ancient stone tablet with magical runes that spell different words. The wise fox explains that to unlock the next path, she must sort the glowing word-stones by their hidden patterns.',
+      baseLine: 'Deep in the magical bakery, London discovers an ancient recipe book with magical runes that spell different words. The wise Sparkle explains that to unlock the next baking spell, she must sort the glowing ingredient-stones by their hidden patterns.',
       questionLine: 'Sort the words by their vowel patterns.',
       validationWord: 'vowel patterns',
-      imagePrompt: 'Stella standing before a mystical stone sorting altar in the enchanted forest, with glowing word-stones floating around her showing "may", "cave", "shake", "gray", two magical sorting bins labeled with ancient runes for "ay" and "a_e" patterns, wise fox nearby pointing with its tail, magical forest atmosphere with floating lanterns.'
+      imagePrompt: 'London standing before a mystical ingredient sorting counter in the enchanted bakery, with glowing word-stones floating around her showing "rain", "cake", "make", "train", two magical sorting bins labeled with ancient runes for "ai" and "a_e" patterns, wise Sparkle nearby pointing, magical bakery atmosphere with glowing ovens and sparkling decorations.'
     }
   },
   {
     id: 2,
-    word: 'log',
-    imageUrl: '🪵✨',
-    isSpelling: true,
-    correctAnswer: 'log',
-    explanation: 'A fallen "log" creates a bridge across the stream - the short o sound in the middle!',
+    word: 'rain',
+    imageUrl: '🌧️✨',
+    isFillBlank: true,
+    fillBlankPattern: 'r__n',
+    correctAnswer: 'rain',
+    explanation: 'The magical "rain" falls gently on the bakery windows - the long a sound with ai pattern!',
     aiHook: {
-      targetWord: 'log',
+      targetWord: 'rain',
       intent: 'spelling',
-      baseLine: 'Stella discovers a fallen tree trunk that serves as a natural bridge over the magical stream.',
-      questionLine: 'Listen and type the short o CVC word for a piece of fallen wood.',
-      validationWord: 'log',
-      imagePrompt: 'Fallen LOG serving as a bridge over a magical glowing stream in the enchanted forest, with Stella approaching it and mystical light emanating from the water; clearly shows the wooden log bridge.'
+      baseLine: 'London watches gentle magical droplets fall from the enchanted clouds above the bakery.',
+      questionLine: 'Listen and fill in the missing letters for water falling from clouds (long a with ai pattern).',
+      validationWord: 'rain',
+      imagePrompt: 'Gentle magical RAIN falling on the enchanted bakery windows with London watching from inside, sparkling droplets and mystical atmosphere; clearly shows rain falling from enchanted clouds.'
     }
   },
   {
     id: 3,
-    word: 'fox',
-    imageUrl: '🦊✨',
-    isSpelling: true,
-    correctAnswer: 'fox',
-    explanation: 'A wise "fox" appears to guide Stella through the forest - the short o sound in the middle!',
+    word: 'pain',
+    imageUrl: '🤕✨',
+    isFillBlank: true,
+    fillBlankPattern: 'p__n',
+    correctAnswer: 'pain',
+    explanation: 'When London touches the hot oven, she feels "pain" - the long a sound with ai pattern!',
     aiHook: {
-      targetWord: 'fox',
+      targetWord: 'pain',
       intent: 'spelling',
-      baseLine: 'A clever forest fox with glowing amber eyes emerges from behind the magical mushrooms to help Stella.',
-      questionLine: 'Listen and type the short o CVC word for the forest animal with a bushy tail.',
-      validationWord: 'fox',
-      imagePrompt: 'Wise magical FOX with glowing amber eyes emerging from behind glowing mushrooms in the enchanted forest, floating lanterns in background; clearly shows the forest fox as Stella\'s guide.'
+      baseLine: 'London accidentally touches the magical oven and learns about being careful in the bakery.',
+      questionLine: 'Listen and fill in the missing letters for when something hurts (long a with ai pattern).',
+      validationWord: 'pain',
+      imagePrompt: 'London carefully touching a magical oven in the enchanted bakery with a gentle expression showing she learned about being careful, warm glowing light from the oven; shows the concept of pain as a learning moment.'
     }
   },
 ];
@@ -80,83 +82,66 @@ export const longAQuestions: Question[] = [
 export const questions: Question[] = [
   {
     id: 1,
-    word: 'Ted is my pal',
-    imageUrl: '🎵✨',
-    isSpacing: true,
-    correctAnswer: 'Ted is my pal.',
-    explanation: 'Great job! You found the correctly spaced sentence.',
-    options: ['Tedismypal.', 'Ted is my pal.'],
+    word: 'train',
+    imageUrl: '🚂✨',
+    isSpelling: true,
+    correctAnswer: 'train',
+    explanation: 'The magical "train" carries ingredients to the bakery - the long a sound with ai pattern!',
     aiHook: {
-      targetWord: 'Ted is my pal',
-      intent: 'spacing',
-      baseLine: 'Listen to this sentence and pick the one with correct spacing between words.',
-      questionLine: 'Click on the button to hear the sentence. Then, pick the right spacing.',
-      validationWord: 'Ted is my pal.',
-      imagePrompt: 'A friendly character named Ted with a warm smile, standing next to a young child in a cheerful, colorful setting that emphasizes friendship and companionship.'
+      targetWord: 'train',
+      intent: 'spelling',
+      baseLine: 'London watches a magical ingredient train arrive at the enchanted bakery station.',
+      questionLine: 'Listen and spell the word for the vehicle that runs on tracks (long a with ai pattern).',
+      validationWord: 'train',
+      imagePrompt: 'Magical TRAIN arriving at the enchanted bakery station carrying glowing ingredients, London watching with wonder, sparkling tracks and mystical steam; clearly shows the magical ingredient train.'
     }
   },
   {
     id: 2,
-    word: 'sit',
-    imageUrl: '🍄✨',
+    word: 'tail',
+    imageUrl: '🦊✨',
     isSpelling: true,
-    correctAnswer: 'sit',
-    explanation: 'Stella can "sit" on the magical mushroom to rest - the short i sound in the middle!',
+    correctAnswer: 'tail',
+    explanation: 'The bakery fox swishes its fluffy "tail" - the long a sound with ai pattern!',
     aiHook: {
-      targetWord: 'sit',
+      targetWord: 'tail',
       intent: 'spelling',
-      baseLine: 'Stella finds a perfect glowing mushroom to rest upon during her forest adventure.',
-      questionLine: 'Listen and type the short i CVC word for resting on something.',
-      validationWord: 'sit',
-      imagePrompt: 'Stella sitting peacefully on a large glowing mushroom in the enchanted forest, floating lanterns and magical atmosphere around her; clearly shows the action of sitting.'
+      baseLine: 'London watches the magical bakery fox swish its beautiful fluffy tail as it helps her.',
+      questionLine: 'Listen and spell the word for the long part at the back of an animal (long a with ai pattern).',
+      validationWord: 'tail',
+      imagePrompt: 'Magical bakery fox with a beautiful fluffy TAIL swishing gracefully in the enchanted bakery, London watching with delight, sparkling fairy lights around; clearly shows the fox\'s tail.'
     }
   },
   {
     id: 3,
-    word: 'big',
-    imageUrl: '🌳✨',
+    word: 'mail',
+    imageUrl: '📮✨',
     isSpelling: true,
-    correctAnswer: 'big',
-    explanation: 'The ancient tree is very "big" and tall - the short i sound in the middle!',
+    correctAnswer: 'mail',
+    explanation: 'London receives magical "mail" with recipes - the long a sound with ai pattern!',
     aiHook: {
-      targetWord: 'big',
+      targetWord: 'mail',
       intent: 'spelling',
-      baseLine: 'Stella gazes up at the enormous ancient tree that towers above the misty forest.',
-      questionLine: 'Listen and type the short i CVC word for something very large.',
-      validationWord: 'big',
-      imagePrompt: 'Stella looking up at a massive BIG ancient tree in the enchanted forest, emphasizing the enormous size with floating lanterns for scale; clearly shows the gigantic tree.'
+      baseLine: 'London finds magical letters with secret baking recipes delivered to the enchanted bakery.',
+      questionLine: 'Listen and spell the word for letters delivered to your house (long a with ai pattern).',
+      validationWord: 'mail',
+      imagePrompt: 'London receiving magical MAIL with glowing recipe letters at the enchanted bakery mailbox, sparkling envelopes floating around; clearly shows magical mail delivery.'
     }
   },
   {
     id: 4,
-    word: 'run',
-    imageUrl: '🏃‍♀️✨',
+    word: 'nail',
+    imageUrl: '🔨✨',
     isSpelling: true,
-    correctAnswer: 'run',
-    explanation: 'Stella must "run" quickly through the misty path - the short u sound in the middle!',
+    correctAnswer: 'nail',
+    explanation: 'London uses a magical "nail" to hang decorations - the long a sound with ai pattern!',
     aiHook: {
-      targetWord: 'run',
+      targetWord: 'nail',
       intent: 'spelling',
-      baseLine: 'Stella moves swiftly along the glowing forest path as magical creatures watch from the shadows.',
-      questionLine: 'Listen and type the short u CVC word for moving quickly on foot.',
-      validationWord: 'run',
-      imagePrompt: 'Stella running quickly along a glowing path in the enchanted forest, motion lines showing speed, magical creatures watching from shadows; clearly shows the action of running.'
-    }
-  },
-  {
-    id: 5,
-    word: 'sun',
-    imageUrl: '☀️✨',
-    isSpelling: true,
-    correctAnswer: 'sun',
-    explanation: 'The golden "sun" breaks through the forest canopy - the short u sound in the middle!',
-    aiHook: {
-      targetWord: 'sun',
-      intent: 'spelling',
-      baseLine: 'Magical golden sunbeams pierce through the misty forest canopy, illuminating Stella\'s path with warm light.',
-      questionLine: 'Listen and type the short u CVC word for the bright light in the sky.',
-      validationWord: 'sun',
-      imagePrompt: 'Golden SUN rays breaking through the magical forest canopy and illuminating Stella\'s path, warm light filtering through leaves and mist; clearly shows sunbeams in the enchanted forest.'
+      baseLine: 'London carefully uses a sparkling nail to hang beautiful decorations around the enchanted bakery.',
+      questionLine: 'Listen and spell the word for the sharp thing you hammer into wood (long a with ai pattern).',
+      validationWord: 'nail',
+      imagePrompt: 'London using a magical sparkling NAIL to hang glowing decorations in the enchanted bakery, gentle hammer work with fairy lights around; clearly shows the nail and decoration hanging.'
     }
   },
 ];

@@ -14,7 +14,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
   const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat, setMetadata } = useStory();
   // Use parent-provided messages or default/local persisted
   const defaultMessages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }> = [
-    { role: 'ai' as const, text: "🌲✨ Stella! I'm excited to continue our magical forest adventure! You just caught a falling dog from a jet and found a second tiny frog who joined our team. The glowing map shimmers again, revealing a new path deeper into the misty forest! 🗺️🐸 What should we explore next in these whispering woods?" }
+    { role: 'ai' as const, text: "🧁✨ London! I'm excited to continue our magical bakery adventure! You and Sparkle just gave a cookie to the mysterious Muffin Monster, who vanished into sparkles. The remembrance cookie on the golden plate is glowing brighter! 🍪✨ What should we bake next in our enchanted bakery with all these magical ingredients?" }
   ];
   const [localAdventureMessages, setLocalAdventureMessages] = useState<Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>>(
     (storyState?.adventureMessages?.length ?? 0) > 0
@@ -51,14 +51,14 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     setting?: string;
     recentEvent?: string;
   }>({
-    type: 'magical forest adventure with whimsical creatures and mysterious paths',
-    protagonist: 'Stella (20-year-old girl with brown hair and brown eyes, wears rusty ragged clothes; kind, brave, and curious)',
-    sidekick: 'Tiny Frog (wears a mossy leaf poncho, fits in her palm, loyal and full of surprises)',
-    teammates: 'Robber (small brown chihuahua with big eyes and a brave heart), second tiny frog companion',
-    setting: 'A misty, magical forest filled with whispering trees, glowing mushrooms, secret paths, floating lanterns, and mysterious nests',
-    goal: 'explore the magical forest, help creatures in need, and follow the glowing map to discover new adventures',
-    villain: 'Jet Lady (secretly poor, hides her truth behind riches; abandoned her dog to avoid vet costs—might return with a new plan or secret mission)',
-    recentEvent: 'Stella returned a lost egg to a magical chicken, earned its trust, caught a falling dog (Robber) from a jet, found a second tiny frog who joined her team, and now the glowing map reveals a new path deeper into the forest'
+    type: 'magical bakery adventure with cupcakes, rainbow treats, and baking magic',
+    protagonist: 'London (teenage girl wearing short dresses with stars and hearts, often in pink and green, sometimes wears a tiara; passionate about baking and storytelling)',
+    sidekick: 'Sparkle (Barb) (London\'s best friend and co-baker, also a teenage girl in colorful short dresses decorated with stars and hearts)',
+    teammates: 'Skydiver Brother (birdlike teen who loves oatmeal cookies, fun-loving and friendly once fed), Mom (supportive figure in the bakery)',
+    setting: 'A magical bakery on Earth, filled with rainbow-colored cupcakes, peach and strawberry treats, glowing ovens, cupcake displays, and decorated with sprinkles, hearts, stars, and frosting patterns',
+    goal: 'create magical cupcakes and treats, protect the secret recipe, and discover new baking magic adventures',
+    villain: 'Frost Sprinkle (hoodie-wearing teen dusted with powdered sugar who wants to steal the secret cupcake recipe and control all baking magic, creates evil cupcakes)',
+    recentEvent: 'London and Sparkle gave a cookie to a mysterious glowing Muffin Monster, who vanished slowly into sparkles. They kept one remembrance cookie on a golden plate, which suddenly started to glow, hinting at the start of a new magical cookie quest with their Skydiver Brother teammate nearby'
   });
   const ADVENTURE_IMAGE_OVERLAY_OPACITY = 0.45;
   const adventureScrollRef = useRef<HTMLDivElement | null>(null);
@@ -91,7 +91,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     const lowerAI = aiResponse.toLowerCase();
     
     // Check for interest-based adventure selection
-    const interests = ['space', 'magical creatures', 'animals', 'candy', 'whimsical', 'forest', 'adventure', 'magic', 'creatures', 'fantasy', 'nature', 'mystical'];
+    const interests = ['baking', 'cupcakes', 'rainbow treats', 'storytelling', 'magical bakery', 'candy', 'whimsical', 'magic', 'frosting', 'sprinkles', 'picture books', 'peach treats', 'strawberry treats'];
     const selectedInterest = interests.find(interest => lowerUser.includes(interest));
     
     if (selectedInterest && adventureState === 'new') {
@@ -382,10 +382,10 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
         }
         
         const contextText = contextParts.join('. ');
-        imagePrompt = `${contextText}. User's image request: ${userImageRequest}. Create an image showing Stella (20-year-old girl with brown hair and brown eyes in rusty ragged clothes), Tiny Frog (in mossy leaf poncho), and Robber (brown chihuahua) in this magical forest adventure scene.`;
+        imagePrompt = `${contextText}. User's image request: ${userImageRequest}. Create an image showing London (teenage girl wearing short dresses with stars and hearts, often in pink and green, sometimes wears a tiara), Sparkle (teenage girl in colorful short dresses decorated with stars and hearts), and Skydiver Brother (birdlike teen) in this magical bakery adventure scene.`;
       } else {
         // Fallback with basic context
-        imagePrompt = `${userImageRequest}. Show Stella (20-year-old girl with brown hair and brown eyes in rusty ragged clothes) with Tiny Frog in mossy leaf poncho and Robber the brown chihuahua in a misty magical forest with glowing mushrooms, floating lanterns, and whispering trees.`;
+        imagePrompt = `${userImageRequest}. Show London (teenage girl wearing short dresses with stars and hearts, often in pink and green, sometimes wears a tiara) with Sparkle (teenage girl in colorful short dresses decorated with stars and hearts) and Skydiver Brother (birdlike teen) in a magical bakery filled with rainbow cupcakes, glowing ovens, and sparkling decorations.`;
       }
       
       updateAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 ${text}` }]);
@@ -465,7 +465,7 @@ Goal: Create fast-paced, mission-oriented adventures with lovable characters, th
 
 Ongoing Adventure: Show excitement, prompt me for what happens next, and occasionally suggest 1–2 creative ideas to spark the next turn.
 
-New Adventure: Ask about my interests (space adventures, magical creatures, whimsical stories, forest magic, etc.). Offer:
+New Adventure: Ask about my interests (baking adventures, magical cupcakes, whimsical stories, bakery magic, etc.). Offer:
 - Interest-based adventure (protagonist + villain + clear goal)
 - Another interest-based adventure
 - "Create-your-own" adventure (I invent the setting, sidekick, and villain)
@@ -476,11 +476,11 @@ Adventure State: ${adventureState === 'new' ? 'NEW_ADVENTURE' : adventureState =
 
 Current Adventure Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
-Student Profile (Irene): Loves space adventures, magical creatures, whimsical and imaginative stories, animals, and candy-themed settings. Prefers realistic art with vibrant colors and whimsical touches (e.g., glowing mushrooms, magical creatures, floating lights). Enjoys magical forest adventures with mysterious creatures and enchanted settings.
+Student Profile (London): Loves baking, storytelling, creating picture books, cupcakes (rainbow/peach/strawberry), whimsical and imaginative stories, and magical bakery settings. Dislikes space settings. Prefers realistic art with warm pastel colors for bakery interiors, detailed frosting on cupcakes, and magical baking elements. Enjoys magical bakery adventures with cupcake creation, frosting magic, and enchanted baking tools.
 
 Character Creation: When creating sidekicks/characters, let me choose names with suggestions, offer trait lists (funny, optimistic, resilient, etc.), and ask me to describe appearance for image creation.
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Irene. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses whimsical and magical to match Irene's interests in space adventures, magical creatures, and enchanted forest settings with vibrant, imaginative elements.`
+Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or London. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses whimsical and magical to match London's interests in baking adventures, magical cupcakes, and enchanted bakery settings with warm, imaginative elements.`
         },
         ...currentMessages
           .slice(-30)
@@ -517,13 +517,13 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
         if (loadingIndex !== -1) {
           newMessages[loadingIndex] = {
             role: 'ai',
-            text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Stella should do next!',
+            text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what London should do next!',
             isLoading: false
           } as any;
         }
         return newMessages;
       });
-      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Stella should do next!' });
+      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what London should do next!' });
     }
   };
 
@@ -676,7 +676,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                   <button onClick={() => {
                     setAdventureState('new');
                     setCurrentAdventure({});
-                    const greeting = "🎉 Hey there, brave adventurer! I'm your loyal sidekick, ready for an epic quest! What kind of adventure gets you excited - space journeys, magical creatures, enchanted forests, or something totally different? Let's create an amazing story together! ✨🌟";
+                    const greeting = "🧁 Hey there, brave baker! I'm your loyal sidekick, ready for an epic quest! What kind of adventure gets you excited - magical cupcakes, rainbow treats, enchanted bakeries, or something totally different? Let's create an amazing baking story together! ✨🌟";
                     updateAdventureMessages(prev => [...prev, { role: 'ai', text: greeting }]);
                     appendStoryMessage({ role: 'ai', text: greeting });
                   }} aria-label="New Adventure" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(245,158,11,0.3)', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Start a new adventure">🎪</button>
