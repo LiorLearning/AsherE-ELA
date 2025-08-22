@@ -50,8 +50,8 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
   const topPicksStories = [
     {
       id: 'stella-tiny-frog',
-      title: 'London and the Magical Bakery',
-      author: 'by London, 2nd grade',
+      title: 'Stella and the Tiny Frog',
+      author: 'by Irene, 2nd grade',
       pages: '15 pages',
       badge: '❤️ "Best Friendship!"',
       imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fdubeus2fv4wzz.cloudfront.net%252Fimages%252F20250819_154510_image.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
