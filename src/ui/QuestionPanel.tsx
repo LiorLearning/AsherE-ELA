@@ -99,6 +99,10 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   // Dynamic header shown in the green container during continuation (CTA or AI help lines)
   const [continuationHeader, setContinuationHeader] = useState<string>('');
   const [isContinuationHeaderLoading, setIsContinuationHeaderLoading] = useState<boolean>(false);
+  
+  // Sorting question state
+  const [sortingAnswers, setSortingAnswers] = useState<{[binLabel: string]: string[]}>({});
+  const [draggingWord, setDraggingWord] = useState<string | null>(null);
 
   // Image-step state (optional branch after a successful response)
   const [isImageStepActive, setIsImageStepActive] = useState<boolean>(false);
@@ -1000,14 +1004,18 @@ Strict rules:
           const contextText = buildContextText();
           const lastEvent = getLastEvent();
           const baseLine = hookBaseLine;
+          const isCurrentLongASorting = currentLongAQuestion?.isSorting;
+          const actionType = isCurrentLongASorting ? 'sorted' : 'spelled';
+          const taskDescription = isCurrentLongASorting ? 'sorting the words by their vowel patterns' : `spelling "${hookTargetWord}"`;
+          
           const messages = [
             {
               role: 'system',
-              content: 'You are a warm, enthusiastic narrator for Grade 2 readers. Write 1-2 short sentences (15-20 words total) that: 1) Celebrate their correct spelling (2-3 words like "Perfect!" or "Yes!"), 2) Reference what just happened in the scene, 3) Ask what happens next using that word (be direct: "Now use \'gate\' to tell what happens next!"). Add one small emoji. Stay connected to the immediate scene context.'
+              content: `You are a warm, enthusiastic narrator for Grade 2 readers. Write 1-2 short sentences (15-20 words total) that: 1) Celebrate their correct ${actionType === 'sorted' ? 'sorting' : 'spelling'} (2-3 words like "Perfect!" or "Yes!"), 2) Reference what just happened in the scene, 3) Ask what happens next using one of the given word(s) (be direct: "Use one of the ${taskDescription} words to describe what happens next!"). Add one small emoji. Stay connected to the immediate scene context.`
             },
             {
               role: 'user',
-              content: `They just spelled "${hookTargetWord}" correctly!\n\nStory context:\n${contextText}\n\nRecent scene:\n${lastEvent}\n\nQuestion scene:\n${baseLine}\n\nCelebrate, briefly reference the immediate scene, and ask them to continue using "${hookTargetWord}".`
+              content: `They just ${actionType} ${isCurrentLongASorting ? 'the words by vowel patterns' : `"${hookTargetWord}"`} correctly!\n\nStory context:\n${contextText}\n\nRecent scene:\n${lastEvent}\n\nQuestion scene:\n${baseLine}\n\nCelebrate, briefly reference the immediate scene, and ask them to use one word to describe what happens next.`
             }
           ];
           const res = await fetch('/api/chat', {
@@ -1499,9 +1507,9 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
     setShowFeedback(false); // Reset feedback when selecting new option
     
     // Play the phoneme sound when option is clicked
-    const clickedPhoneme = options[index];
-    if (clickedPhoneme) {
-      handlePhonemeSound(clickedPhoneme);
+      const clickedPhoneme = options[index];
+      if (clickedPhoneme) {
+        handlePhonemeSound(clickedPhoneme);
     }
   };
 
@@ -1867,7 +1875,33 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       // For blending questions, always advance (no right/wrong)
       handleNextQuestion();
     } else if (currentLongAQuestion) {
-      if (currentLongAQuestion.isSpelling) {
+      if (currentLongAQuestion.isSorting) {
+        // For sorting questions, check if words are in correct bins
+        const correctAnswer = currentLongAQuestion.correctAnswer as {[key: string]: string[]};
+        let correct = true;
+        
+        // Check if all bins have the correct words
+        for (const [binLabel, expectedWords] of Object.entries(correctAnswer)) {
+          const actualWords = sortingAnswers[binLabel] || [];
+          if (actualWords.length !== expectedWords.length || 
+              !expectedWords.every(word => actualWords.includes(word))) {
+            correct = false;
+            break;
+          }
+        }
+        
+        setIsCorrect(correct);
+        setShowFeedback(true);
+        if (!correct) {
+          void generateIncorrectHint({
+            targetWord: 'vowel patterns',
+            studentAnswer: Object.entries(sortingAnswers).map(([bin, words]) => `${bin}: ${words.join(', ')}`).join('; '),
+            theme: 'adventure'
+          });
+        } else {
+          setIncorrectHint('');
+        }
+      } else if (currentLongAQuestion.isSpelling) {
         // For long A spelling questions, check the input text
         const correct = spellingInput.toLowerCase().trim() === (currentLongAQuestion.correctAnswer as string).toLowerCase();
         setIsCorrect(correct);
@@ -3363,7 +3397,204 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
             </div>
           </div>
 
-          {/* Spelling input interface for long A questions */}
+          {/* Answer interface for Long A questions */}
+          {currentLongAQuestion.isSorting ? (
+            /* Sorting interface */
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '20px',
+              marginTop: '12px'
+            }}>
+              <div style={{
+                fontSize: '20px',
+                fontWeight: '600',
+                color: '#374151',
+                textAlign: 'center'
+              }}>
+                Sort the words by their vowel patterns:
+              </div>
+              
+              {/* Draggable words */}
+              <div 
+                style={{
+                  display: 'flex',
+                  gap: '12px',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  marginBottom: '20px',
+                  minHeight: '60px',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: '2px dashed #cbd5e1',
+                  background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                  transition: 'all 0.2s ease'
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)';
+                  e.currentTarget.style.borderColor = '#f59e0b';
+                }}
+                onDragLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  // No need to do anything - word is already removed from bin when dragging starts
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)';
+                  e.currentTarget.style.borderColor = '#cbd5e1';
+                }}
+              >
+                {currentLongAQuestion.sortingWords?.filter(word => 
+                  !Object.values(sortingAnswers).flat().includes(word)
+                ).length === 0 ? (
+                  <div style={{
+                    color: '#9ca3af',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    fontStyle: 'italic',
+                    textAlign: 'center',
+                    width: '100%',
+                    padding: '8px'
+                  }}>
+                    Drag words here to remove them from bins
+                  </div>
+                ) : null}
+                {currentLongAQuestion.sortingWords?.filter(word => 
+                  !Object.values(sortingAnswers).flat().includes(word)
+                ).map((word, index) => (
+                  <div
+                    key={index}
+                    draggable
+                    onDragStart={(e) => {
+                      setDraggingWord(word);
+                      e.dataTransfer.setData('text/plain', word);
+                    }}
+                    onDragEnd={() => setDraggingWord(null)}
+                    style={{
+                      padding: '12px 20px',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      color: 'white',
+                      borderRadius: '12px',
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      cursor: 'grab',
+                      userSelect: 'none',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseDown={(e) => {
+                      e.currentTarget.style.cursor = 'grabbing';
+                    }}
+                    onMouseUp={(e) => {
+                      e.currentTarget.style.cursor = 'grab';
+                    }}
+                  >
+                    {word}
+                  </div>
+                ))}
+              </div>
+
+              {/* Sorting bins */}
+              <div style={{
+                display: 'flex',
+                gap: '24px',
+                justifyContent: 'center',
+                flexWrap: 'wrap'
+              }}>
+                {currentLongAQuestion.sortingBins?.map((binLabel, binIndex) => (
+                  <div
+                    key={binIndex}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)';
+                      e.currentTarget.style.borderColor = '#22c55e';
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)';
+                      e.currentTarget.style.borderColor = '#cbd5e1';
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const word = e.dataTransfer.getData('text/plain');
+                      if (word) {
+                        setSortingAnswers(prev => ({
+                          ...prev,
+                          [binLabel]: [...(prev[binLabel] || []), word]
+                        }));
+                      }
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)';
+                      e.currentTarget.style.borderColor = '#cbd5e1';
+                    }}
+                    style={{
+                      minWidth: '180px',
+                      minHeight: '120px',
+                      padding: '16px',
+                      background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                      border: '3px dashed #cbd5e1',
+                      borderRadius: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{
+                      fontSize: '18px',
+                      fontWeight: '700',
+                      color: '#475569',
+                      marginBottom: '8px'
+                    }}>
+                      {binLabel}
+                    </div>
+                    {(sortingAnswers[binLabel] || []).map((word, wordIndex) => (
+                      <div
+                        key={wordIndex}
+                        draggable
+                        onDragStart={(e) => {
+                          setDraggingWord(word);
+                          e.dataTransfer.setData('text/plain', word);
+                          // Remove from current bin immediately when dragging starts
+                          setSortingAnswers(prev => ({
+                            ...prev,
+                            [binLabel]: prev[binLabel]?.filter(w => w !== word) || []
+                          }));
+                        }}
+                        onDragEnd={() => setDraggingWord(null)}
+                        style={{
+                          padding: '8px 12px',
+                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          color: 'white',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          cursor: 'grab',
+                          boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
+                          transition: 'all 0.2s ease',
+                          userSelect: 'none'
+                        }}
+                        onMouseDown={(e) => {
+                          e.currentTarget.style.cursor = 'grabbing';
+                        }}
+                        onMouseUp={(e) => {
+                          e.currentTarget.style.cursor = 'grab';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.cursor = 'grab';
+                        }}
+                      >
+                        {word}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            /* Spelling input interface for non-sorting long A questions */
           <div style={{
             display: 'flex',
             flexDirection: 'column',
@@ -3434,6 +3665,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
               ))}
             </div>
           </div>
+          )}
         </>
       ) : isAdventureMode ? (
         <AdventureMode 
@@ -3770,9 +4002,11 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
 
       {/* Submit button - only for regular and long A questions */}
       {!isSpeechQuestion && !isBlendingQuestion && !showFeedback && (currentRegularQuestion || currentLongAQuestion) && (
-        ((currentRegularQuestion && currentRegularQuestion.isSpelling) || (currentLongAQuestion && currentLongAQuestion.isSpelling)
-          ? spellingInput.length >= Math.min(3, ((currentRegularQuestion?.correctAnswer || currentLongAQuestion?.correctAnswer) as string).length)
-          : selectedOption !== null)
+        (currentLongAQuestion && currentLongAQuestion.isSorting) 
+          ? Object.values(sortingAnswers).flat().length >= (currentLongAQuestion.sortingWords?.length || 0)
+          : ((currentRegularQuestion && currentRegularQuestion.isSpelling) || (currentLongAQuestion && currentLongAQuestion.isSpelling)
+            ? spellingInput.length >= Math.min(3, ((currentRegularQuestion?.correctAnswer || currentLongAQuestion?.correctAnswer) as string).length)
+            : selectedOption !== null)
       ) && (
         <div style={{
           marginTop: '32px',

@@ -24,6 +24,27 @@ export const speechQuestions: SpeechQuestion[] = [
 export const longAQuestions: Question[] = [
   {
     id: 1,
+    word: 'Sort the words by their vowel patterns',
+    imageUrl: '🔤✨',
+    isSorting: true,
+    correctAnswer: {
+      'ay': ['may', 'gray'],
+      'a_e': ['cave', 'shake']
+    },
+    explanation: 'Perfect! You sorted the magical word-stones by their long A patterns - ay and a_e!',
+    sortingWords: ['may', 'cave', 'shake', 'gray'],
+    sortingBins: ['ay', 'a_e'],
+    aiHook: {
+      targetWord: 'long A patterns',
+      intent: 'sorting',
+      baseLine: 'Deep in the enchanted forest, Stella discovers an ancient stone tablet with magical runes that spell different words. The wise fox explains that to unlock the next path, she must sort the glowing word-stones by their hidden patterns.',
+      questionLine: 'Sort the words by their vowel patterns.',
+      validationWord: 'vowel patterns',
+      imagePrompt: 'Stella standing before a mystical stone sorting altar in the enchanted forest, with glowing word-stones floating around her showing "may", "cave", "shake", "gray", two magical sorting bins labeled with ancient runes for "ay" and "a_e" patterns, wise fox nearby pointing with its tail, magical forest atmosphere with floating lanterns.'
+    }
+  },
+  {
+    id: 2,
     word: 'log',
     imageUrl: '🪵✨',
     isSpelling: true,
@@ -39,7 +60,7 @@ export const longAQuestions: Question[] = [
     }
   },
   {
-    id: 2,
+    id: 3,
     word: 'fox',
     imageUrl: '🦊✨',
     isSpelling: true,
@@ -59,6 +80,23 @@ export const longAQuestions: Question[] = [
 export const questions: Question[] = [
   {
     id: 1,
+    word: 'Ted is my pal',
+    imageUrl: '🎵✨',
+    isSpacing: true,
+    correctAnswer: 'Ted is my pal.',
+    explanation: 'Great job! You found the correctly spaced sentence.',
+    options: ['Tedismypal.', 'Ted is my pal.'],
+    aiHook: {
+      targetWord: 'Ted is my pal',
+      intent: 'spacing',
+      baseLine: 'Listen to this sentence and pick the one with correct spacing between words.',
+      questionLine: 'Click on the button to hear the sentence. Then, pick the right spacing.',
+      validationWord: 'Ted is my pal.',
+      imagePrompt: 'A friendly character named Ted with a warm smile, standing next to a young child in a cheerful, colorful setting that emphasizes friendship and companionship.'
+    }
+  },
+  {
+    id: 2,
     word: 'sit',
     imageUrl: '🍄✨',
     isSpelling: true,
@@ -74,7 +112,7 @@ export const questions: Question[] = [
     }
   },
   {
-    id: 2,
+    id: 3,
     word: 'big',
     imageUrl: '🌳✨',
     isSpelling: true,
@@ -90,7 +128,7 @@ export const questions: Question[] = [
     }
   },
   {
-    id: 3,
+    id: 4,
     word: 'run',
     imageUrl: '🏃‍♀️✨',
     isSpelling: true,
@@ -106,7 +144,7 @@ export const questions: Question[] = [
     }
   },
   {
-    id: 4,
+    id: 5,
     word: 'sun',
     imageUrl: '☀️✨',
     isSpelling: true,
