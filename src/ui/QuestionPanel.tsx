@@ -501,20 +501,42 @@ Give a brief, friendly response that nudges them without giving the answer.`;
     targetWord: string;
     studentAnswer: string;
     theme?: string;
+    isSorting?: boolean;
+    sortingWords?: string[];
+    correctSortingAnswer?: {[key: string]: string[]};
   }): Promise<void> => {
     try {
       setIsIncorrectHintLoading(true);
-      const { targetWord, studentAnswer, theme } = params;
-      const systemPrompt = `Speak like a warm, playful, socratic tutor for young readers. Be natural—no meta talk.
+      const { targetWord, studentAnswer, theme, isSorting, sortingWords, correctSortingAnswer } = params;
+      
+      let systemPrompt: string;
+      let userPrompt: string;
+      
+      if (isSorting && sortingWords && correctSortingAnswer) {
+        // Special handling for sorting questions
+        systemPrompt = `Speak like a warm, playful tutor for young readers. Be encouraging and natural—no meta talk.
+Your reply must be at most two short sentences (25 words total). Help the student think about vowel sounds without directly revealing the answer. Focus on listening to the long-ā sound patterns.
+Optional theme: ${theme || 'adventure'}.`;
+
+        userPrompt = `The student is sorting words by their long-ā vowel patterns: "ay" vs "a_e".
+Words to sort: ${sortingWords.join(', ')}
+Student's current sorting: ${studentAnswer}
+Correct pattern: ay words (${correctSortingAnswer['ay']?.join(', ')}) vs a_e words (${correctSortingAnswer['a_e']?.join(', ')})
+
+Give a gentle hint about listening to the vowel sounds without revealing which words go where. Encourage them to listen carefully to the long-ā patterns.`;
+      } else {
+        // Original spelling question handling
+        systemPrompt = `Speak like a warm, playful, socratic tutor for young readers. Be natural—no meta talk.
 Your reply must be at most two short sentences (25 words total). If possible, show the user why they were wrong (eg, by sounding out their spelling attempt if that makes sense). Avoid directly revealing the answer, but instead socratically give hint(s) if appropriate, in a natural manner. If you're giving options, say something like: "Here are some options: .." 
 Optional theme: ${theme || 'adventure'}.`;
 
-      const userPrompt = `Question: Type the word you hear.
+        userPrompt = `Question: Type the word you hear.
 Target word (do not say): ${targetWord}
 Student attempt: ${studentAnswer || '(blank)'}
 Focus: long-ā spelling patterns
 Theme: ${theme || 'adventure'}
 Write one friendly nudge and then three natural-looking variants of the same word shape, comma-separated. Do not say which one is right.`;
+      }
 
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -869,15 +891,21 @@ Strict rules:
         const questionEnding = hookQuestionLine;
         const baseLine = hookBaseLine;
         const contextText = buildContextText();
+        const isCurrentLongASorting = currentLongAQuestion?.isSorting;
+        const taskDescription = isCurrentLongASorting ? 'sort magical words by their patterns' : 'spell an unseen target word';
+        const actionWord = isCurrentLongASorting ? 'sort' : 'spell';
+        
         const messages = [
           {
             role: 'system',
             content:
-              'You are a super fun, playful narrator for Grade 2 readers. Continue the story in 2–3 short sentences (30–45 words).\n\nHard rules:\n- Build directly on the most recent event; stay in the given scene. No new proper nouns or places.\n- The learner must spell an unseen target word. Do NOT say, define, rhyme, hint letters, show blanks/letter count, or use synonyms of that word.\n- End with a very short, in-world invite to spell (5–7 words).\n\nStyle guidance:\n- Include a brief 3–6 word bridge from the last event.\n- Use 1-2 small emojis if they fit naturally.\n- Keep the tone warm and adventurous with occasional gentle silliness.\n- If suitable, include light physical comedy but don\'t overdo it—avoid multiple movements or excessive sound effects in one passage.\n- Fold the task naturally into the scene\'s dialogue or narration (e.g., "its name," "the entrance," "what we need to pass through").\n- Dont use blanks.\n\nReturn only the story text.'
+              `You are a super fun, playful narrator for Grade 2 readers. Continue the story in 2–3 short sentences (30–45 words).\n\nHard rules:\n- Build directly on the most recent event; stay in the given scene. No new proper nouns or places.\n- The learner must ${taskDescription}. ${isCurrentLongASorting ? 'Do NOT mention the specific words to be sorted or their patterns.' : 'Do NOT say, define, rhyme, hint letters, show blanks/letter count, or use synonyms of that word.'}\n- End with a very short, in-world invite to ${actionWord} (5–7 words).\n\nStyle guidance:\n- Include a brief 3–6 word bridge from the last event.\n- Use 1-2 small emojis if they fit naturally.\n- Keep the tone warm and adventurous with occasional gentle silliness.\n- If suitable, include light physical comedy but don\'t overdo it—avoid multiple movements or excessive sound effects in one passage.\n- Fold the task naturally into the scene\'s dialogue or narration (e.g., ${isCurrentLongASorting ? '"group these by their secret sounds," "sort these by their patterns"' : '"its name," "the entrance," "what we need to pass through"'}).\n- Dont use blanks.\n\nReturn only the story text.`
           },
           {
             role: 'user',
-            content: `Adventure history (most recent last):\n${contextText}\n\nMost recent event to bridge from:\n${lastEvent}\n\nBase line to adapt:\n${baseLine}\n\nUnseen target word (do NOT say it):\n${targetWord}`
+            content: isCurrentLongASorting 
+              ? `Adventure history (most recent last):\n${contextText}\n\nMost recent event to bridge from:\n${lastEvent}\n\nBase line to adapt:\n${baseLine}\n\nTask: Student will sort words by their vowel patterns (do NOT mention the specific words or patterns)`
+              : `Adventure history (most recent last):\n${contextText}\n\nMost recent event to bridge from:\n${lastEvent}\n\nBase line to adapt:\n${baseLine}\n\nUnseen target word (do NOT say it):\n${targetWord}`
           }
         ];
         const res = await fetch('/api/chat', {
@@ -1011,7 +1039,7 @@ Strict rules:
           const messages = [
             {
               role: 'system',
-              content: `You are a warm, enthusiastic narrator for Grade 2 readers. Write 1-2 short sentences (15-20 words total) that: 1) Celebrate their correct ${actionType === 'sorted' ? 'sorting' : 'spelling'} (2-3 words like "Perfect!" or "Yes!"), 2) Reference what just happened in the scene, 3) Ask what happens next using one of the given word(s) (be direct: "Use one of the ${taskDescription} words to describe what happens next!"). Add one small emoji. Stay connected to the immediate scene context.`
+              content: `You are a warm, enthusiastic narrator for Grade 2 readers. Write 1-2 short sentences (15-20 words total) that: 1) Celebrate their correct ${actionType === 'sorted' ? 'sorting' : 'spelling'} (2-3 words like "Perfect!" or "Yes!"), 2) Reference what just happened in the scene, 3) Ask what happens next using the target word or one of the given word(s) (be direct, based on the type of question either: "Use ${hookTargetWord} or one of the ${taskDescription} words to describe what happens next!"). Add one small emoji. Stay connected to the immediate scene context.`
             },
             {
               role: 'user',
@@ -1075,19 +1103,37 @@ Strict rules:
   type ContinuationEval = { status: 'valid' | 'invalid' | 'help'; message: string };
   const validateContinuationWithAI = async (text: string): Promise<ContinuationEval> => {
     try {
-      const targetWord = hookValidationWord;
-      const messages = [
-        { role: 'system', content: `You are Stella's fun AI companion helping kids write their magical forest adventure story. Your job is to check if they used the target word "${targetWord}" in their sentence and respond naturally like a friendly narrator. 
+      const isCurrentLongASorting = currentLongAQuestion?.isSorting;
+      const sortingWords = currentLongAQuestion?.sortingWords || [];
+      const targetWord = isCurrentLongASorting ? 'one of the sorting words' : hookValidationWord;
+      
+      let validationInstructions: string;
+      if (isCurrentLongASorting && sortingWords.length > 0) {
+        validationInstructions = `You are Stella's fun AI companion helping kids write their magical forest adventure story. Your job is to check if they used one of these sorting words: ${sortingWords.join(', ')} in their sentence and respond naturally like a friendly narrator. 
 
 Respond as minified JSON: {"status":"valid|invalid|help","message":"<your response>"}
 
 RULES:
-- "valid": If the word "${targetWord}" appears in any form (case-insensitive) - including within contractions, compound words, or with punctuation. Say something encouraging like "Perfect!" or "Great use of ${targetWord}!" 
-- "invalid": If they used a completely different word or clearly misspelled it, gently point out what they wrote and what you need. Be specific: "I see you wrote '[their word]' but I need the word '${targetWord}'. Try again!"
-- "help": If they ask for help or seem stuck, give a creative prompt about what ${targetWord} could do in the adventure.
+- "valid": If ANY of these words (${sortingWords.join(', ')}) appears in any form (case-insensitive) - including within contractions, compound words, or with punctuation. Say something encouraging like "Perfect!" or "Great use of [word they used]!" 
+- "invalid": If they used a completely different word or clearly misspelled it, gently point out what they wrote and what you need. Be specific: "I see you wrote '[their word]' but I need one of these words: ${sortingWords.join(', ')}. Try again!"`;
+      } else {
+        validationInstructions = `You are Stella's fun AI companion helping kids write their magical forest adventure story. Your job is to check if they used the target word "${hookValidationWord}" in their sentence and respond naturally like a friendly narrator. 
+
+Respond as minified JSON: {"status":"valid|invalid|help","message":"<your response>"}
+
+RULES:
+- "valid": If the word "${hookValidationWord}" appears in any form (case-insensitive) - including within contractions, compound words, or with punctuation. Say something encouraging like "Perfect!" or "Great use of ${hookValidationWord}!" 
+- "invalid": If they used a completely different word or clearly misspelled it, gently point out what they wrote and what you need. Be specific: "I see you wrote '[their word]' but I need the word '${hookValidationWord}'. Try again!"`;
+      }
+      
+      const messages = [
+        { role: 'system', content: validationInstructions + `
+- "help": If they ask for help or seem stuck, give a creative prompt about what the word(s) could do in the adventure.
 
 Be conversational, not scripted. Acknowledge what they actually wrote. Keep responses under 25 words.` },
-        { role: 'user', content: `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue Stella's magical forest adventure using the word "${targetWord}".` }
+        { role: 'user', content: isCurrentLongASorting && sortingWords.length > 0 
+          ? `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue Stella's magical forest adventure using one of these words: ${sortingWords.join(', ')}.`
+          : `Sentence: ${text}\n\nCurrent story context: ${storyContext.join(' ')}\n\nHelp the child continue Stella's magical forest adventure using the word "${hookValidationWord}".` }
       ];
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -1116,45 +1162,94 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       
       // Enhanced fallback validation - more flexible word detection
       const normalizedText = text.toLowerCase().replace(/[^\w\s]/g, ' '); // Replace punctuation with spaces
-      const normalizedTargetWord = targetWord.toLowerCase();
       
-      // Check if target word appears anywhere in the normalized text
-      if (normalizedText.includes(normalizedTargetWord)) {
-        return { status: 'valid', message: 'Great!' };
-      }
-      
-      // Check for common misspellings or similar words
-      const words = normalizedText.split(/\s+/);
-      const similarWord = words.find(word => {
-        // Check if word is very similar (allowing for minor typos)
-        const minLength = Math.min(word.length, normalizedTargetWord.length);
-        if (minLength < 2) return false;
-        
-        // Simple similarity check - allow 1 character difference for words > 2 chars
-        let differences = 0;
-        const maxDifferences = normalizedTargetWord.length > 2 ? 1 : 0;
-        
-        for (let i = 0; i < Math.max(word.length, normalizedTargetWord.length); i++) {
-          if (word[i] !== normalizedTargetWord[i]) {
-            differences++;
-            if (differences > maxDifferences) return false;
+      if (isCurrentLongASorting && sortingWords.length > 0) {
+        // For sorting questions, check if any of the sorting words appears
+        const foundSortingWord = sortingWords.find(word => {
+          const normalizedSortingWord = word.toLowerCase();
+          if (normalizedText.includes(normalizedSortingWord)) {
+            return true;
           }
+          
+          // Check for similar words allowing minor typos
+          const words = normalizedText.split(/\s+/);
+          return words.some(textWord => {
+            const minLength = Math.min(textWord.length, normalizedSortingWord.length);
+            if (minLength < 2) return false;
+            
+            let differences = 0;
+            const maxDifferences = normalizedSortingWord.length > 2 ? 1 : 0;
+            
+            for (let i = 0; i < Math.max(textWord.length, normalizedSortingWord.length); i++) {
+              if (textWord[i] !== normalizedSortingWord[i]) {
+                differences++;
+                if (differences > maxDifferences) return false;
+              }
+            }
+            return differences <= maxDifferences;
+          });
+        });
+        
+        if (foundSortingWord) {
+          return { status: 'valid', message: 'Great!' };
         }
-        return differences <= maxDifferences;
-      });
-      
-      if (similarWord) {
-        return { status: 'valid', message: 'Great!' };
+      } else {
+        // For regular questions, check the target word
+        const normalizedTargetWord = hookValidationWord.toLowerCase();
+        
+        // Check if target word appears anywhere in the normalized text
+        if (normalizedText.includes(normalizedTargetWord)) {
+          return { status: 'valid', message: 'Great!' };
+        }
+        
+        // Check for common misspellings or similar words
+        const words = normalizedText.split(/\s+/);
+        const similarWord = words.find(word => {
+          // Check if word is very similar (allowing for minor typos)
+          const minLength = Math.min(word.length, normalizedTargetWord.length);
+          if (minLength < 2) return false;
+          
+          // Simple similarity check - allow 1 character difference for words > 2 chars
+          let differences = 0;
+          const maxDifferences = normalizedTargetWord.length > 2 ? 1 : 0;
+          
+          for (let i = 0; i < Math.max(word.length, normalizedTargetWord.length); i++) {
+            if (word[i] !== normalizedTargetWord[i]) {
+              differences++;
+              if (differences > maxDifferences) return false;
+            }
+          }
+          return differences <= maxDifferences;
+        });
+        
+        if (similarWord) {
+          return { status: 'valid', message: 'Great!' };
+        }
       }
       
       if (/help|hint|example|idk|don\'?t know/i.test(text)) {
-        return { status: 'help', message: `No worries! What if Stella's ${targetWord} could help her explore the magical forest? How might she use it?` };
+        if (isCurrentLongASorting && sortingWords.length > 0) {
+          return { status: 'help', message: `No worries! Pick one of these words and tell what Stella might do: ${sortingWords.join(', ')}` };
+        } else {
+          return { status: 'help', message: `No worries! What if Stella's ${hookValidationWord} could help her explore the magical forest? How might she use it?` };
+        }
       }
-      return { status: 'invalid', message: `Use the word "${targetWord}" in your sentence.` };
+      
+      if (isCurrentLongASorting && sortingWords.length > 0) {
+        return { status: 'invalid', message: `Use one of these words in your sentence: ${sortingWords.join(', ')}` };
+      } else {
+        return { status: 'invalid', message: `Use the word "${hookValidationWord}" in your sentence.` };
+      }
     } catch (error) {
       console.error('Validation error:', error);
-      const targetWord = hookValidationWord;
-      return { status: 'help', message: `Try using the word "${targetWord}"` };
+      const isCurrentLongASorting = currentLongAQuestion?.isSorting;
+      const sortingWords = currentLongAQuestion?.sortingWords || [];
+      
+      if (isCurrentLongASorting && sortingWords.length > 0) {
+        return { status: 'help', message: `Try using one of these words: ${sortingWords.join(', ')}` };
+      } else {
+        return { status: 'help', message: `Try using the word "${hookValidationWord}"` };
+      }
     }
   };
 
@@ -1196,7 +1291,17 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       setValidationMessage(result.message || 'Try again');
       void playElevenTTS(result.message || 'Try again');
     } else {
-      const msg = result.message || `No worries! What if Stella\'s ${hookTargetWord} could help her explore the magical forest? How might she use it?`;
+      const isCurrentLongASorting = currentLongAQuestion?.isSorting;
+      const sortingWords = currentLongAQuestion?.sortingWords || [];
+      
+      let defaultHelpMsg: string;
+      if (isCurrentLongASorting && sortingWords.length > 0) {
+        defaultHelpMsg = `No worries! Pick one of these words and tell what Stella might do: ${sortingWords.join(', ')}`;
+      } else {
+        defaultHelpMsg = `No worries! What if Stella's ${hookTargetWord} could help her explore the magical forest? How might she use it?`;
+      }
+      
+      const msg = result.message || defaultHelpMsg;
       setValidationMessage(msg);
       setContinuationHeader(msg);
       void playElevenTTS(msg);
@@ -1894,9 +1999,12 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
         setShowFeedback(true);
         if (!correct) {
           void generateIncorrectHint({
-            targetWord: 'vowel patterns',
+            targetWord: 'sorting',
             studentAnswer: Object.entries(sortingAnswers).map(([bin, words]) => `${bin}: ${words.join(', ')}`).join('; '),
-            theme: 'adventure'
+            theme: 'adventure',
+            isSorting: true,
+            sortingWords: currentLongAQuestion.sortingWords,
+            correctSortingAnswer: correctAnswer
           });
         } else {
           setIncorrectHint('');
