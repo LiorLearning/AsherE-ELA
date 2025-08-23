@@ -3,10 +3,10 @@ import { BlendingQuestion, SpeechQuestion, Question } from './types';
 export const blendingQuestions: BlendingQuestion[] = [
   {
     id: 1,
-    word: 'London',
-    imageUrl: '🧁⭐',
-    phonemes: ['L', 'o', 'n', 'd', 'o', 'n'],
-    explanation: "Blend the sounds L-o-n-d-o-n to make 'London'!",
+    word: 'Asher',
+    imageUrl: '🚀⭐',
+    phonemes: ['A', 'sh', 'e', 'r'],
+    explanation: "Blend the sounds A-sh-e-r to make 'Asher'!",
   },
 ];
 
@@ -14,10 +14,10 @@ export const speechQuestions: SpeechQuestion[] = [
   {
     id: 1,
     text:
-      "London found a big whisk in the bakery kitchen. She picked it up and gave it a quick hit against a mixing bowl. The whisk made a loud sound that echoed through the magical bakery.",
-    imageUrl: '🧁🥄✨',
-    expectedWords: ['big', 'whisk', 'hit'],
-    explanation: 'Great job! You found all the short i CVC words in London\'s bakery adventure.',
+      "Captain Asher found a big tech gadget in the starship control room. He picked it up and gave it a quick hit to activate it. The gadget made a loud beep that echoed through the futuristic base.",
+    imageUrl: '🚀🔧✨',
+    expectedWords: ['big', 'hit', 'quick'],
+    explanation: 'Great job! You found all the short i CVC words in Captain Asher\'s space adventure.',
   },
 ];
 
@@ -31,16 +31,16 @@ export const longAQuestions: Question[] = [
       'ai': ['rain', 'train'],
       'a_e': ['cake', 'make']
     },
-    explanation: 'Perfect! You sorted the magical word-stones by their long A patterns - ai and a_e!',
+    explanation: 'Perfect! You sorted the alien data-crystals by their long A patterns - ai and a_e!',
     sortingWords: ['rain', 'cake', 'make', 'train'],
     sortingBins: ['ai', 'a_e'],
     aiHook: {
       targetWord: 'long A patterns',
       intent: 'sorting',
-      baseLine: 'Deep in the magical bakery, London discovers an ancient recipe book with magical runes that spell different words. The wise Sparkle explains that to unlock the next baking spell, she must sort the glowing ingredient-stones by their hidden patterns.',
+      baseLine: 'Deep in the underground starbase, Captain Asher discovers ancient alien data crystals with glowing symbols that spell different words. Clay explains that to unlock the next portal sequence, he must sort the floating data-crystals by their energy patterns.',
       questionLine: 'Sort the words by their vowel patterns.',
       validationWord: 'vowel patterns',
-      imagePrompt: 'London standing before a mystical ingredient sorting counter in the enchanted bakery, with glowing word-stones floating around her showing "rain", "cake", "make", "train", two magical sorting bins labeled with ancient runes for "ai" and "a_e" patterns, wise Sparkle nearby pointing, magical bakery atmosphere with glowing ovens and sparkling decorations.'
+      imagePrompt: 'Captain Asher in his futuristic space suit standing before a holographic sorting station in the underground starbase, with glowing data-crystals floating around him showing "rain", "cake", "make", "train", two energy sorting chambers labeled with alien symbols for "ai" and "a_e" patterns, Clay the massive brown MudWing dragon nearby with glowing amber eyes, high-tech base with metallic walls and glowing control panels surrounded by jungle vines.'
     }
   },
   {
@@ -50,14 +50,14 @@ export const longAQuestions: Question[] = [
     isFillBlank: true,
     fillBlankPattern: 'r__n',
     correctAnswer: 'rain',
-    explanation: 'The magical "rain" falls gently on the bakery windows - the long a sound with ai pattern!',
+    explanation: 'The alien "rain" falls gently on the starbase dome - the long a sound with ai pattern!',
     aiHook: {
       targetWord: 'rain',
       intent: 'spelling',
-      baseLine: 'London watches gentle magical droplets fall from the enchanted clouds above the bakery.',
+      baseLine: 'Captain Asher watches gentle glowing droplets fall from the alien atmosphere above the starbase dome.',
       questionLine: 'Listen and fill in the missing letters for water falling from clouds (long a with ai pattern).',
       validationWord: 'rain',
-      imagePrompt: 'Gentle magical RAIN falling on the enchanted bakery windows with London watching from inside, sparkling droplets and mystical atmosphere; clearly shows rain falling from enchanted clouds.'
+      imagePrompt: 'Gentle alien RAIN with glowing droplets falling on the futuristic starbase dome with Captain Asher in his space suit watching from inside the underground base, bioluminescent jungle atmosphere; clearly shows rain falling from alien clouds through the dome.'
     }
   },
   {
@@ -67,14 +67,14 @@ export const longAQuestions: Question[] = [
     isFillBlank: true,
     fillBlankPattern: 'p__n',
     correctAnswer: 'pain',
-    explanation: 'When London touches the hot oven, she feels "pain" - the long a sound with ai pattern!',
+    explanation: 'When Captain Asher touches the energy core, he feels "pain" - the long a sound with ai pattern!',
     aiHook: {
       targetWord: 'pain',
       intent: 'spelling',
-      baseLine: 'London accidentally touches the magical oven and learns about being careful in the bakery.',
+      baseLine: 'Captain Asher accidentally touches the glowing energy core and learns about being careful in the starbase.',
       questionLine: 'Listen and fill in the missing letters for when something hurts (long a with ai pattern).',
       validationWord: 'pain',
-      imagePrompt: 'London carefully touching a magical oven in the enchanted bakery with a gentle expression showing she learned about being careful, warm glowing light from the oven; shows the concept of pain as a learning moment.'
+      imagePrompt: 'Captain Asher in his space suit carefully examining a glowing energy core in the underground starbase with a thoughtful expression showing he learned about being careful, bright blue energy emanating from the core; shows the concept of pain as a learning moment.'
     }
   },
 ];
@@ -86,62 +86,62 @@ export const questions: Question[] = [
     imageUrl: '🚂✨',
     isSpelling: true,
     correctAnswer: 'train',
-    explanation: 'The magical "train" carries ingredients to the bakery - the long a sound with ai pattern!',
+    explanation: 'The space "train" carries supplies to the starbase - the long a sound with ai pattern!',
     aiHook: {
       targetWord: 'train',
       intent: 'spelling',
-      baseLine: 'London watches a magical ingredient train arrive at the enchanted bakery station.',
+      baseLine: 'Captain Asher watches a futuristic supply train arrive at the underground starbase station.',
       questionLine: 'Listen and spell the word for the vehicle that runs on tracks (long a with ai pattern).',
       validationWord: 'train',
-      imagePrompt: 'Magical TRAIN arriving at the enchanted bakery station carrying glowing ingredients, London watching with wonder, sparkling tracks and mystical steam; clearly shows the magical ingredient train.'
+      imagePrompt: 'Futuristic space TRAIN arriving at the underground starbase station carrying glowing supply containers, Captain Asher in his space suit watching with interest, high-tech magnetic tracks and energy propulsion; clearly shows the futuristic supply train in the jungle starbase.'
     }
   },
   {
     id: 2,
     word: 'tail',
-    imageUrl: '🦊✨',
+    imageUrl: '🐉✨',
     isSpelling: true,
     correctAnswer: 'tail',
-    explanation: 'The bakery fox swishes its fluffy "tail" - the long a sound with ai pattern!',
+    explanation: 'Clay the dragon swishes his massive "tail" - the long a sound with ai pattern!',
     aiHook: {
       targetWord: 'tail',
       intent: 'spelling',
-      baseLine: 'London watches the magical bakery fox swish its beautiful fluffy tail as it helps her.',
+      baseLine: 'Captain Asher watches Clay the massive brown MudWing dragon swish his powerful tail as he helps explore the jungle.',
       questionLine: 'Listen and spell the word for the long part at the back of an animal (long a with ai pattern).',
       validationWord: 'tail',
-      imagePrompt: 'Magical bakery fox with a beautiful fluffy TAIL swishing gracefully in the enchanted bakery, London watching with delight, sparkling fairy lights around; clearly shows the fox\'s tail.'
+      imagePrompt: 'Clay the massive brown MudWing dragon with strong limbs and wide wings, swishing his powerful TAIL gracefully in the futuristic jungle on Ragonia 7\'s moon, Captain Asher in his space suit watching with amazement, glowing alien plants around; clearly shows the dragon\'s tail.'
     }
   },
   {
     id: 3,
     word: 'mail',
-    imageUrl: '📮✨',
+    imageUrl: '📡✨',
     isSpelling: true,
     correctAnswer: 'mail',
-    explanation: 'London receives magical "mail" with recipes - the long a sound with ai pattern!',
+    explanation: 'Captain Asher receives cosmic "mail" with mission data - the long a sound with ai pattern!',
     aiHook: {
       targetWord: 'mail',
       intent: 'spelling',
-      baseLine: 'London finds magical letters with secret baking recipes delivered to the enchanted bakery.',
+      baseLine: 'Captain Asher finds holographic messages with secret mission data delivered to the underground starbase.',
       questionLine: 'Listen and spell the word for letters delivered to your house (long a with ai pattern).',
       validationWord: 'mail',
-      imagePrompt: 'London receiving magical MAIL with glowing recipe letters at the enchanted bakery mailbox, sparkling envelopes floating around; clearly shows magical mail delivery.'
+      imagePrompt: 'Captain Asher in his space suit receiving cosmic MAIL with glowing holographic data packets at the futuristic starbase communication station, floating digital envelopes around; clearly shows space mail delivery in the underground base.'
     }
   },
   {
     id: 4,
     word: 'nail',
-    imageUrl: '🔨✨',
+    imageUrl: '🔧✨',
     isSpelling: true,
     correctAnswer: 'nail',
-    explanation: 'London uses a magical "nail" to hang decorations - the long a sound with ai pattern!',
+    explanation: 'Captain Asher uses a tech "nail" to secure equipment - the long a sound with ai pattern!',
     aiHook: {
       targetWord: 'nail',
       intent: 'spelling',
-      baseLine: 'London carefully uses a sparkling nail to hang beautiful decorations around the enchanted bakery.',
+      baseLine: 'Captain Asher carefully uses a glowing tech nail to secure important equipment around the underground starbase.',
       questionLine: 'Listen and spell the word for the sharp thing you hammer into wood (long a with ai pattern).',
       validationWord: 'nail',
-      imagePrompt: 'London using a magical sparkling NAIL to hang glowing decorations in the enchanted bakery, gentle hammer work with fairy lights around; clearly shows the nail and decoration hanging.'
+      imagePrompt: 'Captain Asher in his space suit using a glowing tech NAIL to secure holographic equipment panels in the underground starbase, advanced energy tools with bright lights around; clearly shows the futuristic nail and equipment mounting in the high-tech base.'
     }
   },
 ];

@@ -14,7 +14,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
   const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat, setMetadata } = useStory();
   // Use parent-provided messages or default/local persisted
   const defaultMessages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }> = [
-    { role: 'ai' as const, text: "🧁✨ London! I'm excited to continue our magical bakery adventure! You and Sparkle just gave a cookie to the mysterious Muffin Monster, who vanished into sparkles. The remembrance cookie on the golden plate is glowing brighter! 🍪✨ What should we bake next in our enchanted bakery with all these magical ingredients?" }
+    { role: 'ai' as const, text: "🚀✨ Captain Asher! I'm excited to continue our futuristic space adventure! You, Clay, and Shracker just defeated The Time Stranglers' leader who fell into the swirling time abyss. The BLT sandwich ship is still here with chaos from the chai spills! 🥪✨ What should we explore next in our underground starbase on Ragonia 7's moon?" }
   ];
   const [localAdventureMessages, setLocalAdventureMessages] = useState<Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>>(
     (storyState?.adventureMessages?.length ?? 0) > 0
@@ -51,14 +51,14 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     setting?: string;
     recentEvent?: string;
   }>({
-    type: 'magical bakery adventure with cupcakes, rainbow treats, and baking magic',
-    protagonist: 'London (teenage girl wearing short dresses with stars and hearts, often in pink and green, sometimes wears a tiara; passionate about baking and storytelling)',
-    sidekick: 'Sparkle (Barb) (London\'s best friend and co-baker, also a teenage girl in colorful short dresses decorated with stars and hearts)',
-    teammates: 'Skydiver Brother (birdlike teen who loves oatmeal cookies, fun-loving and friendly once fed), Mom (supportive figure in the bakery)',
-    setting: 'A magical bakery on Earth, filled with rainbow-colored cupcakes, peach and strawberry treats, glowing ovens, cupcake displays, and decorated with sprinkles, hearts, stars, and frosting patterns',
-    goal: 'create magical cupcakes and treats, protect the secret recipe, and discover new baking magic adventures',
-    villain: 'Frost Sprinkle (hoodie-wearing teen dusted with powdered sugar who wants to steal the secret cupcake recipe and control all baking magic, creates evil cupcakes)',
-    recentEvent: 'London and Sparkle gave a cookie to a mysterious glowing Muffin Monster, who vanished slowly into sparkles. They kept one remembrance cookie on a golden plate, which suddenly started to glow, hinting at the start of a new magical cookie quest with their Skydiver Brother teammate nearby'
+    type: 'futuristic space adventure with alien technology, time portals, and sci-fi exploration',
+    protagonist: 'Captain Asher (young, adventurous boy in a futuristic space suit with glowing neon accents and a courageous spirit; passionate about exploration and strategy)',
+    sidekick: 'Clay (massive brown MudWing dragon with strong limbs, wide wings, stubby snout, warm amber eyes; loyal and protective companion)',
+    teammates: 'Shracker (sleek, metallic robotic bird with scanning eyes and flappable wings), Mango (six-year-old animus MudWing dragon, brown-scaled, with enchanting powers)',
+    setting: 'Futuristic jungle on Ragonia 7\'s moon, filled with glowing portals, floating time-warp cities, and hidden underground starbases beneath alien plantlife',
+    goal: 'protect reality from temporal destruction, master advanced alien technology, and explore the mysteries of time and space',
+    villain: 'The Time Stranglers (ancient civilization using broken time-tech to erase reality; their leader recently fell into a swirling time abyss)',
+    recentEvent: 'Clay\'s entire family stormed through a portal alongside the team. The Time Stranglers\' leader fell into a swirling time abyss. Asher was named "Guardian of Time." Mango, an animus dragon, used powers to move a tree. A delicious sandwich-themed BLT ship rescued the team, causing chaos with chai spills, thunder, and a snack shelf crash!'
   });
   const ADVENTURE_IMAGE_OVERLAY_OPACITY = 0.45;
   const adventureScrollRef = useRef<HTMLDivElement | null>(null);
@@ -91,7 +91,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     const lowerAI = aiResponse.toLowerCase();
     
     // Check for interest-based adventure selection
-    const interests = ['baking', 'cupcakes', 'rainbow treats', 'storytelling', 'magical bakery', 'candy', 'whimsical', 'magic', 'frosting', 'sprinkles', 'picture books', 'peach treats', 'strawberry treats'];
+    const interests = ['space', 'robots', 'dragons', 'sci-fi', 'technology', 'adventure', 'strategy', 'futuristic', 'aliens', 'portals', 'time travel', 'exploration', 'comedy'];
     const selectedInterest = interests.find(interest => lowerUser.includes(interest));
     
     if (selectedInterest && adventureState === 'new') {
@@ -382,10 +382,10 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
         }
         
         const contextText = contextParts.join('. ');
-        imagePrompt = `${contextText}. User's image request: ${userImageRequest}. Create an image showing London (teenage girl wearing short dresses with stars and hearts, often in pink and green, sometimes wears a tiara), Sparkle (teenage girl in colorful short dresses decorated with stars and hearts), and Skydiver Brother (birdlike teen) in this magical bakery adventure scene.`;
+        imagePrompt = `${contextText}. User's image request: ${userImageRequest}. Create an image showing Captain Asher (young boy in futuristic space suit with glowing neon accents), Clay (massive brown MudWing dragon with strong limbs and wide wings), Shracker (sleek metallic robotic bird), and Mango (small brown animus dragon) in this futuristic jungle space adventure scene on Ragonia 7's moon.`;
       } else {
         // Fallback with basic context
-        imagePrompt = `${userImageRequest}. Show London (teenage girl wearing short dresses with stars and hearts, often in pink and green, sometimes wears a tiara) with Sparkle (teenage girl in colorful short dresses decorated with stars and hearts) and Skydiver Brother (birdlike teen) in a magical bakery filled with rainbow cupcakes, glowing ovens, and sparkling decorations.`;
+        imagePrompt = `${userImageRequest}. Show Captain Asher (young boy in futuristic space suit with glowing neon accents) with Clay (massive brown MudWing dragon), Shracker (sleek metallic robotic bird), and Mango (small brown animus dragon) in an underground starbase on Ragonia 7's moon filled with glowing portals, high-tech control panels, and alien jungle plantlife.`;
       }
       
       updateAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 ${text}` }]);
@@ -465,7 +465,7 @@ Goal: Create fast-paced, mission-oriented adventures with lovable characters, th
 
 Ongoing Adventure: Show excitement, prompt me for what happens next, and occasionally suggest 1–2 creative ideas to spark the next turn.
 
-New Adventure: Ask about my interests (baking adventures, magical cupcakes, whimsical stories, bakery magic, etc.). Offer:
+New Adventure: Ask about my interests (space exploration, robotics, dragons, sci-fi adventures, time travel, etc.). Offer:
 - Interest-based adventure (protagonist + villain + clear goal)
 - Another interest-based adventure
 - "Create-your-own" adventure (I invent the setting, sidekick, and villain)
@@ -476,11 +476,11 @@ Adventure State: ${adventureState === 'new' ? 'NEW_ADVENTURE' : adventureState =
 
 Current Adventure Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
-Student Profile (London): Loves baking, storytelling, creating picture books, cupcakes (rainbow/peach/strawberry), whimsical and imaginative stories, and magical bakery settings. Dislikes space settings. Prefers realistic art with warm pastel colors for bakery interiors, detailed frosting on cupcakes, and magical baking elements. Enjoys magical bakery adventures with cupcake creation, frosting magic, and enchanted baking tools.
+Student Profile (Asher): Loves comedy, adventure, sci-fi, robotics, strategy games, space exploration, and futuristic technology. Passionate about time travel adventures and dragon companions. Prefers realistic art with vivid sci-fi details, high-tech environments, glowing fantasy jungle landscapes, and stylized lighting. Enjoys space adventures with alien technology, portal exploration, and epic dragon teamwork.
 
 Character Creation: When creating sidekicks/characters, let me choose names with suggestions, offer trait lists (funny, optimistic, resilient, etc.), and ask me to describe appearance for image creation.
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or London. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses whimsical and magical to match London's interests in baking adventures, magical cupcakes, and enchanted bakery settings with warm, imaginative elements.`
+Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Captain Asher. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses thrilling and futuristic to match Asher's interests in space adventures, alien technology, and epic dragon teamwork in sci-fi settings.`
         },
         ...currentMessages
           .slice(-30)
@@ -517,13 +517,13 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
         if (loadingIndex !== -1) {
           newMessages[loadingIndex] = {
             role: 'ai',
-            text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what London should do next!',
+            text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Captain Asher should do next!',
             isLoading: false
           } as any;
         }
         return newMessages;
       });
-      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what London should do next!' });
+      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Captain Asher should do next!' });
     }
   };
 
@@ -651,7 +651,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                           {/* Quick adventure options - show when starting new adventure */}
             {adventureState === 'new' && adventureMessages.length <= 2 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12, justifyContent: 'center' }}>
-                {['🚀 Space', '🦄 Magical Creatures', '🍭 Candy Adventures', '🌲 Forest Magic', '✨ Whimsical Tales', '🐾 Animal Friends'].map((option) => (
+                {['🚀 Space Exploration', '🤖 Robotics', '🐉 Dragon Adventures', '⚡ Sci-Fi Tech', '⏰ Time Travel', '🌌 Alien Worlds'].map((option) => (
                   <button key={option} onClick={() => {
                     const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
                     setAdventureInput(`I love ${interest} adventures!`);
@@ -676,7 +676,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                   <button onClick={() => {
                     setAdventureState('new');
                     setCurrentAdventure({});
-                    const greeting = "🧁 Hey there, brave baker! I'm your loyal sidekick, ready for an epic quest! What kind of adventure gets you excited - magical cupcakes, rainbow treats, enchanted bakeries, or something totally different? Let's create an amazing baking story together! ✨🌟";
+                    const greeting = "🚀 Hey there, Captain Asher! I'm your loyal sidekick, ready for an epic space quest! What kind of adventure gets you excited - alien technology, dragon teamwork, time portals, or something totally different? Let's create an amazing sci-fi story together! ✨🌟";
                     updateAdventureMessages(prev => [...prev, { role: 'ai', text: greeting }]);
                     appendStoryMessage({ role: 'ai', text: greeting });
                   }} aria-label="New Adventure" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(245,158,11,0.3)', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Start a new adventure">🎪</button>

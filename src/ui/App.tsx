@@ -4,6 +4,8 @@ import { ImagePanel } from './ImagePanel';
 import { QuestionPanel } from './QuestionPanel';
 import { LandingPage } from './LandingPage';
 import { PictureBook } from './PictureBook';
+import { AsherPictureBook } from './AsherPictureBook';
+import { ConnorPictureBook } from './ConnorPictureBook';
 import { Button } from './components/Button';
 
 export function App(): JSX.Element {
@@ -11,6 +13,7 @@ export function App(): JSX.Element {
   const [showLandingPage, setShowLandingPage] = useState(true);
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [storyMode, setStoryMode] = useState<'adventure' | 'picture-book'>('picture-book');
+  const [currentWorld, setCurrentWorld] = useState<'asher' | 'connor'>('asher');
 
   // Practice loop state (placeholder assets, no DALL·E)
   const [chapter, setChapter] = useState<1 | 2>(1);
@@ -45,7 +48,7 @@ export function App(): JSX.Element {
       return [
         { id: 'q1', type: 'mc', prompt: 'Where are Captain Asher and his team?', options: ['A snowy mountain', 'A futuristic jungle on Ragonia 7\'s moon', 'Under the ocean'], correct: 1 },
         { id: 'q2', type: 'spelling', prompt: 'Fix the word from the story:', target: 'portal', options: ['portel', 'portal', 'protale'], correct: 1 },
-        { id: 'bonus', type: 'micro', prompt: 'Who is Asher\'s winged robo-dino?', options: ['Clay', 'Shracker'], correct: 0 }
+        { id: 'bonus', type: 'micro', prompt: 'Who is Asher\'s metallic robotic bird?', options: ['Clay', 'Shracker'], correct: 1 }
       ] as const;
     }
     return [
@@ -98,80 +101,89 @@ export function App(): JSX.Element {
     setShowLandingPage(true);
     setSelectedStoryId(null);
     setStoryMode('picture-book');
+    setCurrentWorld('asher');
+  }, []);
+
+  const handleNextWorld = useCallback(() => {
+    setCurrentWorld('connor');
+  }, []);
+
+  const handlePreviousWorld = useCallback(() => {
+    setCurrentWorld('asher');
   }, []);
 
   // Picture book data
-  const stellaStoryPages = useMemo(() => [
+  const asherStoryPages = useMemo(() => [
     {
       id: 'page-1',
       pageNumber: 1,
-      text: 'In a magical bakery full of sparkles and sweet aromas, lived a girl named London. She wore short dresses with stars and hearts and had her best friend—Sparkle, who loved to bake cupcakes.',
+      text: 'In a futuristic underground starbase hidden beneath alien jungle vines, lived a young adventurer named Captain Asher. He wore a glowing space suit with neon accents and had his best friend—Clay, a massive brown dragon with warm amber eyes.',
       imageUrl: undefined
     },
     {
       id: 'page-2',
       pageNumber: 2,
-      text: 'One morning, Sparkle ran off to the ingredient storage. London followed, calling out—but she was gone.',
+      text: 'One morning, Clay flew off to explore a strange portal. Asher followed, calling out through his suit\'s communicator—but Clay was gone.',
       imageUrl: undefined
     },
     {
       id: 'page-3',
       pageNumber: 3,
-      text: 'Just then, a glowing golden whisk floated down from above. Inside was a shimmering recipe… pointing the way to her lost friend.',
+      text: 'Just then, a glowing data crystal floated down from above. Inside was a shimmering hologram… pointing the way to his lost friend.',
       imageUrl: undefined
     },
     {
       id: 'page-4',
       pageNumber: 4,
-      text: 'London set off through the bakery. She spotted a magical muffin guarding some rainbow cupcakes. She tried to catch them with her hands, but they vanished with a puff!',
+      text: 'Asher set off through the starbase. He spotted a Time Strangler guarding some portal controls. He tried to activate them with his tech tools, but they vanished with a spark!',
       imageUrl: undefined
     },
     {
       id: 'page-5',
       pageNumber: 5,
-      text: 'In the nest, she found only a wiggly bug. She sighed, ate it, and declared, "No more eggs for me!"',
+      text: 'In the control room, he found only a glowing energy core. He sighed, powered it down, and declared, "No more energy overloads for me!"',
       imageUrl: undefined
     },
     {
       id: 'page-6',
       pageNumber: 6,
-      text: 'Suddenly, a single cupcake appeared on the display. London gently placed it back, and the magical muffin giggled happily and danced away.',
+      text: 'Suddenly, a single portal stabilized in the chamber. Asher carefully recalibrated it, and the Time Strangler\'s device sparkled and teleported away.',
       imageUrl: undefined
     },
     {
       id: 'page-7',
       pageNumber: 7,
-      text: 'High above, through the bakery window, a delivery drone zoomed by. Someone in a hood tossed something out—London gasped!',
+      text: 'High above, through the starbase dome, a BLT sandwich ship zoomed by. Someone threw out supplies—Asher gasped!',
       imageUrl: undefined
     },
     {
       id: 'page-8',
       pageNumber: 8,
-      text: 'It was a tiny cookie! London raced forward and caught it just in time. "You\'re safe," she whispered.',
+      text: 'It was a tiny robot companion! Asher caught it just in time with his energy net. "You\'re safe," he whispered.',
       imageUrl: undefined
     },
     {
       id: 'page-9',
       pageNumber: 9,
-      text: 'She named the cookie Helper. It sparkled and floated beside her, magical and bright.',
+      text: 'He named the robot Shracker. It scanned and hovered beside him, metallic and bright.',
       imageUrl: undefined
     },
     {
       id: 'page-10',
       pageNumber: 10,
-      text: 'As they walked deeper into the bakery, something blinked at them from behind the cupcakes... Their Skydiver Brother—smaller than expected—peeked out and gave a tiny chirp.',
+      text: 'As they walked deeper into the starbase, something rustled in the alien plants... Mango—a small brown dragon with enchanting powers—peeked out and gave a tiny roar.',
       imageUrl: undefined
     },
     {
       id: 'page-11',
       pageNumber: 11,
-      text: 'London welcomed him warmly. "You\'re joining our baking team too," she smiled. Now she had her cookie friend... and Skydiver Brother.',
+      text: 'Asher welcomed him warmly. "You\'re joining our space team too," he smiled. Now he had his robot friend... and Mango.',
       imageUrl: undefined
     },
     {
       id: 'page-12',
       pageNumber: 12,
-      text: 'The glowing recipe shimmered again—revealing a new ingredient. With her baking friends by her side, London took a deep breath... and stepped into the unknown kitchen.',
+      text: 'The glowing crystal shimmered again—revealing a new portal destination. With his space friends by his side, Asher took a deep breath... and stepped into the unknown dimension.',
       imageUrl: undefined
     },
     {
@@ -233,20 +245,39 @@ export function App(): JSX.Element {
     );
   }
 
-  // Show picture book for London story (when mode is picture-book)
+  // Show picture book for older story (Stella and tiny frog)
   if (selectedStoryId === 'stella-tiny-frog' && storyMode === 'picture-book') {
     return (
       <PictureBook
-        title="London and the Magical Bakery"
-        author="by London, 2nd grade"
-        pages={stellaStoryPages}
+        title="Captain Asher and the Futuristic Starbase"
+        author="by Asher, 2nd grade"
+        pages={asherStoryPages}
         onBack={handleBackToLibrary}
       />
     );
   }
+
+  // Show new AsherPictureBook for Captain Asher's adventure
+  if (selectedStoryId === 'captain-asher-time-stranglers' && storyMode === 'picture-book') {
+    if (currentWorld === 'asher') {
+      return (
+        <AsherPictureBook
+          onBack={handleBackToLibrary}
+          onNext={handleNextWorld}
+        />
+      );
+    } else if (currentWorld === 'connor') {
+      return (
+        <ConnorPictureBook
+          onBack={handleBackToLibrary}
+          onPrevious={handlePreviousWorld}
+        />
+      );
+    }
+  }
   
-  // Show adventure mode for London story (when mode is adventure) or new story creation
-  if (selectedStoryId === 'stella-tiny-frog' && storyMode === 'adventure' || selectedStoryId === 'new-story') {
+  // Show adventure mode for Asher story (when mode is adventure) or new story creation
+  if ((selectedStoryId === 'captain-asher-time-stranglers' && storyMode === 'adventure') || selectedStoryId === 'new-story') {
     return (
       <div style={{
         display: 'grid',
