@@ -395,20 +395,33 @@ Give a brief, friendly response that nudges them without giving the answer.`;
   };
 
   const ensureQuestionImage = async (key: string, explicitPrompt?: string) => {
+    console.log('=== ENSURE QUESTION IMAGE ===');
+    console.log('Key:', key);
+    console.log('Cache has key:', questionImageCacheRef.current.has(key));
+    
     if (questionImageCacheRef.current.has(key)) {
-      setQuestionImageUrl(questionImageCacheRef.current.get(key) || null);
+      const cachedUrl = questionImageCacheRef.current.get(key) || null;
+      console.log('Found in memory cache:', cachedUrl);
+      setQuestionImageUrl(cachedUrl);
       return;
     }
+    
     // Persist once-per-student using story local storage bucket
     try {
       const storeKey = `images:v1:${key}`;
       const existing = window.localStorage.getItem(storeKey);
+      console.log('Checking localStorage for:', storeKey);
+      console.log('Found in localStorage:', existing ? 'YES' : 'NO');
+      
       if (existing) {
+        console.log('Adding to cache and setting URL:', existing);
         questionImageCacheRef.current.set(key, existing);
         setQuestionImageUrl(existing);
         return;
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
+    }
     const targetWord = hookTargetWord || currentRegularQuestion?.word || currentLongAQuestion?.word || '';
     const prompt = buildQuestionImagePrompt({
       targetWord,
@@ -449,18 +462,82 @@ Give a brief, friendly response that nudges them without giving the answer.`;
 
   // When a question with emoji image enters view, generate and swap in contextual art
   useEffect(() => {
+    // Reset image state for new question
     setQuestionImageUrl(null);
     setQuestionImageLoading(false);
+    
     const studentId = String(storyState?.metadata?.protagonist || 'student').toLowerCase().replace(/\s+/g, '-') || 'student';
     const stepKey = isSpeechQuestion ? 'speech' : isLongAQuestion ? 'longA' : (!isBlendingQuestion && !isAdventureMode ? 'regular' : '');
     const questionId = isSpeechQuestion ? currentSpeechQuestion?.id : isLongAQuestion ? currentLongAQuestion?.id : currentRegularQuestion?.id;
     const aiImagePrompt = aiCfg?.imagePrompt;
     const display = isSpeechQuestion ? currentSpeechQuestion?.imageUrl : isLongAQuestion ? currentLongAQuestion?.imageUrl : currentRegularQuestion?.imageUrl;
     const isEmoji = !!display && !String(display).startsWith('http');
-    if (!stepKey || !questionId || !isEmoji) return;
+    
+    console.log('=== QUESTION IMAGE DISPLAY ===');
+    console.log('stepKey:', stepKey, 'questionId:', questionId, 'isEmoji:', isEmoji);
+    console.log('display value:', display);
+    
+    if (!stepKey || !questionId || !isEmoji) {
+      console.log('Skipping image processing - conditions not met');
+      return;
+    }
+    
     const key = `${studentId}:${stepKey}:${questionId}`;
+    console.log('Processing image for key:', key);
+    
+    // Always call ensureQuestionImage which will handle cache and localStorage lookup
     void ensureQuestionImage(key, aiImagePrompt);
   }, [currentQuestionIndex]);
+
+  // Restore question image cache from localStorage on component mount
+  useEffect(() => {
+    const studentId = String(storyState?.metadata?.protagonist || 'student').toLowerCase().replace(/\s+/g, '-') || 'student';
+    const restoreCache = () => {
+      // Restore images for Long A questions
+      for (const q of longAQuestions) {
+        const isEmoji = !!q.imageUrl && !String(q.imageUrl).startsWith('http');
+        if (!isEmoji) continue;
+        const key = `${studentId}:longA:${q.id}`;
+        try {
+          const existing = window.localStorage.getItem(`images:v1:${key}`);
+          if (existing) {
+            questionImageCacheRef.current.set(key, existing);
+          }
+        } catch {}
+      }
+      
+      // Restore images for regular questions
+      for (const q of questions) {
+        const isEmoji = !!q.imageUrl && !String(q.imageUrl).startsWith('http');
+        if (!isEmoji) continue;
+        const key = `${studentId}:regular:${q.id}`;
+        try {
+          const existing = window.localStorage.getItem(`images:v1:${key}`);
+          if (existing) {
+            questionImageCacheRef.current.set(key, existing);
+          }
+        } catch {}
+      }
+      
+      // Restore images for speech questions
+      for (const q of speechQuestions) {
+        const isEmoji = !!q.imageUrl && !String(q.imageUrl).startsWith('http');
+        if (!isEmoji) continue;
+        const key = `${studentId}:speech:${q.id}`;
+        try {
+          const existing = window.localStorage.getItem(`images:v1:${key}`);
+          if (existing) {
+            questionImageCacheRef.current.set(key, existing);
+          }
+        } catch {}
+      }
+    };
+    
+    restoreCache();
+    console.log('=== CACHE RESTORATION COMPLETE ===');
+    console.log('Cache size:', questionImageCacheRef.current.size);
+    console.log('Cache keys:', Array.from(questionImageCacheRef.current.keys()));
+  }, []); // Run only once on mount
 
   // Pre-generate question images with priority so the user never waits
   useEffect(() => {
@@ -1319,54 +1396,56 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
     if (!text) return;
       setValidationMessage('');
     const result = await validateContinuationWithAI(text);
+    
+    // Always allow continuation regardless of target word usage
+    // Show encouraging message for valid usage, but still proceed for invalid
     if (result.status === 'valid') {
       setValidationMessage(result.message || 'Great!');
-      setValidatedContinuation(text);
-      setStoryContext(prev => [...prev, text]);
-      setContinuationInput('');
-      // Immediately animate out (no added wait, no praise TTS)
-        setIsContinuationHidden(true);
-      setIsFeedbackRemoved(false);
-      try { appendEvent(`User's continuation (Step 3): ${text}`); } catch {} // Store for AdventureMode story summaries
-      try { setPendingAdventureChat(text); } catch {}
-      // Auto-advance to Step 4 after a short beat
-      // Reset step-level UI state to avoid bleed into Step 4
-      setShowFeedback(false);
-      setIsCorrect(false);
-      setSelectedOption(null);
-      setSpellingInput('');
-      setHasAutoplayedContPrompt(false);
-      setContinuationHeader('');
-      setValidationMessage('');
-      setIsContinuationHidden(false);
-      setHasGeneratedSummary(false);
-      setAiSummary('');
-      setIsSummaryLoading(true);
-      setTimeout(() => {
-        setCurrentQuestionIndex(prev => prev + 1);
-      }, 600);
-      // Also eager-prime the next hook (Step 6) after Step 5 user chat lands,
-      // the regular flow will regenerate from updated storyContext.
-        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
     } else if (result.status === 'invalid') {
-      setValidationMessage(result.message || 'Try again');
-      void playElevenTTS(result.message || 'Try again');
+      setValidationMessage(result.message || 'Nice story continuation!');
     } else {
       const isCurrentLongASorting = currentLongAQuestion?.isSorting;
       const sortingWords = currentLongAQuestion?.sortingWords || [];
       
       let defaultHelpMsg: string;
       if (isCurrentLongASorting && sortingWords.length > 0) {
-        defaultHelpMsg = `No worries! Pick one of these words and tell what London might do: ${sortingWords.join(', ')}`;
+        defaultHelpMsg = `Great story! Next time try using one of these words: ${sortingWords.join(', ')}`;
       } else {
-        defaultHelpMsg = `No worries! What if London's ${hookTargetWord} could help her explore the magical bakery? How might she use it?`;
+        defaultHelpMsg = `Nice continuation! Next time consider using the word "${hookValidationWord}"`;
       }
       
       const msg = result.message || defaultHelpMsg;
       setValidationMessage(msg);
-      setContinuationHeader(msg);
-      void playElevenTTS(msg);
     }
+    
+    // Always proceed with continuation
+    setValidatedContinuation(text);
+    setStoryContext(prev => [...prev, text]);
+    setContinuationInput('');
+    // Immediately animate out (no added wait, no praise TTS)
+      setIsContinuationHidden(true);
+    setIsFeedbackRemoved(false);
+    try { appendEvent(`User's continuation (Step 3): ${text}`); } catch {} // Store for AdventureMode story summaries
+    try { setPendingAdventureChat(text); } catch {}
+    // Auto-advance to Step 4 after a short beat
+    // Reset step-level UI state to avoid bleed into Step 4
+    setShowFeedback(false);
+    setIsCorrect(false);
+    setSelectedOption(null);
+    setSpellingInput('');
+    setHasAutoplayedContPrompt(false);
+    setContinuationHeader('');
+    setValidationMessage('');
+    setIsContinuationHidden(false);
+    setHasGeneratedSummary(false);
+    setAiSummary('');
+    setIsSummaryLoading(true);
+    setTimeout(() => {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }, 600);
+    // Also eager-prime the next hook (Step 6) after Step 5 user chat lands,
+    // the regular flow will regenerate from updated storyContext.
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
   };
 
   // Image flow: start from the student's continuation input
