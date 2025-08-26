@@ -2,6 +2,10 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './ui/App';
 import { StoryProvider } from './ui/story/StoryStore';
+import { initPostHog } from './analytics/posthog';
+
+// Initialize PostHog
+initPostHog();
 
 const container = document.getElementById('root')!;
 const root = createRoot(container);

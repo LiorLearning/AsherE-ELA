@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { ChatPanel } from './ChatPanel';
 import { ImagePanel } from './ImagePanel';
 import { QuestionPanel } from './QuestionPanel';
@@ -7,6 +7,7 @@ import { PictureBook } from './PictureBook';
 import { LondonPictureBook } from './LondonPictureBook';
 import { ConnorPictureBook } from './ConnorPictureBook';
 import { Button } from './components/Button';
+import { analytics } from '../analytics/posthog';
 
 export function App(): JSX.Element {
   // Feature flags
@@ -65,6 +66,38 @@ export function App(): JSX.Element {
   const [selected, setSelected] = useState<number | null>(null);
   const [fragmentsOrder, setFragmentsOrder] = useState<number[]>([]);
 
+  // Analytics: Track page views based on app state
+  useEffect(() => {
+    if (showLandingPage) {
+      analytics.page('Landing Page');
+    } else if (selectedStoryId && storyMode === 'picture-book') {
+      analytics.page('Picture Book', {
+        story_id: selectedStoryId,
+        current_world: currentWorld,
+      });
+    } else if (selectedStoryId && storyMode === 'adventure') {
+      analytics.page('Adventure Mode', {
+        story_id: selectedStoryId,
+        chapter: chapter,
+        progress: progress,
+      });
+    } else if (selectedStoryId === 'new-story') {
+      analytics.page('New Story Creation');
+    }
+  }, [showLandingPage, selectedStoryId, storyMode, currentWorld, chapter, progress]);
+
+  // Analytics: Set user properties based on preferences and progress
+  useEffect(() => {
+    analytics.setUserProperties({
+      preferred_story_mode: storyMode,
+      current_chapter: chapter,
+      current_progress: progress,
+      current_world: currentWorld,
+      last_selected_story: selectedStoryId,
+      last_activity: new Date().toISOString(),
+    });
+  }, [storyMode, chapter, progress, currentWorld, selectedStoryId]);
+
   const startChapter = useCallback(() => {
     setError(null);
     setShowWin(false);
@@ -89,6 +122,14 @@ export function App(): JSX.Element {
   // Landing page handlers
   const handleSelectStory = useCallback((storyId: string, mode: 'adventure' | 'picture-book' = 'picture-book') => {
     console.log('Selected story:', storyId, 'mode:', mode);
+    
+    // Analytics: Track story selection
+    analytics.track('Story Selected', {
+      story_id: storyId,
+      mode: mode,
+      timestamp: new Date().toISOString(),
+    });
+    
     setSelectedStoryId(storyId);
     setStoryMode(mode);
     setShowLandingPage(false);
@@ -96,24 +137,53 @@ export function App(): JSX.Element {
 
   const handleCreateNewStory = useCallback(() => {
     console.log('Creating new story');
+    
+    // Analytics: Track new story creation
+    analytics.track('New Story Created', {
+      timestamp: new Date().toISOString(),
+    });
+    
     setSelectedStoryId('new-story');
     setShowLandingPage(false);
   }, []);
 
   const handleBackToLibrary = useCallback(() => {
+    // Analytics: Track navigation back to library
+    analytics.track('Back to Library', {
+      from_story_id: selectedStoryId,
+      from_mode: storyMode,
+      timestamp: new Date().toISOString(),
+    });
+    
     setShowLandingPage(true);
     setSelectedStoryId(null);
     setStoryMode('picture-book');
     setCurrentWorld('asher');
-  }, []);
+  }, [selectedStoryId, storyMode]);
 
   const handleNextWorld = useCallback(() => {
+    // Analytics: Track world navigation
+    analytics.track('World Navigation', {
+      from_world: currentWorld,
+      to_world: 'connor',
+      story_id: selectedStoryId,
+      timestamp: new Date().toISOString(),
+    });
+    
     setCurrentWorld('connor');
-  }, []);
+  }, [currentWorld, selectedStoryId]);
 
   const handlePreviousWorld = useCallback(() => {
+    // Analytics: Track world navigation
+    analytics.track('World Navigation', {
+      from_world: currentWorld,
+      to_world: 'asher',
+      story_id: selectedStoryId,
+      timestamp: new Date().toISOString(),
+    });
+    
     setCurrentWorld('asher');
-  }, []);
+  }, [currentWorld, selectedStoryId]);
 
   // Picture book data
   const asherStoryPages = useMemo(() => [
@@ -206,6 +276,19 @@ export function App(): JSX.Element {
     } else if (q.type === 'order') {
       correct = JSON.stringify(fragmentsOrder) === JSON.stringify(q.order);
     }
+    
+    // Analytics: Track question attempt
+    analytics.track('Question Answered', {
+      question_id: q.id,
+      question_type: q.type,
+      correct: correct,
+      chapter: chapter,
+      progress: progress,
+      question_index: questionIndex,
+      selected_answer: selected,
+      timestamp: new Date().toISOString(),
+    });
+    
     if (!correct) return;
 
     const newProgress = Math.min(progress + 1, 3);
@@ -215,6 +298,15 @@ export function App(): JSX.Element {
     // Advance to next question or bonus
     if (newProgress >= 3) {
       setShowWin(true);
+      
+      // Analytics: Track chapter completion
+      analytics.track('Chapter Completed', {
+        chapter: chapter,
+        final_progress: newProgress,
+        questions_answered: questionIndex + 1,
+        timestamp: new Date().toISOString(),
+      });
+      
       // Kick off video creation in background
       setVideoLoading(true);
       void (async () => {

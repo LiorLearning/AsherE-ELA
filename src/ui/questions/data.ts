@@ -10,16 +10,7 @@ export const blendingQuestions: BlendingQuestion[] = [
   },
 ];
 
-export const speechQuestions: SpeechQuestion[] = [
-  {
-    id: 1,
-    text:
-      "London discovered a big magical mixing bowl in the enchanted bakery. She picked it up and gave it a quick mix to activate its sparkles. The bowl made a loud ding that echoed through the magical bakery.",
-    imageUrl: '✨🧁💖',
-    expectedWords: ['big', 'mix', 'quick'],
-    explanation: 'Great job! You found all the short i CVC words in London\'s magical bakery adventure.',
-  },
-];
+export const speechQuestions: SpeechQuestion[] = [];
 
 export const longAQuestions: Question[] = [
   // Step 2 changed from sorting to fill-in-the-blank per FLOSS rule

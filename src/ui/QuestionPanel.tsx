@@ -635,6 +635,12 @@ Give a brief, friendly response that nudges them without giving the answer.`;
     };
   }, []);
 
+  // Helper function to check if a word follows the Floss rule
+  const isFlossRuleWord = (word: string): boolean => {
+    const flossWords = ['fluff', 'jazz', 'shell', 'buzz', 'fizz', 'spill', 'staff'];
+    return flossWords.includes(word.toLowerCase());
+  };
+
   // Generate a brief Socratic hint for incorrect spelling answers (max 2 sentences)
   const generateIncorrectHint = async (params: {
     targetWord: string;
@@ -663,6 +669,24 @@ Student's current sorting: ${studentAnswer}
 Correct pattern: ay words (${correctSortingAnswer['ay']?.join(', ')}) vs a_e words (${correctSortingAnswer['a_e']?.join(', ')})
 
 Give a gentle hint about listening to the vowel sounds without revealing which words go where. Encourage them to listen carefully to the long-ā patterns.`;
+      } else if (isFlossRuleWord(targetWord)) {
+        // Special handling for Floss rule words
+        systemPrompt = `Speak like a warm, playful tutor for young readers. Be encouraging and natural—no meta talk.
+Your reply must be at most two short sentences (25 words total). Analyze the student's specific attempt and give personalized feedback. Reference the Floss rule when helpful, but focus on what they got right and what needs fixing.
+Optional theme: ${theme || 'adventure'}.`;
+
+        userPrompt = `Question: Spell the word you hear.
+Target word (do not say): ${targetWord}
+Student attempt: "${studentAnswer || '(blank)'}"
+
+Analyze their specific attempt. What did they get right? What's wrong? This is a Floss rule word (short vowel + double final consonant f/l/s/z). Give personalized feedback that addresses their specific mistake and guides them toward the Floss rule concept.
+
+Examples of good responses:
+- If they wrote "flif" for "fluff": "Good start with 'fl'! You need that short 'u' sound and the Floss rule - double the 'f'."
+- If they wrote "fuf" for "fluff": "You got the 'f' sounds right! Add the 'l' and remember to double that final 'f'."
+- If they wrote "fluff" but for "staff": "Close! Try 'st' at the start, then that short 'a' with double 'f'."
+
+Be specific to their attempt, not generic.`;
       } else {
         // Original spelling question handling
         systemPrompt = `Speak like a warm, playful, socratic tutor for young readers. Be natural—no meta talk.
