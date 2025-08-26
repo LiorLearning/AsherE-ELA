@@ -2,19 +2,22 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useStory } from '../story/StoryStore';
 import bg1Url from '../../../bg2.png';
 import { audioManager } from '../audioManager';
+// import '../../../api/image'
 
 type Props = {
   onAdventureMessage?: (userMessage: string) => void;
   onStoryUpdate?: (storyUpdate: string) => void;
   adventureMessages?: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>;
   onAdventureMessagesUpdate?: (messages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>) => void;
+  onSwitchToQuestions?: () => void;
+  onGoToPrevious?: () => void;
 };
 
-export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMessages: propAdventureMessages, onAdventureMessagesUpdate }: Props): JSX.Element {
+export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMessages: propAdventureMessages, onAdventureMessagesUpdate, onSwitchToQuestions, onGoToPrevious }: Props): JSX.Element {
   const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat, setMetadata } = useStory();
   // Use parent-provided messages or default/local persisted
   const defaultMessages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }> = [
-    { role: 'ai' as const, text: "🚀✨ Captain Asher! I'm excited to continue our futuristic space adventure! You, Clay, and Shracker just defeated The Time Stranglers' leader who fell into the swirling time abyss. The BLT sandwich ship is still here with chaos from the chai spills! 🥪✨ What should we explore next in our underground starbase on Ragonia 7's moon?" }
+    { role: 'ai' as const, text: "✨🧁 London! I'm so excited to continue our magical bakery adventure! You and your blonde sidekick just finished 'Cupcake Day' with Sprinkle Beast's amazing help, survived those wild frosting storms, and rode the whipped cream waves! 🌊✨ What magical baking challenge should we tackle next in our enchanted bakery?" }
   ];
   const [localAdventureMessages, setLocalAdventureMessages] = useState<Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>>(
     (storyState?.adventureMessages?.length ?? 0) > 0
@@ -38,9 +41,13 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
   // Keep accumulated transcript across interim/final events and potential auto-restarts
   const adventureAccumulatedRef = useRef<string>('');
   const adventureRecordingRef = useRef<boolean>(false);
+  const adventureInputRef = useRef<HTMLInputElement>(null);
   
   // Adventure state management
   const [adventureState, setAdventureState] = useState<'new' | 'ongoing' | 'character_creation'>('ongoing');
+  
+  // Message counter for Begin Challenge trigger (count user messages only)
+  const [userMessageCount, setUserMessageCount] = useState(0);
   const [currentAdventure, setCurrentAdventure] = useState<{
     type?: string;
     protagonist?: string;
@@ -51,17 +58,72 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     setting?: string;
     recentEvent?: string;
   }>({
-    type: 'futuristic space adventure with alien technology, time portals, and sci-fi exploration',
-    protagonist: 'Captain Asher (young, adventurous boy in a futuristic space suit with glowing neon accents and a courageous spirit; passionate about exploration and strategy)',
-    sidekick: 'Clay (massive brown MudWing dragon with strong limbs, wide wings, stubby snout, warm amber eyes; loyal and protective companion)',
-    teammates: 'Shracker (sleek, metallic robotic bird with scanning eyes and flappable wings), Mango (six-year-old animus MudWing dragon, brown-scaled, with enchanting powers)',
-    setting: 'Futuristic jungle on Ragonia 7\'s moon, filled with glowing portals, floating time-warp cities, and hidden underground starbases beneath alien plantlife',
-    goal: 'protect reality from temporal destruction, master advanced alien technology, and explore the mysteries of time and space',
-    villain: 'The Time Stranglers (ancient civilization using broken time-tech to erase reality; their leader recently fell into a swirling time abyss)',
-    recentEvent: 'Clay\'s entire family stormed through a portal alongside the team. The Time Stranglers\' leader fell into a swirling time abyss. Asher was named "Guardian of Time." Mango, an animus dragon, used powers to move a tree. A delicious sandwich-themed BLT ship rescued the team, causing chaos with chai spills, thunder, and a snack shelf crash!'
+    type: 'magical enchanted bakery adventure with baking magic, whimsical creatures, and culinary exploration',
+    protagonist: 'London (teenage girl with blonde hair, wearing sparkly star and heart dresses, cheerful and imaginative; passionate about baking and fantasy adventures)',
+    sidekick: 'Another blonde-haired teenage girl (same age as London, also in star/heart dresses; best friend and baking companion)',
+    teammates: 'Sprinkle Beast (giant cupcake monster with whipped cream hair and sprinkle eyes), red-hat skydiver brother (rescuer with a net who helps when things get chaotic)',
+    setting: 'A magical enchanted bakery where ovens glow with mystical energy, frosting storms brew in the sky, rainbow frosting shelves sparkle, spatulas swirl in mid-air, and gumdrop trails lead to mysterious places. There\'s also an upstairs lab hidden behind frosting levers.',
+    goal: 'maintain harmony in the magical bakery, master baking magic, solve word puzzles, and create the most amazing magical treats',
+    villain: 'Chaotic magical forces (wild frosting storms, mischievous singing cupcakes, tricky gumdrop traps) that threaten to disrupt the bakery\'s magical harmony',
+    recentEvent: 'London and her blonde sidekick successfully completed "Cupcake Day" with Sprinkle Beast\'s help! They survived dangerous frosting storms, rode exciting whipped cream waves, solved challenging word puzzles, and encountered a mysterious magical oven that glowed bright red. Now they\'re preparing for "Cake Day" tomorrow - an even bigger, more dazzling magical challenge!'
   });
   const ADVENTURE_IMAGE_OVERLAY_OPACITY = 0.45;
   const adventureScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Message history management for weighted image generation (both user and AI)
+  const CONVERSATION_MESSAGES_KEY = 'adventure_conversation_history';
+  const MAX_STORED_CONVERSATION_MESSAGES = 20; // Store more to have good context
+
+  // Get the last 6 conversation messages for lightweight context (OpenAI-style)
+  const getLastConversationMessages = (): Array<{role: 'user' | 'ai', text: string}> => {
+    // Get recent messages from current conversation, excluding loading/image messages
+    const recentMessages = adventureMessages
+      .filter(m => !m.isLoading && !m.isImage && m.text.trim())
+      .slice(-6) // Last 6 messages for lighter context
+      .map(m => ({
+        role: m.role === 'student' ? 'user' as const : 'ai' as const,
+        text: m.text
+      }));
+    
+    return recentMessages;
+  };
+
+  const generateWeightedPrompt = (currentMessage: string, conversationHistory: Array<{role: 'user' | 'ai', text: string}>): string => {
+    // OpenAI-style weighting: Current request = 85% anchor, History = 15% total
+    const ANCHOR_WEIGHT = 0.85; // 85% for current user request
+    const HISTORY_BUDGET = 0.15; // 15% total for all history
+    
+    // Distribute history budget across last 5 messages with decay
+    // [0.05, 0.04, 0.03, 0.02, 0.01] = 0.15 total
+    const historyWeights = [0.05, 0.04, 0.03, 0.02, 0.01];
+    
+    // Role multipliers to slightly favor user intent for image generation
+    const getRoleMultiplier = (role: 'user' | 'ai') => role === 'user' ? 1.00 : 0.85;
+    
+    let weightedPrompt = '';
+    
+    // Current message gets 85% weight (the anchor)
+    weightedPrompt += `${currentMessage}`;
+    
+    // Process conversation history (most recent first) with light context injection
+    const reversedHistory = [...conversationHistory].reverse(); // Most recent first
+    
+    reversedHistory.forEach((message, index) => {
+      if (message.text.trim() && index < historyWeights.length) {
+        const baseWeight = historyWeights[index] ?? 0.01; // Fallback weight
+        const roleMultiplier = getRoleMultiplier(message.role);
+        const finalWeight = baseWeight * roleMultiplier;
+        
+        // Only include if relevant - light context injection like OpenAI
+        if (finalWeight >= 0.025) { // Only include meaningful context
+          const contextPrefix = message.role === 'user' ? 'Context from user' : 'Context from conversation';
+          weightedPrompt += ` (${contextPrefix}: ${message.text})`;
+        }
+      }
+    });
+    
+    return weightedPrompt.trim();
+  };
 
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
   const [fullscreenImageUrl, setFullscreenImageUrl] = useState<string | null>(null);
@@ -91,7 +153,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     const lowerAI = aiResponse.toLowerCase();
     
     // Check for interest-based adventure selection
-    const interests = ['space', 'robots', 'dragons', 'sci-fi', 'technology', 'adventure', 'strategy', 'futuristic', 'aliens', 'portals', 'time travel', 'exploration', 'comedy'];
+    const interests = ['baking', 'magic', 'fantasy', 'cupcakes', 'adventure', 'friendship', 'magical', 'enchanted', 'cooking', 'whimsical', 'sparkly', 'rainbow'];
     const selectedInterest = interests.find(interest => lowerUser.includes(interest));
     
     if (selectedInterest && adventureState === 'new') {
@@ -155,6 +217,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     if (pending && pending.text) {
       // Drive the normal send path to avoid duplicate appends
       setAdventureInput(pending.text);
+      scrollInputToEnd();
       setTimeout(() => { void sendAdventureMessage(); }, 50);
     }
 
@@ -179,16 +242,63 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     const text = adventureInput.trim();
     if (!text) return;
 
+    // Get conversation history for weighted prompt generation (last 6 messages - OpenAI style)
+    const conversationHistory = getLastConversationMessages();
+    
+    // Generate OpenAI-style weighted prompt: 85% anchor on current request, 15% light context
+    const weightedContent = generateWeightedPrompt(text, conversationHistory);
+    
+    // Build comprehensive context-aware prompt with weighted user messages
+    const storyEventsContext = storyState?.storyEvents?.length > 0 
+      ? storyState.storyEvents.slice(-8).join('. ')
+      : '';
+    
+    // Build the main image prompt using weighted user message history
+    const contextParts = [];
+    contextParts.push(weightedContent);
+    contextParts.push('Remove moderated parts from the image if present, and create it.');
+    
+    // Story setting comes first for context
+    // if (currentAdventure?.setting) {
+    //   contextParts.push(`ADVENTURE SETTING(just use this as the background): ${currentAdventure.setting}`);
+    // }
+    
+    // Add weighted user message context (this is the core of the prompt)
+    
+    
+    // Add recent story events for additional context
+    // if (storyEventsContext) {
+    //   contextParts.push(`Additional story context(just use this as the background): ${storyEventsContext}`);
+    // }
+    
+    // Construct the main image prompt that will be sent to image.ts
+    const mainimageprompt = contextParts.join('. ');
+    
+    // Use mainimageprompt as the final prompt that goes to the API
+    
+    let imagePrompt = mainimageprompt;
+    // Log weighted adventure image generation
+    console.log('=== ADVENTURE MODE WEIGHTED IMAGE GENERATION ===');
+    console.log('Function: AdventureMode.generateAdventureImage');
+          console.log('Current input text:', text);
+      console.log('Conversation history (last 6 - OpenAI style):', conversationHistory);
+      console.log('OpenAI-style weighted content (85% anchor, 15% context):', weightedContent);
+    console.log('Story setting:', currentAdventure?.setting);
+    console.log('Final mainimageprompt sent to image.ts:', mainimageprompt);
+    console.log('================================================');
+
     updateAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 Create image: ${text}` }]);
     appendStoryMessage({ role: 'student', text: `🌄 Create image: ${text}` });
     setAdventureInput('');
-    updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Creating your adventure image...', isLoading: true }]);
+    // Increment user message counter for image generation too
+    setUserMessageCount(prev => prev + 1);
+    updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Creating your image...', isLoading: true }]);
 
     try {
       const response = await fetch('/api/image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: text })
+        body: JSON.stringify({ prompt: imagePrompt })
       });
       const data = await response.json();
       if (response.ok && data.imageUrl) {
@@ -198,7 +308,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
           if (loadingIndex !== -1) {
             newMessages[loadingIndex] = {
               role: 'ai',
-              text: "Here's your adventure image! 🌄✨",
+              text: "Here's your image! 🌄✨",
               isImage: true,
               imageUrl: data.imageUrl,
               isLoading: false
@@ -346,96 +456,59 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     await playAIResponse(messageIndex, text);
   };
 
+  // Enhanced function to detect image creation intent
+  const detectImageIntent = (text: string): boolean => {
+    const lowerText = text.toLowerCase();
+    
+    // Direct image requests
+    if (lowerText === 'image' || lowerText === 'create image' || lowerText.startsWith('create image')) {
+      return true;
+    }
+    
+    // Common image creation patterns
+    const imagePatterns = [
+      // Direct requests
+      /^(make|create|generate|draw|show me?).*image/i,
+      /^image.*(of|for|with|showing)/i,
+      /^(can you|could you).*image/i,
+      
+      // Visual description requests
+      /^(show|display|visualize|picture|illustrate)/i,
+      /^what.*(look|appear|seem).*(like)/i,
+      /^i want to see/i,
+      /^let me see/i,
+      
+      // Scene description requests
+      /^(imagine|picture|envision|visualize)/i,
+      /(scene|scenery|setting|environment|landscape|view)/i,
+      
+      // "I see" or descriptive statements that imply visualization
+      /^i see.*(with|in|at|near|around)/i,
+      /^there (is|are|appears|stands|sits)/i,
+      
+      // Adventure-specific visual requests
+      /(magical|enchanted|mystical|fantasy).*scene/i,
+      /(bakery|kitchen|oven|cupcake).*scene/i,
+      /adventure.*scene/i,
+      
+      // Drawing/art requests
+      /^(draw|sketch|paint|design)/i,
+      /art.*(of|for|showing)/i
+    ];
+    
+    return imagePatterns.some(pattern => pattern.test(lowerText));
+  };
+
   const sendAdventureMessage = async () => {
     const text = adventureInput.trim();
     console.log('sendAdventureMessage called with text:', text);
     if (!text) return;
-    if (text.toLowerCase() === 'image' || text.toLowerCase() === 'create image' || text.toLowerCase().startsWith('create image')) {
-      // Build context-aware image prompt
-      const userImageRequest = text.toLowerCase() === 'image' || text.toLowerCase() === 'create image'
-        ? 'Current adventure scene with characters'
-        : text.replace(/^create image\s*/i, '').trim() || 'Current adventure scene with characters';
-      
-      // Get story context and adventure state
-      const storyEventsContext = storyState?.storyEvents?.length > 0 
-        ? storyState.storyEvents.slice(-5).join('. ')
-        : '';
-      
-      const recentMessages = adventureMessages.filter(m => !m.isLoading && !m.isImage).slice(-3);
-      const conversationContext = recentMessages.map(m => `${m.role}: ${m.text}`).join('. ');
-      
-      // Build comprehensive prompt with story context
-      let imagePrompt = '';
-      if (storyEventsContext || conversationContext || currentAdventure?.setting) {
-        const contextParts = [];
-        
-        if (currentAdventure?.setting) {
-          contextParts.push(`Adventure setting: ${currentAdventure.setting}`);
-        }
-        
-        if (storyEventsContext) {
-          contextParts.push(`Recent story events: ${storyEventsContext}`);
-        }
-        
-        if (conversationContext) {
-          contextParts.push(`Recent conversation: ${conversationContext}`);
-        }
-        
-        const contextText = contextParts.join('. ');
-        imagePrompt = `${contextText}. User's image request: ${userImageRequest}. Create an image showing Captain Asher (young boy in futuristic space suit with glowing neon accents), Clay (massive brown MudWing dragon with strong limbs and wide wings), Shracker (sleek metallic robotic bird), and Mango (small brown animus dragon) in this futuristic jungle space adventure scene on Ragonia 7's moon.`;
-      } else {
-        // Fallback with basic context
-        imagePrompt = `${userImageRequest}. Show Captain Asher (young boy in futuristic space suit with glowing neon accents) with Clay (massive brown MudWing dragon), Shracker (sleek metallic robotic bird), and Mango (small brown animus dragon) in an underground starbase on Ragonia 7's moon filled with glowing portals, high-tech control panels, and alien jungle plantlife.`;
-      }
-      
-      updateAdventureMessages(prev => [...prev, { role: 'student', text: `🌄 ${text}` }]);
-      onAdventureMessage?.(text);
-      setAdventureInput('');
-      // Reset accumulated speech recognition text after submission
-      adventureAccumulatedRef.current = '';
-      updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Creating your adventure image...', isLoading: true }]);
-      try {
-        const response = await fetch('/api/image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: imagePrompt })
-        });
-        const data = await response.json();
-        if (response.ok && data.imageUrl) {
-          updateAdventureMessages(prev => {
-            const newMessages = [...prev];
-            const loadingIndex = newMessages.findIndex(m => m.isLoading);
-            if (loadingIndex !== -1) {
-              newMessages[loadingIndex] = {
-                role: 'ai',
-                text: "Here's your adventure image! 🌄✨",
-                isImage: true,
-                imageUrl: data.imageUrl,
-                isLoading: false
-              };
-            }
-            return newMessages;
-          });
-          setFullscreenImageUrl(data.imageUrl);
-          setShowFullscreenImage(true);
-        } else {
-          throw new Error(data.error || 'Failed to generate image');
-        }
-      } catch (error) {
-        console.error('Error generating image:', error);
-        updateAdventureMessages(prev => {
-          const newMessages = [...prev];
-          const loadingIndex = newMessages.findIndex(m => m.isLoading);
-          if (loadingIndex !== -1) {
-            newMessages[loadingIndex] = {
-              role: 'ai',
-              text: "Sorry, I couldn't create that image. Please try again with a different description! 🌄",
-              isLoading: false
-            };
-          }
-          return newMessages;
-        });
-      }
+
+    // Check for image creation intent using enhanced detection
+    if (detectImageIntent(text)) {
+      console.log('Image intent detected, using generateAdventureImage flow');
+      // Use the exact same flow as the 🌄 button
+      await generateAdventureImage();
       return;
     }
 
@@ -443,6 +516,8 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     appendStoryMessage({ role: 'student', text });
     onAdventureMessage?.(text);
     setAdventureInput('');
+    // Increment user message counter
+    setUserMessageCount(prev => prev + 1);
     // Reset accumulated speech recognition text after submission
     adventureAccumulatedRef.current = '';
     updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Thinking about your adventure...', isLoading: true }]);
@@ -476,11 +551,11 @@ Adventure State: ${adventureState === 'new' ? 'NEW_ADVENTURE' : adventureState =
 
 Current Adventure Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
-Student Profile (Asher): Loves comedy, adventure, sci-fi, robotics, strategy games, space exploration, and futuristic technology. Passionate about time travel adventures and dragon companions. Prefers realistic art with vivid sci-fi details, high-tech environments, glowing fantasy jungle landscapes, and stylized lighting. Enjoys space adventures with alien technology, portal exploration, and epic dragon teamwork.
+Student Profile (London): Loves baking, K-pop, fantasy/demon hunter themes, fun dress-up, magical adventures, and whimsical storytelling. Passionate about enchanted bakery adventures and cupcake monster companions. Prefers realistic art with vivid magical details, enchanted bakery environments, glowing fantasy landscapes, and sparkly lighting. Enjoys magical baking adventures with enchanted creatures, recipe exploration, and epic friendship teamwork.
 
 Character Creation: When creating sidekicks/characters, let me choose names with suggestions, offer trait lists (funny, optimistic, resilient, etc.), and ask me to describe appearance for image creation.
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Captain Asher. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses thrilling and futuristic to match Asher's interests in space adventures, alien technology, and epic dragon teamwork in sci-fi settings.`
+Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or London. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses thrilling and magical to match London's interests in baking adventures, enchanted creatures, and epic friendship teamwork in magical settings.`
         },
         ...currentMessages
           .slice(-30)
@@ -517,14 +592,42 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
         if (loadingIndex !== -1) {
           newMessages[loadingIndex] = {
             role: 'ai',
-            text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Captain Asher should do next!',
+            text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what London should do next!',
             isLoading: false
           } as any;
         }
         return newMessages;
       });
-      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what Captain Asher should do next!' });
+      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! ✨ Tell me more about what London should do next!' });
     }
+  };
+
+  // Helper function to auto-scroll input to show latest text
+  const scrollInputToEnd = () => {
+    if (adventureInputRef.current) {
+      // Use setTimeout to ensure the DOM has updated
+      setTimeout(() => {
+        if (adventureInputRef.current) {
+          adventureInputRef.current.scrollLeft = adventureInputRef.current.scrollWidth;
+        }
+      }, 0);
+    }
+  };
+
+  // Helper function to stop microphone and reset input when user clicks action buttons
+  const stopMicAndResetInput = () => {
+    // Stop microphone if it's recording
+    if (isAdventureRecording) {
+      setIsAdventureRecording(false);
+      adventureRecordingRef.current = false;
+      if (adventureSpeechRecognition) {
+        adventureSpeechRecognition.stop();
+        setAdventureSpeechRecognition(null);
+      }
+    }
+    // Always reset the input area and accumulated speech text, regardless of mic state
+    setAdventureInput('');
+    adventureAccumulatedRef.current = '';
   };
 
   const toggleAdventureMic = () => {
@@ -564,6 +667,8 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
       }
       const displayTranscript = (adventureAccumulatedRef.current + interimTranscript).trim();
       setAdventureInput(displayTranscript);
+      // Auto-scroll to show the latest speech text
+      scrollInputToEnd();
     };
     recognition.onend = () => {
       // Auto-restart if user hasn't explicitly stopped, to avoid losing context on long pauses
@@ -595,6 +700,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
         .speech-bubble-ai::after { content: ''; position: absolute; left: -5px; bottom: 13px; width: 0; height: 0; border-style: solid; border-width: 0 0 10px 10px; border-color: transparent transparent rgba(255,255,255,0.9) transparent; transform: rotate(45deg); z-index: 1; }
         .speech-bubble-student::before { content: ''; position: absolute; right: -6px; bottom: 12px; width: 0; height: 0; border-style: solid; border-width: 12px 12px 0 0; border-color: #FFFADB transparent transparent transparent; transform: rotate(45deg);} 
         .speech-bubble-student::after { content: ''; position: absolute; right: -5px; bottom: 13px; width: 0; height: 0; border-style: solid; border-width: 10px 10px 0 0; border-color: rgba(255,245,205,0.9) transparent transparent transparent; transform: rotate(45deg); z-index: 1; }
+        @keyframes challengeAttention { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
       `}</style>
 
       <div style={{
@@ -651,10 +757,12 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                           {/* Quick adventure options - show when starting new adventure */}
             {adventureState === 'new' && adventureMessages.length <= 2 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12, justifyContent: 'center' }}>
-                {['🚀 Space Exploration', '🤖 Robotics', '🐉 Dragon Adventures', '⚡ Sci-Fi Tech', '⏰ Time Travel', '🌌 Alien Worlds'].map((option) => (
+                {['🧁 Magical Baking', '✨ Enchanted Cooking', '🌈 Rainbow Treats', '🧚 Fantasy Adventures', '💖 Friendship Magic', '🎪 Whimsical Worlds'].map((option) => (
                   <button key={option} onClick={() => {
+                    stopMicAndResetInput();
                     const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
                     setAdventureInput(`I love ${interest} adventures!`);
+                    scrollInputToEnd();
                     setTimeout(() => void sendAdventureMessage(), 100);
                   }}
                     style={{ padding: '8px 12px', borderRadius: 16, border: 'none', background: 'rgba(255,255,255,0.9)', color: '#374151', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'Quicksand, sans-serif', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s ease' }}
@@ -669,19 +777,28 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.95)', padding: '8px 12px', borderRadius: 20, gap: 10, border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                <input value={adventureInput} onChange={(e) => setAdventureInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void sendAdventureMessage(); }} placeholder="Message..."
+                <input 
+                  ref={adventureInputRef}
+                  value={adventureInput} 
+                  onChange={(e) => { 
+                    setAdventureInput(e.target.value); 
+                    scrollInputToEnd(); 
+                  }} 
+                  onKeyDown={(e) => { if (e.key === 'Enter') { stopMicAndResetInput(); void sendAdventureMessage(); } }} 
+                  placeholder="Message..."
                   style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#111827', fontSize: 17, fontWeight: 400, fontFamily: 'Quicksand, sans-serif' }} />
-                <button onClick={() => void generateAdventureImage()} aria-label="Generate Image" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(16,185,129,0.3)', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Generate image from your message">🌄</button>
+                <button onClick={() => { stopMicAndResetInput(); void generateAdventureImage(); }} aria-label="Generate Image" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(16,185,129,0.3)', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Generate image from your message">🌄</button>
                 {adventureState !== 'new' && (
                   <button onClick={() => {
+                    stopMicAndResetInput();
                     setAdventureState('new');
                     setCurrentAdventure({});
-                    const greeting = "🚀 Hey there, Captain Asher! I'm your loyal sidekick, ready for an epic space quest! What kind of adventure gets you excited - alien technology, dragon teamwork, time portals, or something totally different? Let's create an amazing sci-fi story together! ✨🌟";
+                    const greeting = "✨ Hey there, London! I'm your loyal sidekick, ready for an epic magical baking quest! What kind of adventure gets you excited - enchanted cupcakes, magical friendship, rainbow treats, or something totally different? Let's create an amazing magical bakery story together! 🧁🌟";
                     updateAdventureMessages(prev => [...prev, { role: 'ai', text: greeting }]);
                     appendStoryMessage({ role: 'ai', text: greeting });
                   }} aria-label="New Adventure" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(245,158,11,0.3)', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Start a new adventure">🎪</button>
                 )}
-                <button onClick={() => void sendAdventureMessage()} aria-label="Send" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(139,92,246,0.3)', background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>▲</button>
+                <button onClick={() => { stopMicAndResetInput(); void sendAdventureMessage(); }} aria-label="Send" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(139,92,246,0.3)', background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>▲</button>
               </div>
               <button onClick={toggleAdventureMic} aria-label="Record" style={{ width: 48, height: 48, borderRadius: 24, border: 'none', cursor: 'pointer', background: isAdventureRecording ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)', boxShadow: isAdventureRecording ? '0 6px 18px rgba(239, 68, 68, 0.3)' : '0 6px 18px rgba(16, 185, 129, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {isAdventureRecording ? (<div style={{ width: 14, height: 14, background: 'white', borderRadius: 3 }} />) : (
@@ -691,6 +808,117 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
             </div>
           </div>
         </div>
+        
+        {/* Subtle Next button - top right, almost invisible */}
+        <button
+          onClick={() => {
+            onSwitchToQuestions?.();
+          }}
+          style={{
+            position: 'fixed',
+            top: 16,
+            right: 16,
+            zIndex: 100,
+            width: '20px',
+            height: '20px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.99)',
+            color: 'rgb(252, 252, 252)',
+            border: '0.2px solid rgb(255, 251, 251)',
+            cursor: 'pointer',
+            fontSize: '2px',
+            fontWeight: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease',
+            opacity: 0.0001
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.7';
+            e.currentTarget.style.background = 'rgb(255, 255, 255)';
+            e.currentTarget.style.color = 'rgb(255, 255, 255)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '0.0001';
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.99)';
+            e.currentTarget.style.color = 'rgb(252, 252, 252)';
+          }}
+          title="Next"
+        >
+          →
+        </button>
+
+        {/* Previous Button - always visible, positioned bottom left
+        <button
+          onClick={() => {
+            // Go back to previous step in the question flow
+            onGoToPrevious?.();
+          }}
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            left: 24,
+            zIndex: 100,
+            padding: '12px 20px',
+            borderRadius: 20,
+            border: 'none',
+            background: 'linear-gradient(135deg,rgba(107, 114, 128, 0.39) 0%, #6b7280 100%)',
+            color: 'white',
+            fontSize: 14,
+            fontWeight: 600,
+            fontFamily: 'Quicksand, sans-serif',
+            cursor: 'pointer',
+            boxShadow: '0 8px 16px rgba(192, 195, 199, 0.4)',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title="Go to previous step"
+        >
+          ⬅️ Previous
+        </button> */}
+
+        {/* Begin Challenge Button - always visible in adventure mode, positioned bottom right */}
+        <button
+          onClick={() => {
+            onSwitchToQuestions?.();
+          }}
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 100,
+            padding: '12px 20px',
+            borderRadius: 20,
+            border: 'none',
+            background: 'linear-gradient(135deg, #6F05F0 0%, #6F05F0 100%)',
+            color: 'white',
+            fontSize: 16,
+            fontWeight: 600,
+            fontFamily: 'Quicksand, sans-serif',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            animation: userMessageCount >= 5 ? 'challengeAttention 2s ease-in-out infinite' : 'none'
+          }}
+          onMouseEnter={(e) => {
+            if (userMessageCount < 5) {
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (userMessageCount < 5) {
+              e.currentTarget.style.transform = 'scale(1)';
+            }
+          }}
+          title={userMessageCount >= 5 ? 'Ready for a challenge!' : `Adventure more! (${userMessageCount}/5 messages)`}
+        >
+          🎯 Begin Challenge
+        </button>
       </div>
 
       {showFullscreenImage && (

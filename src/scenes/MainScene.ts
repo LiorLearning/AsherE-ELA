@@ -15,7 +15,7 @@ export class MainScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
 
-    this.titleText = this.add.text(width / 2, height / 2 - 40, 'AsherE', {
+    this.titleText = this.add.text(width / 2, height / 2 - 40, 'LondonE', {
       fontFamily: 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
       fontSize: '48px',
       color: '#111827',

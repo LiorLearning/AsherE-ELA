@@ -6,7 +6,7 @@ type Props = { onGenerateImage?: (userText: string) => void };
 export function ChatPanel({ onGenerateImage }: Props): JSX.Element {
   const [messages, setMessages] = useState<Message[]>([
     { role: 'system', content: 'You are a friendly story guide for kids. Be conversational and helpful.' },
-    { role: 'assistant', content: "What happens next in Captain Asher's adventure? Type a short line and press Enter." }
+    { role: 'assistant', content: "What happens next in London's magical bakery adventure? Type a short line and press Enter." }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);

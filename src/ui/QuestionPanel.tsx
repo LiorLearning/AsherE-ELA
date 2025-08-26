@@ -77,6 +77,9 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   const [hasGeneratedSummary, setHasGeneratedSummary] = useState<boolean>(false);
   // Long A specific passage state
   const [longAPassage, setLongAPassage] = useState<string>('');
+  
+  // Dev mode navigation (MSA keys)
+  const [isDevModeActive, setIsDevModeActive] = useState(false);
   const [hasGeneratedLongAPassage, setHasGeneratedLongAPassage] = useState<boolean>(false);
   const [hasAutoplayedLongAPassage, setHasAutoplayedLongAPassage] = useState<boolean>(false);
   const [isLongAPassageLoading, setIsLongAPassageLoading] = useState<boolean>(false);
@@ -122,6 +125,10 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   // Speech recording for speech continuation input
   const [isSpeechContRecording, setIsSpeechContRecording] = useState<boolean>(false);
   const [speechContRecognition, setSpeechContRecognition] = useState<any>(null);
+  
+  // Feature flag: Enable/disable image generation from continuation messages
+  // Set to false to disable, true to enable - can be easily toggled later
+  const ENABLE_CONTINUATION_IMAGE_GENERATION = false;
   
   // Lightweight back-and-forth chat during incorrect attempts
   const sendIncorrectFollowup = async (studentText: string): Promise<void> => {
@@ -324,6 +331,18 @@ Give a brief, friendly response that nudges them without giving the answer.`;
     const prompt = latestEvent
       ? `Reflect this new story update front-and-center: ${latestEvent}. ${basePrompt}`
       : basePrompt;
+    
+    // Log regeneration details
+    console.log('=== QUESTION PANEL REGENERATE IMAGE ===');
+    console.log('Function: QuestionPanel.regenerateQuestionImage');
+    console.log('Student ID:', studentId);
+    console.log('Step Key:', stepKey);
+    console.log('Question ID:', questionId);
+    console.log('Cache Key:', key);
+    console.log('Base prompt:', basePrompt);
+    console.log('Final prompt with latest event:', prompt);
+    console.log('=====================================');
+    
     try {
       setQuestionImageRegenerating(true);
       const res = await fetch('/api/image', {
@@ -372,7 +391,7 @@ Give a brief, friendly response that nudges them without giving the answer.`;
     }
     
     // Keep short; /api/image will wrap with kid-safe epic style
-    return `Clear, unmistakable depiction of the word "${word}" inside our magical bakery adventure. ${contextText}. Educational hint: ${ask}. Ensure the subject visually communicates "${word}" at a glance while fitting seamlessly into the ongoing story.`;
+    return `Clear, unmistakable depiction of the word "${word}" inside our magical bakery adventure. ${contextText}. Educational hint: ${ask}. Ensure the subject visually communicates "${word}" at a glance while fitting seamlessly into the ongoing story. Ensure it does not have any moderated content and strictly avoid nudity, sexual scenes or sensual poses or dresses.`;
   };
 
   const ensureQuestionImage = async (key: string, explicitPrompt?: string) => {
@@ -397,6 +416,16 @@ Give a brief, friendly response that nudges them without giving the answer.`;
       questionLine: hookQuestionLine,
       explicit: explicitPrompt
     });
+    
+    // Log question image generation
+    console.log('=== QUESTION PANEL ENSURE IMAGE ===');
+    console.log('Function: QuestionPanel.ensureQuestionImage');
+    console.log('Cache Key:', key);
+    console.log('Target Word:', targetWord);
+    console.log('Explicit Prompt:', explicitPrompt);
+    console.log('Generated prompt:', prompt);
+    console.log('================================');
+    
     try {
       setQuestionImageLoading(true);
       const res = await fetch('/api/image', {
@@ -473,6 +502,14 @@ Give a brief, friendly response that nudges them without giving the answer.`;
                 questionLine: hook.questionLine || ''
               });
           try {
+            // Log bulk pregeneration
+            console.log('=== QUESTION PANEL BULK PREGENERATION ===');
+            console.log('Function: QuestionPanel bulk pregeneration');
+            console.log('Item key:', it.key);
+            console.log('Hook:', hook);
+            console.log('Generated prompt:', prompt);
+            console.log('======================================');
+            
             const res = await fetch('/api/image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
             const data = await res.json();
             const url = (data?.imageUrl || '').trim();
@@ -494,6 +531,31 @@ Give a brief, friendly response that nudges them without giving the answer.`;
     };
     void pregen();
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Dev mode navigation - detect MSA key combination
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // MSA = Meta + Shift + Alt
+      if (e.metaKey && e.shiftKey && e.altKey) {
+        setIsDevModeActive(true);
+      }
+    };
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      // When any of the MSA keys are released, disable dev mode
+      if (!e.metaKey || !e.shiftKey || !e.altKey) {
+        setIsDevModeActive(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
   }, []);
 
   // Generate a brief Socratic hint for incorrect spelling answers (max 2 sentences)
@@ -770,7 +832,7 @@ Strict rules:
         const messages = [
           {
             role: 'system',
-            content: 'You are a super fun, playful narrator for Grade 2 readers. Continue the story in 2–3 short sentences (30–45 words).\n\nHard rules:\n- Build directly on the most recent event; stay in the given scene. No new proper nouns or places.\n- The learner must spell an unseen target word. Do NOT say, define, rhyme, hint letters, show blanks/letter count, or use synonyms of that word.\n- End with a very short, in-world invite to spell (5–7 words).\n\nStyle guidance:\n- Include a brief 3–6 word bridge from the last event.\n- Use 1-2 small emojis if they fit naturally.\n- Keep the tone warm and adventurous with occasional gentle silliness.\n- If suitable, include light physical comedy but don\'t overdo it—avoid multiple movements or excessive sound effects in one passage.\n- Fold the task naturally into the scene\'s dialogue or narration (e.g., "its name," "the entrance," "what we need to pass through").\n- Dont use blanks.\n\nReturn only the story text.'
+            content: 'You are a warm, excited narrator for Grade 2 readers. Return exactly two sentences, no more than 11 words in total.  Sentence 1: 4–6 words reacting to the latest adventure moment. Sentence 2: 3–5 words, must contain exactly “here\’s the next clue.” Connect the sentences with a simple word like “Now” or “So.” Do not add extra description, imagery, or instructions.'
           },
           {
             role: 'user',
@@ -797,7 +859,7 @@ Strict rules:
         console.error('Error generating Long A passage:', error);
         if (!cancelled && currentLongAQuestion) {
           // Fallback to base line
-          const fallback = currentLongAQuestion.aiHook?.baseLine || 'A shimmering starlight doorway appears in the cavern wall. The baby alien points to the glowing opening.';
+          const fallback = currentLongAQuestion.aiHook?.baseLine || 'A sparkling frosting doorway appears in the bakery wall. London sees magical ingredients floating through the glowing opening.';
           setLongAPassage(fallback);
           setHasGeneratedLongAPassage(true);
           setIsLongAPassageLoading(false);
@@ -892,14 +954,13 @@ Strict rules:
         const baseLine = hookBaseLine;
         const contextText = buildContextText();
         const isCurrentLongASorting = currentLongAQuestion?.isSorting;
-        const taskDescription = isCurrentLongASorting ? 'sort magical words by their patterns' : 'spell an unseen target word';
         const actionWord = isCurrentLongASorting ? 'sort' : 'spell';
         
         const messages = [
           {
             role: 'system',
             content:
-              `You are a super fun, playful narrator for Grade 2 readers. Continue the story in 2–3 short sentences (30–45 words).\n\nHard rules:\n- Build directly on the most recent event; stay in the given scene. No new proper nouns or places.\n- The learner must ${taskDescription}. ${isCurrentLongASorting ? 'Do NOT mention the specific words to be sorted or their patterns.' : 'Do NOT say, define, rhyme, hint letters, show blanks/letter count, or use synonyms of that word.'}\n- End with a very short, in-world invite to ${actionWord} (5–7 words).\n\nStyle guidance:\n- Include a brief 3–6 word bridge from the last event.\n- Use 1-2 small emojis if they fit naturally.\n- Keep the tone warm and adventurous with occasional gentle silliness.\n- If suitable, include light physical comedy but don\'t overdo it—avoid multiple movements or excessive sound effects in one passage.\n- Fold the task naturally into the scene\'s dialogue or narration (e.g., ${isCurrentLongASorting ? '"group these by their secret sounds," "sort these by their patterns"' : '"its name," "the entrance," "what we need to pass through"'}).\n- Dont use blanks.\n\nReturn only the story text.`
+              `You are a warm, excited narrator for Grade 2 readers. Return exactly two sentences, no more than 11 words in total.  Sentence 1: 4–6 words reacting to the latest adventure moment. Sentence 2: 3–5 words, must contain exactly “here\’s the next clue.” Connect the sentences with a simple word like “Now” or “So.” Do not add extra description, imagery, or instructions.`
           },
           {
             role: 'user',
@@ -1039,7 +1100,7 @@ Strict rules:
           const messages = [
             {
               role: 'system',
-              content: `You are a warm, enthusiastic narrator for Grade 2 readers. Write 1-2 short sentences (15-20 words total) that: 1) Celebrate their correct ${actionType === 'sorted' ? 'sorting' : 'spelling'} (2-3 words like "Perfect!" or "Yes!"), 2) Reference what just happened in the scene, 3) Ask what happens next using the target word or one of the given word(s) (be direct, based on the type of question either: "Use ${hookTargetWord} or one of the ${taskDescription} words to describe what happens next!"). Add one small emoji. Stay connected to the immediate scene context.`
+              content: `You are a warm, enthusiastic narrator for Grade 2 readers. Write exactly 2 short sentences (maximum 14 words total). The first sentence should celebrate their correct ${actionType === 'sorted' ? 'sorting' : 'spelling'} with 2–3 words (e.g., “Perfect!” or “Yes!”) plus one emoji. The second sentence should give a direct, simple instruction: ask them to use ${hookTargetWord} (or one of the ${taskDescription} words) to describe what happens next, using phrasing like “Try using ${hookTargetWord} to describe what happens next” or “How would you use ${hookTargetWord} to describe what happens next?”. Do not add any extra scene description or story details.`
             },
             {
               role: 'user',
@@ -1310,6 +1371,12 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
 
   // Image flow: start from the student's continuation input
   const startImageFromContinuation = async () => {
+    // FEATURE FLAG: Disable continuation image generation
+    if (!ENABLE_CONTINUATION_IMAGE_GENERATION) {
+      console.log('Continuation image generation is disabled');
+      return;
+    }
+    
     const raw = continuationInput.trim();
     if (!raw) return;
     // Seed description directly from user text (can be refined later by LLM)
@@ -1324,6 +1391,12 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
 
   // Image flow: start from the speech continuation input
   const startImageFromSpeechContinuation = async () => {
+    // FEATURE FLAG: Disable continuation image generation
+    if (!ENABLE_CONTINUATION_IMAGE_GENERATION) {
+      console.log('Speech continuation image generation is disabled');
+      return;
+    }
+    
     const raw = speechContinuationInput.trim();
     if (!raw) return;
     setImageDescription(raw);
@@ -1363,6 +1436,17 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
       const contextText = contextParts.join('. ');
       contextualPrompt = `${contextText}. User's image request: ${rawPrompt}. Create an image that fits seamlessly into this ongoing magical bakery adventure story.`;
     }
+    
+    // Log user-generated image details
+    console.log('=== QUESTION PANEL USER IMAGE GENERATION ===');
+    console.log('Function: QuestionPanel.generateImageFromDescription');
+    console.log('Raw prompt:', rawPrompt);
+    console.log('Override prompt:', overridePrompt);
+    console.log('Story context:', storyContext);
+    console.log('Latest event:', latestEvent);
+    console.log('Latest meaningful event:', latestMeaningfulEvent);
+    console.log('Final contextual prompt:', contextualPrompt);
+    console.log('==========================================');
     
     try {
       setImageLoading(true);
@@ -3304,28 +3388,30 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                         <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" fill="white"/>
                       </svg>
                     </button>
-                    {/* Icon CTA: Create Image (speech) */}
-                    <button
-                      onClick={startImageFromSpeechContinuation}
-                      title="Create image from this response"
-                      aria-label="Create image from this response"
-                      disabled={!speechContinuationInput.trim()}
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: '50%',
-                        background: speechContinuationInput.trim() ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#9ca3af',
-                        border: '1px solid rgba(255,255,255,0.6)',
-                        color: 'white',
-                        cursor: speechContinuationInput.trim() ? 'pointer' : 'not-allowed',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-                      }}
-                    >
-                      <span role="img" aria-label="Create Image">🌄</span>
-                    </button>
+                    {/* Icon CTA: Create Image (speech) - DISABLED BY FEATURE FLAG */}
+                    {ENABLE_CONTINUATION_IMAGE_GENERATION && (
+                      <button
+                        onClick={startImageFromSpeechContinuation}
+                        title="Create image from this response"
+                        aria-label="Create image from this response"
+                        disabled={!speechContinuationInput.trim()}
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: '50%',
+                          background: speechContinuationInput.trim() ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#9ca3af',
+                          border: '1px solid rgba(255,255,255,0.6)',
+                          color: 'white',
+                          cursor: speechContinuationInput.trim() ? 'pointer' : 'not-allowed',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                        }}
+                      >
+                        <span role="img" aria-label="Create Image">🌄</span>
+                      </button>
+                    )}
                     {/* Icon CTA: Continue story (speech) */}
                     <button
                       onClick={handleSubmitSpeechContinuation}
@@ -3926,6 +4012,14 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
         <AdventureMode 
           onAdventureMessage={(userMessage: string) => setStoryContext(prev => [...prev, userMessage])} 
           onStoryUpdate={(storyUpdate: string) => setStoryContext(prev => [...prev, storyUpdate])}
+          onSwitchToQuestions={() => {
+            // Move to the next question step (exit adventure mode)
+            setCurrentQuestionIndex(prev => prev + 1);
+          }}
+          onGoToPrevious={() => {
+            // Go to previous step (same as the always-visible Previous button)
+            handlePreviousQuestion();
+          }}
         />
       ) : (
         <>
@@ -4446,7 +4540,11 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                   rows={2}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSubmitContinuation(); }
-                    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); void startImageFromContinuation(); }
+                    // FEATURE FLAG: Disable image generation keyboard shortcut
+                    if (ENABLE_CONTINUATION_IMAGE_GENERATION && (e.metaKey || e.ctrlKey) && e.key === 'Enter') { 
+                      e.preventDefault(); 
+                      void startImageFromContinuation(); 
+                    }
                   }}
                   style={{
                     width: '100%',
@@ -4493,28 +4591,30 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
                     </svg>
                   )}
                 </button>
-                {/* Icon CTA: Create Image */}
-                <button
-                  onClick={startImageFromContinuation}
-                  title="Create image from this response"
-                  aria-label="Create image from this response"
-                  disabled={!continuationInput.trim()}
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: '50%',
-                    background: continuationInput.trim() ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#9ca3af',
-                    border: '1px solid rgba(255,255,255,0.6)',
-                    color: 'white',
-                    cursor: continuationInput.trim() ? 'pointer' : 'not-allowed',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-                  }}
-                >
-                  <span role="img" aria-label="Create Image">🌄</span>
-                </button>
+                {/* Icon CTA: Create Image - DISABLED BY FEATURE FLAG */}
+                {ENABLE_CONTINUATION_IMAGE_GENERATION && (
+                  <button
+                    onClick={startImageFromContinuation}
+                    title="Create image from this response"
+                    aria-label="Create image from this response"
+                    disabled={!continuationInput.trim()}
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: '50%',
+                      background: continuationInput.trim() ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#9ca3af',
+                      border: '1px solid rgba(255,255,255,0.6)',
+                      color: 'white',
+                      cursor: continuationInput.trim() ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                    }}
+                  >
+                    <span role="img" aria-label="Create Image">🌄</span>
+                  </button>
+                )}
                 {/* Icon CTA: Continue story */}
                 <button
                   onClick={handleSubmitContinuation}
@@ -4625,8 +4725,83 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
         </button>
       )}
 
-      {/* Global navigation - bottom right */}
-      <div style={{ position: 'fixed', bottom: '16px', right: '16px', display: 'flex', gap: '9.6px', zIndex: 10 }}>
+      {/* Subtle Next button - top right, almost invisible */}
+      <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 10 }}>
+        <button
+          onClick={handleNext}
+          style={{
+            width: '20px',
+            height: '20px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.99)',
+            color: 'rgb(252, 252, 252)',
+            border: '0.2px solid rgb(255, 251, 251)',
+            cursor: 'pointer',
+            fontSize: '2px',
+            fontWeight: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease',
+            opacity: 0.0001
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.7';
+            e.currentTarget.style.background = 'rgb(255, 255, 255)';
+            e.currentTarget.style.color = 'rgb(255, 255, 255)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '0.2';
+            e.currentTarget.style.background = 'rgba(156,163,175,0.1)';
+            e.currentTarget.style.color = 'rgba(107,114,128,0.3)';
+          }}
+          title="Next"
+          aria-label="Next question (subtle)"
+        >
+          →
+        </button>
+      </div>
+
+      {/* Always visible Previous button - bottom left */}
+      <div style={{ position: 'fixed', bottom: '16px', left: '16px', zIndex: 10 }}>
+        <button
+          onClick={handlePreviousQuestion}
+          disabled={currentQuestionIndex === 0}
+          style={{
+            minWidth: '96px',
+            height: '38.4px',
+            borderRadius: '12.8px',
+            background: 'linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 100%)',
+            color: '#374151',
+            border: 'none',
+            cursor: currentQuestionIndex === 0 ? 'not-allowed' : 'pointer',
+            fontSize: '12.8px',
+            fontWeight: 700,
+            boxShadow: '0 6.4px 19.2px rgba(156,163,175,0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6.4px',
+            opacity: currentQuestionIndex === 0 ? 0.6 : 1
+          }}
+          onMouseDown={(e) => {
+            if (currentQuestionIndex !== 0) e.currentTarget.style.transform = 'scale(0.95)';
+          }}
+          onMouseUp={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+          title={currentQuestionIndex === 0 ? 'No previous question' : 'Go to previous question'}
+          aria-label="Previous question"
+        >
+          ⬅️ Previous
+        </button>
+      </div>
+
+      {/* Global navigation - bottom right (dev mode only) */}
+      <div style={{ position: 'fixed', bottom: '16px', right: '16px', display: isDevModeActive ? 'flex' : 'none', gap: '9.6px', zIndex: 10 }}>
         <button
           onClick={handlePreviousQuestion}
           disabled={currentQuestionIndex === 0}

@@ -3,10 +3,10 @@ import { BlendingQuestion, SpeechQuestion, Question } from './types';
 export const blendingQuestions: BlendingQuestion[] = [
   {
     id: 1,
-    word: 'Asher',
-    imageUrl: '🚀⭐',
-    phonemes: ['A', 'sh', 'e', 'r'],
-    explanation: "Blend the sounds A-sh-e-r to make 'Asher'!",
+    word: 'London',
+    imageUrl: '✨💖',
+    phonemes: ['L', 'o', 'n', 'd', 'o', 'n'],
+    explanation: "Blend the sounds L-o-n-d-o-n to make 'London'!",
   },
 ];
 
@@ -14,134 +14,134 @@ export const speechQuestions: SpeechQuestion[] = [
   {
     id: 1,
     text:
-      "Captain Asher found a big tech gadget in the starship control room. He picked it up and gave it a quick hit to activate it. The gadget made a loud beep that echoed through the futuristic base.",
-    imageUrl: '🚀🔧✨',
-    expectedWords: ['big', 'hit', 'quick'],
-    explanation: 'Great job! You found all the short i CVC words in Captain Asher\'s space adventure.',
+      "London discovered a big magical mixing bowl in the enchanted bakery. She picked it up and gave it a quick mix to activate its sparkles. The bowl made a loud ding that echoed through the magical bakery.",
+    imageUrl: '✨🧁💖',
+    expectedWords: ['big', 'mix', 'quick'],
+    explanation: 'Great job! You found all the short i CVC words in London\'s magical bakery adventure.',
   },
 ];
 
 export const longAQuestions: Question[] = [
+  // Step 2 changed from sorting to fill-in-the-blank per FLOSS rule
   {
     id: 1,
-    word: 'Sort the words by their vowel patterns',
-    imageUrl: '🔤✨',
-    isSorting: true,
-    correctAnswer: {
-      'ai': ['rain', 'train'],
-      'a_e': ['cake', 'make']
-    },
-    explanation: 'Perfect! You sorted the alien data-crystals by their long A patterns - ai and a_e!',
-    sortingWords: ['rain', 'cake', 'make', 'train'],
-    sortingBins: ['ai', 'a_e'],
+    word: 'fluff',
+    imageUrl: '🧁✨',
+    isFillBlank: true,
+    fillBlankPattern: 'fl__f',
+    correctAnswer: 'fluff',
+    explanation: 'Sprinkle Beast\'s whipped cream hair is so soft and fluffy—finish the word!',
     aiHook: {
-      targetWord: 'long A patterns',
-      intent: 'sorting',
-      baseLine: 'Deep in the underground starbase, Captain Asher discovers ancient alien data crystals with glowing symbols that spell different words. Clay explains that to unlock the next portal sequence, he must sort the floating data-crystals by their energy patterns.',
-      questionLine: 'Sort the words by their vowel patterns.',
-      validationWord: 'vowel patterns',
-      imagePrompt: 'Captain Asher in his futuristic space suit standing before a holographic sorting station in the underground starbase, with glowing data-crystals floating around him showing "rain", "cake", "make", "train", two energy sorting chambers labeled with alien symbols for "ai" and "a_e" patterns, Clay the massive brown MudWing dragon nearby with glowing amber eyes, high-tech base with metallic walls and glowing control panels surrounded by jungle vines.'
+      targetWord: 'fluff',
+      intent: 'spelling',
+      baseLine: 'London watches Sprinkle Beast the giant cupcake monster fluff up his whipped cream hair as magical sparkles swirl around the enchanted bakery.',
+      questionLine: 'Listen and fill in the missing letters for something soft and puffy (FLOSS rule with double f).',
+      validationWord: 'fluff',
+      imagePrompt: 'London in her sparkly star dress watching Sprinkle Beast the giant cupcake monster with incredibly FLUFFY whipped cream hair in the enchanted bakery, magical sparkles floating around, soft puffy clouds of whipped cream, rainbow frosting shelves; clearly shows the concept of fluff and softness.'
     }
   },
+  // Step 3 fill-in-the-blank
   {
     id: 2,
-    word: 'rain',
-    imageUrl: '🌧️✨',
+    word: 'jazz',
+    imageUrl: '🎶✨',
     isFillBlank: true,
-    fillBlankPattern: 'r__n',
-    correctAnswer: 'rain',
-    explanation: 'The alien "rain" falls gently on the starbase dome - the long a sound with ai pattern!',
+    fillBlankPattern: 'ja__',
+    correctAnswer: 'jazz',
+    explanation: 'The mixer hums a jazzy beat—complete the word you hear!',
     aiHook: {
-      targetWord: 'rain',
+      targetWord: 'jazz',
       intent: 'spelling',
-      baseLine: 'Captain Asher watches gentle glowing droplets fall from the alien atmosphere above the starbase dome.',
-      questionLine: 'Listen and fill in the missing letters for water falling from clouds (long a with ai pattern).',
-      validationWord: 'rain',
-      imagePrompt: 'Gentle alien RAIN with glowing droplets falling on the futuristic starbase dome with Captain Asher in his space suit watching from inside the underground base, bioluminescent jungle atmosphere; clearly shows rain falling from alien clouds through the dome.'
+      baseLine: 'London listens as the magical mixer creates a rhythmic jazzy beat that echoes through the enchanted bakery, making all the ingredients dance.',
+      questionLine: 'Listen and fill in the missing letters for a musical style with rhythm (FLOSS rule with double z).',
+      validationWord: 'jazz',
+      imagePrompt: 'London in her sparkly star dress listening to a magical mixer creating JAZZ music with musical notes floating around the enchanted bakery, ingredients dancing to the beat, rhythmic sparkles; clearly shows jazz music and rhythm.'
     }
   },
+  // Step 4 fill-in-the-blank
   {
     id: 3,
-    word: 'pain',
-    imageUrl: '🤕✨',
+    word: 'shell',
+    imageUrl: '🥚✨',
     isFillBlank: true,
-    fillBlankPattern: 'p__n',
-    correctAnswer: 'pain',
-    explanation: 'When Captain Asher touches the energy core, he feels "pain" - the long a sound with ai pattern!',
+    fillBlankPattern: 'she__',
+    correctAnswer: 'shell',
+    explanation: 'London cracks an eggshell over the glowing bowl—fill in the missing letters!',
     aiHook: {
-      targetWord: 'pain',
+      targetWord: 'shell',
       intent: 'spelling',
-      baseLine: 'Captain Asher accidentally touches the glowing energy core and learns about being careful in the starbase.',
-      questionLine: 'Listen and fill in the missing letters for when something hurts (long a with ai pattern).',
-      validationWord: 'pain',
-      imagePrompt: 'Captain Asher in his space suit carefully examining a glowing energy core in the underground starbase with a thoughtful expression showing he learned about being careful, bright blue energy emanating from the core; shows the concept of pain as a learning moment.'
+      baseLine: 'London carefully cracks a magical golden eggshell over the glowing mixing bowl, watching the sparkly contents pour into her special recipe.',
+      questionLine: 'Listen and fill in the missing letters for the hard outer covering of an egg (FLOSS rule with double l).',
+      validationWord: 'shell',
+      imagePrompt: 'London in her sparkly star dress cracking a magical golden EGGSHELL over a glowing mixing bowl in the enchanted bakery, sparkly egg contents flowing out, magical golden light; clearly shows the eggshell being cracked.'
     }
   },
 ];
 
 export const questions: Question[] = [
+  // Steps 7–10 updated to FLOSS-rule spelling words
   {
     id: 1,
-    word: 'train',
-    imageUrl: '🚂✨',
+    word: 'buzz',
+    imageUrl: '🔔✨',
     isSpelling: true,
-    correctAnswer: 'train',
-    explanation: 'The space "train" carries supplies to the starbase - the long a sound with ai pattern!',
+    correctAnswer: 'buzz',
+    explanation: 'The magical ovens buzz when a recipe is ready. Spell the word.',
     aiHook: {
-      targetWord: 'train',
+      targetWord: 'buzz',
       intent: 'spelling',
-      baseLine: 'Captain Asher watches a futuristic supply train arrive at the underground starbase station.',
-      questionLine: 'Listen and spell the word for the vehicle that runs on tracks (long a with ai pattern).',
-      validationWord: 'train',
-      imagePrompt: 'Futuristic space TRAIN arriving at the underground starbase station carrying glowing supply containers, Captain Asher in his space suit watching with interest, high-tech magnetic tracks and energy propulsion; clearly shows the futuristic supply train in the jungle starbase.'
+      baseLine: 'London hears the magical ovens buzz with excitement as her recipe reaches the perfect temperature, filling the enchanted bakery with melodic humming.',
+      questionLine: 'Listen and spell the word for the sound a bee makes or when something vibrates (FLOSS rule with double z).',
+      validationWord: 'buzz',
+      imagePrompt: 'London in her sparkly star dress standing near magical ovens that are BUZZING with golden energy in the enchanted bakery, sound waves and sparkles emanating from the ovens, her blonde sidekick nearby; clearly shows the buzzing ovens.'
     }
   },
   {
     id: 2,
-    word: 'tail',
-    imageUrl: '🐉✨',
+    word: 'fizz',
+    imageUrl: '🧪✨',
     isSpelling: true,
-    correctAnswer: 'tail',
-    explanation: 'Clay the dragon swishes his massive "tail" - the long a sound with ai pattern!',
+    correctAnswer: 'fizz',
+    explanation: 'A sparkly potion fizzes in the mixing jar. Spell the word.',
     aiHook: {
-      targetWord: 'tail',
+      targetWord: 'fizz',
       intent: 'spelling',
-      baseLine: 'Captain Asher watches Clay the massive brown MudWing dragon swish his powerful tail as he helps explore the jungle.',
-      questionLine: 'Listen and spell the word for the long part at the back of an animal (long a with ai pattern).',
-      validationWord: 'tail',
-      imagePrompt: 'Clay the massive brown MudWing dragon with strong limbs and wide wings, swishing his powerful TAIL gracefully in the futuristic jungle on Ragonia 7\'s moon, Captain Asher in his space suit watching with amazement, glowing alien plants around; clearly shows the dragon\'s tail.'
+      baseLine: 'London watches a sparkly magical potion fizz and bubble in her crystal mixing jar, creating rainbow bubbles that float around the enchanted bakery.',
+      questionLine: 'Listen and spell the word for when bubbles form and pop in a drink (FLOSS rule with double z).',
+      validationWord: 'fizz',
+      imagePrompt: 'London in her sparkly star dress watching a magical potion FIZZING with colorful bubbles in a crystal jar in the enchanted bakery, rainbow bubbles floating around, sparkling liquid; clearly shows the fizzing potion.'
     }
   },
   {
     id: 3,
-    word: 'mail',
-    imageUrl: '📡✨',
+    word: 'spill',
+    imageUrl: '🍬✨',
     isSpelling: true,
-    correctAnswer: 'mail',
-    explanation: 'Captain Asher receives cosmic "mail" with mission data - the long a sound with ai pattern!',
+    correctAnswer: 'spill',
+    explanation: 'Uh-oh! A sprinkle spill slides across the counter. Spell the word.',
     aiHook: {
-      targetWord: 'mail',
+      targetWord: 'spill',
       intent: 'spelling',
-      baseLine: 'Captain Asher finds holographic messages with secret mission data delivered to the underground starbase.',
-      questionLine: 'Listen and spell the word for letters delivered to your house (long a with ai pattern).',
-      validationWord: 'mail',
-      imagePrompt: 'Captain Asher in his space suit receiving cosmic MAIL with glowing holographic data packets at the futuristic starbase communication station, floating digital envelopes around; clearly shows space mail delivery in the underground base.'
+      baseLine: 'London gasps as colorful sprinkles spill across the magical counter, creating a rainbow cascade that sparkles as it slides toward the edge.',
+      questionLine: 'Listen and spell the word for when liquid or small things fall and spread out (FLOSS rule with double l).',
+      validationWord: 'spill',
+      imagePrompt: 'London in her sparkly star dress looking at colorful sprinkles SPILLING across a magical counter in the enchanted bakery, rainbow cascade of sprinkles flowing, surprised expression; clearly shows the spilling sprinkles.'
     }
   },
   {
     id: 4,
-    word: 'nail',
-    imageUrl: '🔧✨',
+    word: 'staff',
+    imageUrl: '🔮✨',
     isSpelling: true,
-    correctAnswer: 'nail',
-    explanation: 'Captain Asher uses a tech "nail" to secure equipment - the long a sound with ai pattern!',
+    correctAnswer: 'staff',
+    explanation: 'London lifts a glowing baking staff to calm the frosting storm. Spell the word.',
     aiHook: {
-      targetWord: 'nail',
+      targetWord: 'staff',
       intent: 'spelling',
-      baseLine: 'Captain Asher carefully uses a glowing tech nail to secure important equipment around the underground starbase.',
-      questionLine: 'Listen and spell the word for the sharp thing you hammer into wood (long a with ai pattern).',
-      validationWord: 'nail',
-      imagePrompt: 'Captain Asher in his space suit using a glowing tech NAIL to secure holographic equipment panels in the underground starbase, advanced energy tools with bright lights around; clearly shows the futuristic nail and equipment mounting in the high-tech base.'
+      baseLine: 'London lifts her magical glowing baking staff high above her head, sending calming sparkles into the wild frosting storm that swirls around the enchanted bakery.',
+      questionLine: 'Listen and spell the word for a long stick used by wizards or bakers (FLOSS rule with double f).',
+      validationWord: 'staff',
+      imagePrompt: 'London in her sparkly star dress holding a magical glowing baking STAFF above her head in the enchanted bakery, calming a frosting storm with sparkles emanating from the staff, dramatic magical scene; clearly shows the magical staff.'
     }
   },
 ];

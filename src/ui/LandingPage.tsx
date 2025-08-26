@@ -36,13 +36,13 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       pages: undefined
     },
     {
-      id: 'captain-asher-time-stranglers',
-      title: 'Captain Asher and the Time Stranglers',
-      author: 'by Asher Elliman, 3rd grade',
-      pages: '65 pages',
-      emoji: '🚀',
-      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FAsherE%252F20250815_174915.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
-      color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+      id: 'london-magical-bakery',
+      title: 'London and the Magical Bakery',
+      author: 'by London, 3rd grade',
+      pages: '10 pages',
+      emoji: '✨',
+      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fdubeus2fv4wzz.cloudfront.net%252Fimages%252F20250822_192830_image.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+      color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
       isCreateNew: false
     }
   ];
@@ -58,6 +58,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       emoji: '🐸',
       color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
     },
+
     {
       id: 'captain-asher-time-stranglers',
       title: 'Captain Asher and the Time Stranglers',
@@ -782,7 +783,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
               fontFamily: 'Quicksand, system-ui, sans-serif',
               textShadow: '0 2px 4px rgba(0,0,0,0.05)'
             }}>
-              📚 Welcome back, Captain Asher!
+              📚 Welcome back, London!
             </h1>
             <div style={{ marginTop: 20 }}>
               <AuthorLevelBadge />

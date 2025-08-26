@@ -117,6 +117,15 @@ export function ConnorPictureBook({ onBack, onPrevious }: Props): JSX.Element {
         prompt = `Connor adventure scene ${sceneNumber}, fantasy world, magical adventure, digital art`;
       }
 
+      // Log image generation details for Connor PictureBook
+      console.log('=== CONNOR PICTURE BOOK IMAGE GENERATION ===');
+      console.log('Function: ConnorPictureBook.generateImage');
+      console.log('ID:', id);
+      console.log('Label:', label);
+      console.log('Action:', action);
+      console.log('Generated prompt:', prompt);
+      console.log('===========================================');
+
       const response = await fetch('/api/image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
