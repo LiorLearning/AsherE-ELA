@@ -24,7 +24,7 @@ export type Question = {
   options?: string[]; // Optional answer choices for multiple choice questions
   sortingWords?: string[]; // Words to be sorted
   sortingBins?: string[]; // Bin labels for sorting
-  aiHook?: AiHook; // Optional AI hook config for Step 4 methodology
+  aiHook?: AiHook; // Optional AI hook config for Step 5 methodology
 };
 
 export type BlendingQuestion = {

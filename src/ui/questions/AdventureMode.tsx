@@ -212,7 +212,7 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
   }, []);
 
   useEffect(() => {
-    // If arriving from Step 4 with a pending chat, inject it once
+    // If arriving from Step 5 with a pending chat, inject it once
     const pending = consumePendingAdventureChat?.();
     if (pending && pending.text) {
       // Drive the normal send path to avoid duplicate appends

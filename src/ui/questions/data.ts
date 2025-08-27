@@ -31,7 +31,7 @@ export const longAQuestions: Question[] = [
       imagePrompt: 'London in her sparkly star dress watching Sprinkle Beast the giant cupcake monster with incredibly FLUFFY whipped cream hair in the enchanted bakery, magical sparkles floating around, soft puffy clouds of whipped cream, rainbow frosting shelves; clearly shows the concept of fluff and softness.'
     }
   },
-  // Step 3 fill-in-the-blank
+  // Step 4 fill-in-the-blank
   {
     id: 2,
     word: 'jazz',
@@ -49,7 +49,7 @@ export const longAQuestions: Question[] = [
       imagePrompt: 'London in her sparkly star dress listening to a magical mixer creating JAZZ music with musical notes floating around the enchanted bakery, ingredients dancing to the beat, rhythmic sparkles; clearly shows jazz music and rhythm.'
     }
   },
-  // Step 4 fill-in-the-blank
+  // Step 5 fill-in-the-blank
   {
     id: 3,
     word: 'shell',

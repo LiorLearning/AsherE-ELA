@@ -4,6 +4,7 @@ import bg1Url from '../../bg1.png';
 import { Question, BlendingQuestion, SpeechQuestion } from './questions/types';
 import { blendingQuestions as blendingQuestionsData, speechQuestions as speechQuestionsData, longAQuestions as longAQuestionsData, questions as regularQuestionsData, options } from './questions/data';
 import { AdventureMode } from './questions/AdventureMode';
+import { AdventureMode2 } from './questions/AdventureMode2';
 import { useStory } from './story/StoryStore';
 import { audioManager } from './audioManager';
 
@@ -27,8 +28,8 @@ export function QuestionPanel({ onComplete }: Props): JSX.Element {
   // Question data
   const questions: Question[] = regularQuestionsData;
   
-  // Flow order: adventure mode (step 1) -> long A questions -> speech -> adventure mode -> regular questions -> adventure mode (blending step removed)
-  const totalSteps = 1 + blendingQuestions.length + longAQuestions.length + speechQuestions.length + 1 + questions.length + 1;
+  // Flow order: adventure mode 2 (step 1) -> adventure mode (step 2) -> long A questions -> speech -> adventure mode -> regular questions -> adventure mode (blending step removed)
+  const totalSteps = 1 + 1 + blendingQuestions.length + longAQuestions.length + speechQuestions.length + 1 + questions.length + 1;
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -142,7 +143,7 @@ Rules:
 - Encourage, ask one small guiding question if helpful.
 - Keep focus on listening and long-\u0101 spelling for this step.
 - Optional theme: adventure.`;
-      const user = `Context: Step 3 spelling practice (long-\u0101). Target word (do not say): ${target}.
+      const user = `Context: Step 4 spelling practice (long-\u0101). Target word (do not say): ${target}.
 Student said: ${studentText}
 Give a brief, friendly response that nudges them without giving the answer.`;
       const res = await fetch('/api/chat', {
@@ -253,17 +254,18 @@ Give a brief, friendly response that nudges them without giving the answer.`;
   
   // Determine current step type
   const isAdventureMode1 = currentQuestionIndex === 0;
-  const isBlendingQuestion = currentQuestionIndex >= 1 && currentQuestionIndex < 1 + blendingQuestions.length;
-  const isLongAQuestion = currentQuestionIndex >= 1 + blendingQuestions.length && currentQuestionIndex < 1 + blendingQuestions.length + longAQuestions.length;
-  const isSpeechQuestion = currentQuestionIndex >= 1 + blendingQuestions.length + longAQuestions.length && currentQuestionIndex < 1 + blendingQuestions.length + longAQuestions.length + speechQuestions.length;
-  const isAdventureMode4 = currentQuestionIndex === (1 + blendingQuestions.length + longAQuestions.length + speechQuestions.length);
-  const isAdventureMode9 = currentQuestionIndex === (1 + blendingQuestions.length + longAQuestions.length + speechQuestions.length + 1 + questions.length);
-  const isAdventureMode = isAdventureMode1 || isAdventureMode4 || isAdventureMode9;
-  const currentBlendingQuestion = isBlendingQuestion ? blendingQuestions[currentQuestionIndex - 1] : null;
-  const currentLongAQuestion = isLongAQuestion ? longAQuestions[currentQuestionIndex - 1 - blendingQuestions.length] : null;
-  const currentSpeechQuestion = isSpeechQuestion ? speechQuestions[currentQuestionIndex - 1 - blendingQuestions.length - longAQuestions.length] : null;
+  const isAdventureMode2 = currentQuestionIndex === 1;
+  const isBlendingQuestion = currentQuestionIndex >= 2 && currentQuestionIndex < 2 + blendingQuestions.length;
+  const isLongAQuestion = currentQuestionIndex >= 2 + blendingQuestions.length && currentQuestionIndex < 2 + blendingQuestions.length + longAQuestions.length;
+  const isSpeechQuestion = currentQuestionIndex >= 2 + blendingQuestions.length + longAQuestions.length && currentQuestionIndex < 2 + blendingQuestions.length + longAQuestions.length + speechQuestions.length;
+  const isAdventureMode5 = currentQuestionIndex === (2 + blendingQuestions.length + longAQuestions.length + speechQuestions.length);
+  const isAdventureMode10 = currentQuestionIndex === (2 + blendingQuestions.length + longAQuestions.length + speechQuestions.length + 1 + questions.length);
+  const isAdventureMode = isAdventureMode1 || isAdventureMode2 || isAdventureMode5 || isAdventureMode10;
+  const currentBlendingQuestion = isBlendingQuestion ? blendingQuestions[currentQuestionIndex - 2] : null;
+  const currentLongAQuestion = isLongAQuestion ? longAQuestions[currentQuestionIndex - 2 - blendingQuestions.length] : null;
+  const currentSpeechQuestion = isSpeechQuestion ? speechQuestions[currentQuestionIndex - 2 - blendingQuestions.length - longAQuestions.length] : null;
   const currentRegularQuestion = (!isBlendingQuestion && !isSpeechQuestion && !isLongAQuestion && !isAdventureMode)
-    ? questions[currentQuestionIndex - 1 - blendingQuestions.length - longAQuestions.length - speechQuestions.length - 1]
+    ? questions[currentQuestionIndex - 2 - blendingQuestions.length - longAQuestions.length - speechQuestions.length - 1]
     : null;
   // Continuation experiment flags (now data-driven via aiHook)
   const isFirstRegularStep = (!isBlendingQuestion && !isSpeechQuestion && !isLongAQuestion && !isAdventureMode && currentRegularQuestion?.id === 1);
@@ -286,9 +288,9 @@ Give a brief, friendly response that nudges them without giving the answer.`;
     return storyContext.join('\n');
   };
   const getLastEvent = (): string => {
-    // For the first regular step (Step 4), prefer the validated continuation from Step 3.
+    // For the first regular step (Step 5), prefer the validated continuation from Step 4.
     if (isFirstRegularStep && validatedContinuation) return validatedContinuation;
-    // For the second regular step (Step 6), bridge from the most recent story context (Step 5 adventure message).
+    // For the second regular step (Step 7), bridge from the most recent story context (Step 6 adventure message).
     if (isSecondRegularStep) return storyContext[storyContext.length - 1] || validatedContinuation || '';
     // Fallback: latest context event
     return storyContext[storyContext.length - 1] || '';
@@ -916,7 +918,7 @@ Strict rules:
 
   // Do not seed static passage into story context; keep context sourced from Step 1 and user additions only
 
-  // Generate Long A specific passage for step 3 (gate question)
+  // Generate Long A specific passage for step 4 (gate question)
   useEffect(() => {
     if (!isLongAQuestion || !currentLongAQuestion || hasGeneratedLongAPassage) return;
     if (!storyContext.length) return;
@@ -983,7 +985,7 @@ Strict rules:
     setTimeout(() => { void playElevenTTS(passage); }, 300);
   }, [isLongAQuestion, hasGeneratedLongAPassage, hasAutoplayedLongAPassage, longAPassage]);
 
-  // Note: Speech question (step 2) does not autoplay - student needs to read it themselves
+  // Note: Speech question (step 3) does not autoplay - student needs to read it themselves
 
   // Automatic feedback for speech questions once evaluation is finalized
   useEffect(() => {
@@ -1031,7 +1033,7 @@ Strict rules:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAiHookStep, currentRegularQuestion?.id]);
 
-  // Preserve the learner's validated continuation when returning to Step 4 later
+  // Preserve the learner's validated continuation when returning to Step 5 later
   useEffect(() => {
     if (isFirstRegularStep && validatedContinuation) {
       setShowFeedback(true);
@@ -1041,7 +1043,7 @@ Strict rules:
     }
   }, [isFirstRegularStep, validatedContinuation]);
 
-  // Generate a brief story-forwarding hook (short sentences) when step 4/5 is active, only once unless retried
+  // Generate a brief story-forwarding hook (short sentences) when step 5/6 is active, only once unless retried
   useEffect(() => {
     const shouldSummarize = isAiHookStep && storyContext.length > 0 && !hasGeneratedSummary;
     if (!shouldSummarize) return;
@@ -1449,10 +1451,10 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
     // Immediately animate out (no added wait, no praise TTS)
       setIsContinuationHidden(true);
     setIsFeedbackRemoved(false);
-    try { appendEvent(`User's continuation (Step 3): ${text}`); } catch {} // Store for AdventureMode story summaries
+    try { appendEvent(`User's continuation (Step 4): ${text}`); } catch {} // Store for AdventureMode story summaries
     try { setPendingAdventureChat(text); } catch {}
-    // Auto-advance to Step 4 after a short beat
-    // Reset step-level UI state to avoid bleed into Step 4
+    // Auto-advance to Step 5 after a short beat
+    // Reset step-level UI state to avoid bleed into Step 5
     setShowFeedback(false);
     setIsCorrect(false);
     setSelectedOption(null);
@@ -1591,18 +1593,18 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
     } else {
       const text = continuationInput.trim();
       if (text) {
-        try { appendEvent(`User's continuation (Step 3): ${text}`); } catch {} // Store for AdventureMode story summaries
+        try { appendEvent(`User's continuation (Step 4): ${text}`); } catch {} // Store for AdventureMode story summaries
         setValidatedContinuation(text);
         setStoryContext(prev => [...prev, text]);
         try { setPendingAdventureChat(text); } catch {}
       }
     }
-    // Ensure Step 4 regenerates fresh summary from the new continuation
+    // Ensure Step 5 regenerates fresh summary from the new continuation
     setHasGeneratedSummary(false);
     setHasAutoplayedSummary(false);
     setAiSummary('');
     setIsSummaryLoading(true);
-    // Reset Step 3 UI-specific flags just like the non-image path
+    // Reset Step 4 UI-specific flags just like the non-image path
     setShowFeedback(false);
     setIsCorrect(false);
     setSelectedOption(null);
@@ -2667,7 +2669,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
         fontFamily: 'system-ui, -apple-system, sans-serif',
         position: 'relative'
       }}>
-      {/* Step 4: move the AI hook into the central prompt; hide top-left bubble */}
+      {/* Step 5: move the AI hook into the central prompt; hide top-left bubble */}
       {/* Progress indicator */}
       <div style={{
         position: 'absolute',
@@ -4111,7 +4113,33 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
           </div>
           )}
         </>
-      ) : isAdventureMode ? (
+      ) : isAdventureMode1 ? (
+        <AdventureMode2 
+          onAdventureMessage={(userMessage: string) => setStoryContext(prev => [...prev, userMessage])} 
+          onStoryUpdate={(storyUpdate: string) => setStoryContext(prev => [...prev, storyUpdate])}
+          onSwitchToQuestions={() => {
+            // Move to the next question step (exit adventure mode)
+            setCurrentQuestionIndex(prev => prev + 1);
+          }}
+          onGoToPrevious={() => {
+            // Go to previous step (same as the always-visible Previous button)
+            handlePreviousQuestion();
+          }}
+        />
+      ) : isAdventureMode2 ? (
+        <AdventureMode 
+          onAdventureMessage={(userMessage: string) => setStoryContext(prev => [...prev, userMessage])} 
+          onStoryUpdate={(storyUpdate: string) => setStoryContext(prev => [...prev, storyUpdate])}
+          onSwitchToQuestions={() => {
+            // Move to the next question step (exit adventure mode)
+            setCurrentQuestionIndex(prev => prev + 1);
+          }}
+          onGoToPrevious={() => {
+            // Go to previous step (same as the always-visible Previous button)
+            handlePreviousQuestion();
+          }}
+        />
+      ) : (isAdventureMode5 || isAdventureMode10) ? (
         <AdventureMode 
           onAdventureMessage={(userMessage: string) => setStoryContext(prev => [...prev, userMessage])} 
           onStoryUpdate={(storyUpdate: string) => setStoryContext(prev => [...prev, storyUpdate])}
@@ -4126,7 +4154,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
         />
       ) : (
         <>
-          {/* Regular Question Prompt - moved above image; for step 4, show AI hook here */}
+          {/* Regular Question Prompt - moved above image; for step 5, show AI hook here */}
           {!isBlendingQuestion && !isSpeechQuestion && !isLongAQuestion && (
             <div style={{
               marginBottom: '28.8px',
@@ -4536,7 +4564,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
               lineHeight: 1.5,
               width: '100%'
             }} className={isContinuationStep ? (isContinuationAnimating ? 'fade-out' : '') : ''}>
-              {/* Show user's response if validated for Step 4 only, otherwise show the CTA */}
+              {/* Show user's response if validated for Step 5 only, otherwise show the CTA */}
               {isCorrect && isContinuationStep && isContinuationHidden && validatedContinuation && isFirstRegularStep ? (
                 <div style={{
                   fontFamily: 'Quicksand, sans-serif',
@@ -4779,7 +4807,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
             {/* No next button here when correct to keep the box compact */}
           </div>
 
-          {/* Step 4 continuation experiment moved into green container above */}
+          {/* Step 5 continuation experiment moved into green container above */}
         </div>
       )}
 
