@@ -30,13 +30,22 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
           companions: "Shadow (mysterious black dog), Mia's Sister, The Boy Protector",
           theme: "courage, family bonds, and trust in animals"
         };
+      case 'gregory-ipad-kid':
+        return {
+          defaultMessage: "⚡🎮 Gregory! It's Pikachu.exe. We've reached the cursed lake's depths. Your Time Cloak pulses, weakening the iPad Kid's grip. Gregory.exe is almost free. The shadows tremble. Will you confront the iPad Kid, free Gregory.exe, or explore the glitchy depths? What will you do next? ⚡",
+          protagonist: "Gregory",
+          username: "Gregory",
+          setting: "A corrupted glitchy digital world with shifting landscapes, cursed lakes, and hidden digital artifacts",
+          companions: "Pikachu.exe (glitch-powered loyal Pokémon), Gregory Prime (wise future self)",
+          theme: "courage vs. corruption, self-discovery, and digital world protection"
+        };
       case 'roblox-showdown':
       case 'captain-asher-time-stranglers':
       default:
         return {
-          defaultMessage: "✨🌟 Welcome to our adventure session, Irene! I'm so excited to create an amazing story with you! What kind of adventure sparks your imagination today - magical forests with talking animals, space exploration with robotic friends, or would you like to create your very own adventure with your own setting and characters?",
-          protagonist: "Irene",
-          username: "Irene",
+          defaultMessage: "⚡🎮 Hey Gregory! Ready for an epic glitchy adventure? I'm thinking digital battles, anime powers, maybe some Pokemon action in a corrupted world? What sounds most exciting to you today? ⚡",
+          protagonist: "Gregory",
+          username: "Gregory",
           setting: "Adventure creation space",
           companions: "loyal companion",
           theme: "creative storytelling and adventure exploration"
@@ -175,14 +184,14 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
 
   // Target words for spelling challenges - CVC words with short "o" and short "u"
   const targetWords: string[] = [
-    // CVC words with short "o"
-    'box', 'fox', 'pot', 'hot', 'dot', 'lot', 'got',
-    'hop', 'top', 'mop', 'cop', 'pop', 'job', 'rob',
-    'log', 'dog', 'fog', 'jog', 'nod', 'rod', 'mom', 'not',
-    // CVC words with short "u"
-    'bug', 'hug', 'mug', 'rug', 'tug', 'jug', 'pug',
-    'bus', 'cut', 'hut', 'nut', 'but', 'run', 'fun', 'sun',
-    'gun', 'bun', 'mud', 'cup', 'pup', 'gum', 'sum', 'hum'
+    // Common long "u" words with silent e
+    'cube', 'flute', 'mule', 'tune', 'rude', 'cute', 'fuse', 'use', 'mute', 'huge',
+    // Common long "u" words with "ue"
+    'blue', 'clue', 'true', 'glue', 'rescue', 'issue', 'value', 'argue', 'continue', 'avenue',
+    // Common long "u" words with "oo"
+    'moon', 'spoon', 'broom', 'room', 'bloom', 'groom', 'zoom', 'food', 'school', 'noon',
+    // Common long "u" words with "ew"
+    'new', 'stew', 'crew', 'flew', 'chew', 'grew', 'blew', 'few', 'view', 'jewel'
   ].sort(() => Math.random() - 0.5); // Randomize the order
 
   // Function to get current phase and target words
@@ -324,6 +333,17 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
           goal: 'find the missing sister, uncover forest secrets, and build trust with magical creatures',
           villain: 'The Forest\'s Dark Secret (mysterious force that separates families)',
           recentEvent: 'Shadow appeared from the shadows, offering to guide Irene through the mystical forest to find her sister'
+        };
+      case 'gregory-ipad-kid':
+        return {
+          type: 'corrupted digital world adventure with glitch powers and anime battles',
+          protagonist: 'Gregory (brave boy wearing a glowing Time Cloak, determined to protect others from corruption)',
+          sidekick: 'Pikachu.exe (once corrupted Pokémon, now captured in a special Pokéball, loyal and glitch-powered)',
+          teammates: 'Gregory Prime (Gregory\'s wiser future self who guided him through the Gregory.exe v2 USB)',
+          setting: 'A corrupted glitchy digital world with shifting landscapes, cursed lakes, corrupted anime warriors, and hidden digital artifacts',
+          goal: 'face the chained shadow beneath the cursed lake, stop the iPad Kid\'s corruption, and protect the digital world',
+          villain: 'The iPad Kid (source of brainrot corruption, spreading glitches across the digital world, sending corrupted anime warriors)',
+          recentEvent: 'Gregory, now armed with Echo Shift, journeys deep beneath the cursed lake to face his glitched shadow, while a chained version of Gregory.exe waits to be freed'
         };
       case 'roblox-showdown':
       case 'captain-asher-time-stranglers':
@@ -634,7 +654,7 @@ The target word: "${word}"
 Student's attempt: "${userAttempt}"
 
 Format your response like this:
-"Ah, that sounds like '${userAttempt}' which is [explanation]. Here are some options to try: [2-3 choices including correct answer]."
+"Ah, that sounds like ${userAttempt} which is [explanation]. Here are some options to try: [2-3 choices including correct answer]."
 
 Keep it within 20 words. Keep it encouraging and focus on the learning process rather than giving away the answer.`
             },
@@ -1379,7 +1399,9 @@ Keep it within 20 words. Keep it encouraging and focus on the learning process r
     const lowerAI = aiResponse.toLowerCase();
     
     // Check for interest-based adventure selection
-          const interests = ['gaming', 'roblox', 'digital', 'battle', 'adventure', 'heroic', 'forest', 'technology', 'shadow', 'magic', 'robot', 'epic', 'futuristic'];
+    const interests = selectedStoryId === 'gregory-ipad-kid' 
+      ? ['glitch', 'digital', 'anime', 'pokemon', 'corruption', 'echo', 'cursed', 'shadow', 'battle', 'ipad', 'time', 'cloak']
+      : ['gaming', 'roblox', 'digital', 'battle', 'adventure', 'heroic', 'forest', 'technology', 'shadow', 'magic', 'robot', 'epic', 'futuristic'];
     const selectedInterest = interests.find(interest => lowerUser.includes(interest));
     
     if (selectedInterest && adventureState === 'new') {
@@ -1546,7 +1568,7 @@ Keep it within 20 words. Keep it encouraging and focus on the learning process r
     // Build the main image prompt using weighted user message history
     const contextParts = [];
     contextParts.push(weightedContent);
-    contextParts.push('Remove moderated parts from the image if present, and create it.');
+    contextParts.push('Remove any parts that make it moderated, if any, and create it.');
     
     // Story setting comes first for context
     // if (currentAdventure?.setting) {
@@ -1783,7 +1805,8 @@ Keep it within 20 words. Keep it encouraging and focus on the learning process r
       
       // Adventure-specific visual requests
       /(magical|enchanted|mystical|fantasy).*scene/i,
-              /(roblox|digital|crater|robot|forest).*scene/i,
+      /(roblox|digital|crater|robot|forest).*scene/i,
+      /(glitch|corrupted|anime|pokemon|cursed|echo).*scene/i,
       /adventure.*scene/i,
       
       // Drawing/art requests
@@ -1898,6 +1921,8 @@ Current Adventure Details:
 
 Student Profile (${storyContext.username}): ${selectedStoryId === 'two-sisters' 
   ? 'Loves forests, animals, and mystery. Enjoys cautious exploration and discovering family connections. Passionate about magical nature adventures with talking animals and mystical settings. Prefers realistic art with fantasy touches, magical forest environments, glowing mushrooms, and soft light effects.' 
+  : selectedStoryId === 'gregory-ipad-kid'
+  ? 'Loves digital worlds, anime, Pokémon, and glitch universes. Passionate about storytelling with corrupted digital fighters, neon glitch effects, and dramatic showdowns. Prefers realistic anime-glitch hybrid art style with glowing artifacts, corrupted digital environments, and epic battle scenes. Enjoys themes of courage vs. corruption, self-discovery, and loyalty.'
   : selectedStoryId === 'roblox-showdown' || selectedStoryId === 'captain-asher-time-stranglers'
   ? 'Loves video games, especially Roblox (e.g., "Steal a Brain Rot"), digital adventures, and heroic battles. Passionate about forest magic, technology mashups, and epic adventures with robotic companions. Prefers cartoon-style art with glowing effects, dramatic lighting, and fantasy-sci-fi mashup visuals. Enjoys epic battles, magical powers, and teamwork adventures in futuristic settings.'
   : 'Enjoys creative storytelling and adventure exploration. Open to various adventure themes and settings.'}
@@ -2293,21 +2318,38 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
                           {/* Quick adventure options - show when starting new adventure */}
             {adventureState === 'new' && adventureMessages.length <= 2 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12, justifyContent: 'center' }}>
-                {['⚡ Epic Battles', '🎮 Digital Adventures', '🌳 Forest Magic', '🤖 Robot Companions', '💫 Heroic Quests', '🎪 Futuristic Worlds'].map((option) => (
-                  <button key={option} onClick={() => {
-                    stopMicAndResetInput();
-                    const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
-                    setAdventureInput(`I love ${interest} adventures!`);
-                    scrollInputToEnd();
-                    setTimeout(() => void sendAdventureMessage(), 100);
-                  }}
-                    style={{ padding: '8px 12px', borderRadius: 16, border: 'none', background: 'rgba(255,255,255,0.9)', color: '#374151', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'Quicksand, sans-serif', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s ease' }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                  >
-                    {option}
-                  </button>
-                ))}
+                {selectedStoryId === 'gregory-ipad-kid' ? 
+                  ['⚡ Glitch Powers', '🎮 Digital Corruption', '👾 Anime Battles', '🔮 Echo Shift', '💻 Cursed Lake', '🌊 Shadow Chains'].map((option) => (
+                    <button key={option} onClick={() => {
+                      stopMicAndResetInput();
+                      const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
+                      setAdventureInput(`Let's explore ${interest}!`);
+                      scrollInputToEnd();
+                      setTimeout(() => void sendAdventureMessage(), 100);
+                    }}
+                      style={{ padding: '8px 12px', borderRadius: 16, border: 'none', background: 'rgba(255,255,255,0.9)', color: '#374151', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'Quicksand, sans-serif', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s ease' }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    >
+                      {option}
+                    </button>
+                  )) :
+                  ['⚡ Epic Battles', '🎮 Digital Adventures', '🌳 Forest Magic', '🤖 Robot Companions', '💫 Heroic Quests', '🎪 Futuristic Worlds'].map((option) => (
+                    <button key={option} onClick={() => {
+                      stopMicAndResetInput();
+                      const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
+                      setAdventureInput(`I love ${interest} adventures!`);
+                      scrollInputToEnd();
+                      setTimeout(() => void sendAdventureMessage(), 100);
+                    }}
+                      style={{ padding: '8px 12px', borderRadius: 16, border: 'none', background: 'rgba(255,255,255,0.9)', color: '#374151', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'Quicksand, sans-serif', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s ease' }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    >
+                      {option}
+                    </button>
+                  ))
+                }
               </div>
             )}
 
@@ -2409,6 +2451,8 @@ Student Profile (${storyContext.username}): ${selectedStoryId === 'two-sisters'
 
 Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or ${storyContext.username}. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses ${selectedStoryId === 'two-sisters' 
   ? 'mysterious and magical to match the mystical forest setting with talking animals, glowing mushrooms, and family mysteries.' 
+  : selectedStoryId === 'gregory-ipad-kid'
+  ? 'intense and dramatic to match the corrupted digital world with glitch powers, anime battles, and the ongoing fight against the iPad Kid\'s corruption.'
   : 'thrilling and action-packed to match the interests in video games, digital adventures, epic battles, and heroic teamwork in futuristic settings.'}
 
 Current Phase: CHAT (1/3)`

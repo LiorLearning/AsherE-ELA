@@ -37,13 +37,13 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
     },
 
     {
-      id: 'two-sisters',
-      title: 'Two Sisters',
-      author: 'by Irene, 3rd grade',
-      pages: '8 pages',
-      emoji: '🌲',
-      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252Ftestuser4%252F20250826_150624.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
-      color: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+      id: 'gregory-ipad-kid',
+      title: 'Gregory and the iPad Kid',
+      author: 'by Gregory, 3rd grade',
+      pages: '10 pages',
+      emoji: '✨',
+      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252Ftestuser4%252F20250826_160847.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+      color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
       isCreateNew: false
     }
   ];
@@ -425,11 +425,11 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
   };
 
   const AuthorLevelBadge = () => {
-    const currentLevel = 2;
+    const currentLevel = 3;
     const nextLevel = currentLevel + 1;
     const currentTitle = 'Story Scribbler';
     const upcomingTitle = 'Plot Weaver';
-    const progressToNext = 0.35; // 35% toward next level
+    const progressToNext = 0.70; // 35% toward next level
 
     const ringBackground = `conic-gradient(#10b981 ${Math.round(progressToNext * 100)}%, #e5e7eb ${Math.round(progressToNext * 100)}%)`;
 
@@ -796,7 +796,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
               fontFamily: 'Quicksand, system-ui, sans-serif',
               textShadow: '0 2px 4px rgba(0,0,0,0.05)'
             }}>
-              📚 Welcome back, Irene!
+              📚 Welcome back, Gregory!
             </h1>
             <div style={{ marginTop: 20 }}>
               <AuthorLevelBadge />
@@ -844,7 +844,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
                 imageUrl={story.imageUrl}
                 author={story.author}
                 pages={story.pages}
-                showPublishButton={story.id === 'captain-asher-time-stranglers' || story.id === 'two-sisters'}
+                showPublishButton={story.id === 'captain-asher-time-stranglers' || story.id === 'two-sisters' || story.id === 'gregory-ipad-kid'}
                 onPublish={() => handlePublishStory(story.id)}
                 onClick={() => story.isCreateNew ? handleCreateNew() : handleStorySelect(story.id, 'adventure')}
               />
