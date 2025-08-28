@@ -513,6 +513,106 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
   
   // State for managing hints for incorrect answers
   const [wordHints, setWordHints] = useState<Record<string, Record<number, string>>>({});
+  
+  // State for managing hint audio playback
+  const [hintAudioLoading, setHintAudioLoading] = useState<Record<string, Record<number, boolean>>>({});
+  const [hintAudioPlaying, setHintAudioPlaying] = useState<Record<string, Record<number, boolean>>>({});
+  const [hintAudioInstances, setHintAudioInstances] = useState<Record<string, Record<number, HTMLAudioElement>>>({});
+
+  // Function to toggle hint audio playback (play/pause)
+  const toggleHintAudio = async (messageId: string, blankIndex: number, hintText: string) => {
+    try {
+      const existingAudio = hintAudioInstances[messageId]?.[blankIndex];
+      
+      // If audio exists and is playing, pause it
+      if (existingAudio && !existingAudio.paused) {
+        existingAudio.pause();
+        setHintAudioPlaying(prev => ({
+          ...prev,
+          [messageId]: { ...prev[messageId], [blankIndex]: false }
+        }));
+        return;
+      }
+      
+      // If audio exists and is paused, restart from beginning
+      if (existingAudio && existingAudio.paused && existingAudio.currentTime > 0) {
+        existingAudio.currentTime = 0; // Reset to beginning
+        existingAudio.play();
+        setHintAudioPlaying(prev => ({
+          ...prev,
+          [messageId]: { ...prev[messageId], [blankIndex]: true }
+        }));
+        return;
+      }
+
+      // Otherwise, create new audio
+      setHintAudioLoading(prev => ({
+        ...prev,
+        [messageId]: { ...prev[messageId], [blankIndex]: true }
+      }));
+
+      const response = await fetch('/api/text-to-speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: hintText,
+          voice_id: 'cgSgspJ2msm6clMCkdW9', // Jessica voice
+          speed: 0.8
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to generate audio');
+      
+      const data = await response.json();
+      
+      // Create and configure audio
+      const audio = new Audio(data.audioUrl);
+      
+      // Store audio instance
+      setHintAudioInstances(prev => ({
+        ...prev,
+        [messageId]: { ...prev[messageId], [blankIndex]: audio }
+      }));
+
+      audio.onended = () => {
+        setHintAudioPlaying(prev => ({
+          ...prev,
+          [messageId]: { ...prev[messageId], [blankIndex]: false }
+        }));
+      };
+
+      audio.onerror = () => {
+        setHintAudioPlaying(prev => ({
+          ...prev,
+          [messageId]: { ...prev[messageId], [blankIndex]: false }
+        }));
+      };
+
+      audio.onpause = () => {
+        setHintAudioPlaying(prev => ({
+          ...prev,
+          [messageId]: { ...prev[messageId], [blankIndex]: false }
+        }));
+      };
+
+      audio.onplay = () => {
+        setHintAudioPlaying(prev => ({
+          ...prev,
+          [messageId]: { ...prev[messageId], [blankIndex]: true }
+        }));
+      };
+
+      await audio.play();
+    } catch (error) {
+      console.error('Error with hint audio:', error);
+    } finally {
+      // Clear loading state
+      setHintAudioLoading(prev => ({
+        ...prev,
+        [messageId]: { ...prev[messageId], [blankIndex]: false }
+      }));
+    }
+  };
 
   // Function to generate AI hint for incorrect spelling
   const generateHintForWord = async (word: string, userAttempt: string) => {
@@ -524,16 +624,19 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
           messages: [
             {
               role: 'system',
-              content: `You are a helpful spelling tutor for children aged 8-14. Generate a short, encouraging hint (15-25 words) to help a student spell a word correctly. Focus on:
-- Sound patterns (like "sounds like..." or "rhymes with...")
-- Letter patterns or common spelling rules
-- Encouraging tone
-- Simple, clear guidance
+              content: `You are a helpful spelling tutor for children aged 8-14. A student is trying to spell a word but got it wrong. Your job is to:
 
-The word to spell: "${word}"
+1. First, explain why their attempt doesn't match the target word
+2. Give them 2-3 alternative options to consider (including the correct answer mixed in)
+3. Strictly ensure the answer isn't directly mentioned in your hint.
+
+The target word: "${word}"
 Student's attempt: "${userAttempt}"
 
-Give a helpful hint without giving away the answer directly.`
+Format your response like this:
+"Ah, that sounds like '${userAttempt}' which is [explanation]. Here are some options to try: [2-3 choices including correct answer]."
+
+Keep it within 20 words. Keep it encouraging and focus on the learning process rather than giving away the answer.`
             },
             {
               role: 'user',
@@ -649,9 +752,8 @@ Give a helpful hint without giving away the answer directly.`
       if (part.type === 'text') {
         completeText += part.content;
       } else {
-        // Use user's answer or the hint/answer for audio
-        const userAnswer = blankAnswers[messageId]?.[blankIndex];
-        const audioText = userAnswer || part.answer || 'blank';
+        // Use the target word (correct answer) for audio, not user's input
+        const audioText = part.answer || 'blank';
         completeText += audioText;
         blankIndex++;
       }
@@ -673,12 +775,12 @@ Give a helpful hint without giving away the answer directly.`
     
     // Function to check if word is spelled correctly
     const isWordCorrect = (userWord: string, expectedWord: string) => {
-      return userWord.toUpperCase().trim() === expectedWord.toUpperCase().trim();
+      return userWord.replace(/ /g, '').toUpperCase() === expectedWord.toUpperCase();
     };
 
     // Function to check if word is complete (all letters filled)
     const isWordComplete = (userWord: string, expectedLength: number) => {
-      return userWord.length === expectedLength && userWord.trim().length === expectedLength;
+      return userWord.length === expectedLength && userWord.replace(/ /g, '').length === expectedLength;
     };
 
     // Function to check if word is incorrect (complete but wrong spelling)
@@ -858,10 +960,11 @@ Give a helpful hint without giving away the answer directly.`
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            animation: 'fadeSlideIn 0.3s ease-out'
+            animation: 'fadeSlideIn 0.3s ease-out',
+            position: 'relative'
           }}>
             <span style={{ fontSize: '16px' }}>💡</span>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: '#92400E', lineHeight: 1.4 }}>
+            <div style={{ fontSize: '14px', fontWeight: 500, color: '#92400E', lineHeight: 1.4, flex: 1 }}>
               {parts.filter(part => part.type === 'blank').map((part, index) => {
                 const hint = wordHints[messageId]?.[index];
                 return hint && hint.trim() !== '' ? (
@@ -871,6 +974,75 @@ Give a helpful hint without giving away the answer directly.`
                 ) : null;
               }).filter(Boolean)}
             </div>
+            {/* Speaker button for hint audio */}
+            {parts.filter(part => part.type === 'blank').some((part, index) => {
+              const hint = wordHints[messageId]?.[index];
+              return hint && hint.trim() !== '';
+            }) && (
+              <button
+                onClick={() => {
+                  const firstHintIndex = parts.findIndex((part, index) => {
+                    if (part.type !== 'blank') return false;
+                    const blankIndex = parts.slice(0, index + 1).filter(p => p.type === 'blank').length - 1;
+                    const hint = wordHints[messageId]?.[blankIndex];
+                    return hint && hint.trim() !== '';
+                  });
+                  
+                  if (firstHintIndex !== -1) {
+                    const blankIndex = parts.slice(0, firstHintIndex + 1).filter(p => p.type === 'blank').length - 1;
+                    const hint = wordHints[messageId]?.[blankIndex];
+                    if (hint) {
+                      toggleHintAudio(messageId, blankIndex, hint);
+                    }
+                  }
+                }}
+                disabled={Object.values(hintAudioLoading[messageId] || {}).some(loading => loading)}
+                style={{
+                  position: 'absolute',
+                  bottom: '10px',
+                  right: '10px',
+                  background: Object.values(hintAudioPlaying[messageId] || {}).some(playing => playing) 
+                    ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' 
+                    : 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: Object.values(hintAudioLoading[messageId] || {}).some(loading => loading) ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  color: 'white',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.2s ease',
+                  opacity: Object.values(hintAudioLoading[messageId] || {}).some(loading => loading) ? 0.6 : 1
+                }}
+                onMouseEnter={(e) => {
+                  if (!Object.values(hintAudioLoading[messageId] || {}).some(loading => loading)) {
+                    e.currentTarget.style.transform = 'scale(1.1)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                {Object.values(hintAudioLoading[messageId] || {}).some(loading => loading) ? (
+                  <div style={{
+                    width: '10px',
+                    height: '10px',
+                    border: '2px solid transparent',
+                    borderTop: '2px solid white',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                ) : Object.values(hintAudioPlaying[messageId] || {}).some(playing => playing) ? (
+                  '⏸️'
+                ) : (
+                  '🔊'
+                )}
+              </button>
+            )}
           </div>
         )}
 
@@ -910,7 +1082,8 @@ Give a helpful hint without giving away the answer directly.`
                     alignItems: 'center'
                   }}>
                     {Array.from({ length: expectedLength }, (_, letterIndex) => {
-                      const letterValue = currentAnswer[letterIndex] || '';
+                      const rawLetterValue = currentAnswer[letterIndex] || ' ';
+                      const letterValue = rawLetterValue === ' ' ? '' : rawLetterValue;
                       const isWordCompleteNow = isWordComplete(currentAnswer, expectedLength);
                       const isWordCorrectNow = isWordCompleteNow && isWordCorrect(currentAnswer, part.answer || '');
                       const isWordIncorrectNow = isWordIncorrect(currentAnswer, part.answer || '', expectedLength);
@@ -982,16 +1155,15 @@ Give a helpful hint without giving away the answer directly.`
                             const newValue = e.target.value.toUpperCase();
                             if (newValue.match(/[A-Z]/) || newValue === '') {
                               // Update the word by replacing the character at this position
-                              const newWord = currentAnswer.split('');
-                              newWord[letterIndex] = newValue;
-                              // Pad or trim to expected length
-                              while (newWord.length < expectedLength) newWord.push('');
-                              const finalWord = newWord.slice(0, expectedLength).join('');
+                              const newWord = Array.from({ length: expectedLength }, (_, i) => 
+                                i === letterIndex ? newValue : (currentAnswer[i] || ' ')
+                              );
+                              const finalWord = newWord.join('').replace(/ /g, ' '); // Use space as placeholder
                               onAnswerChange(currentBlankIndex, finalWord);
                               
                               // Check if word is complete and incorrect to generate hint
                               if (isWordComplete(finalWord, expectedLength) && !isWordCorrect(finalWord, part.answer || '')) {
-                                // Generate hint for incorrect complete word
+                                // Always generate a new hint for each incorrect complete word attempt
                                 const hint = await generateHintForWord(part.answer || '', finalWord);
                                 setWordHints(prev => ({
                                   ...prev,
@@ -1000,6 +1172,16 @@ Give a helpful hint without giving away the answer directly.`
                                     [currentBlankIndex]: hint
                                   }
                                 }));
+                                
+                                // Clear any existing audio instance so new hint audio can be generated
+                                setHintAudioInstances(prev => {
+                                  const newState = { ...prev };
+                                  if (newState[messageId]) {
+                                    const { [currentBlankIndex]: _, ...rest } = newState[messageId];
+                                    newState[messageId] = rest;
+                                  }
+                                  return newState;
+                                });
                               } else if (isWordCorrect(finalWord, part.answer || '')) {
                                 // Clear hint when word becomes correct
                                 setWordHints(prev => ({
@@ -1036,11 +1218,21 @@ Give a helpful hint without giving away the answer directly.`
                             }
                           }}
                           onKeyDown={(e) => {
-                            if (e.key === 'Backspace' && !letterValue && letterIndex > 0) {
-                              // Move to previous box on backspace if current is empty
-                              const prevBox = document.querySelector(`input[data-letter="${currentBlankIndex}-${letterIndex - 1}"]`) as HTMLInputElement;
-                              if (prevBox) {
-                                prevBox.focus();
+                            if (e.key === 'Backspace') {
+                              if (letterValue) {
+                                // If current box has a letter, clear it and stay in same position
+                                e.preventDefault(); // Prevent default backspace behavior
+                                const newWord = Array.from({ length: expectedLength }, (_, i) => 
+                                  i === letterIndex ? ' ' : (currentAnswer[i] || ' ')
+                                );
+                                const finalWord = newWord.join(''); // Use space as placeholder
+                                onAnswerChange(currentBlankIndex, finalWord);
+                              } else if (letterIndex > 0) {
+                                // If current box is empty, move to previous box
+                                const prevBox = document.querySelector(`input[data-letter="${currentBlankIndex}-${letterIndex - 1}"]`) as HTMLInputElement;
+                                if (prevBox) {
+                                  prevBox.focus();
+                                }
                               }
                             } else if (e.key === 'ArrowLeft' && letterIndex > 0) {
                               const prevBox = document.querySelector(`input[data-letter="${currentBlankIndex}-${letterIndex - 1}"]`) as HTMLInputElement;
