@@ -11,10 +11,11 @@ import { audioManager } from './audioManager';
 // (audioManager is now shared across UI to enforce single-instance playback)
 
 type Props = {
+  selectedStoryId?: string | null;
   onComplete?: () => void;
 };
 
-export function QuestionPanel({ onComplete }: Props): JSX.Element {
+export function QuestionPanel({ selectedStoryId, onComplete }: Props): JSX.Element {
   const { state: storyState, appendEvent, setHookForStep, setPendingAdventureChat } = useStory();
   // Blending question data (first question) - COMMENTED OUT FOR NOW
   const blendingQuestions: BlendingQuestion[] = []; // blendingQuestionsData;
@@ -4115,6 +4116,7 @@ Be conversational, not scripted. Acknowledge what they actually wrote. Keep resp
         </>
       ) : isAdventureMode1 ? (
         <AdventureMode2 
+          selectedStoryId={selectedStoryId}
           onAdventureMessage={(userMessage: string) => setStoryContext(prev => [...prev, userMessage])} 
           onStoryUpdate={(storyUpdate: string) => setStoryContext(prev => [...prev, storyUpdate])}
           onSwitchToQuestions={() => {

@@ -35,14 +35,15 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       imageUrl: undefined,
       pages: undefined
     },
+
     {
-      id: 'london-magical-bakery',
-      title: 'Roblox Showdown',
-      author: 'by Iker, 4th grade',
-      pages: '5 pages',
-      emoji: '✨',
-      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FIker%252F20250826_223658.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
-      color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+      id: 'two-sisters',
+      title: 'Two Sisters',
+      author: 'by Irene, 3rd grade',
+      pages: '8 pages',
+      emoji: '🌲',
+      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252Ftestuser4%252F20250826_150624.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+      color: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
       isCreateNew: false
     }
   ];
@@ -68,6 +69,18 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FAsherE%252F20250815_174915.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
       emoji: '🚀',
       color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+    },
+
+    {
+      id: 'roblox-showdown',
+      title: 'Roblox Showdown',
+      author: 'by Iker, 4th grade',
+      pages: '5 pages',
+      badge: '🎢 "Thrilling!"',
+      emoji: '✨',
+      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FIker%252F20250826_223658.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+      color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+      isCreateNew: false
     }
   ];
 
@@ -783,7 +796,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
               fontFamily: 'Quicksand, system-ui, sans-serif',
               textShadow: '0 2px 4px rgba(0,0,0,0.05)'
             }}>
-              📚 Welcome back, Iker!
+              📚 Welcome back, Irene!
             </h1>
             <div style={{ marginTop: 20 }}>
               <AuthorLevelBadge />
@@ -831,7 +844,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
                 imageUrl={story.imageUrl}
                 author={story.author}
                 pages={story.pages}
-                showPublishButton={story.id === 'captain-asher-time-stranglers'}
+                showPublishButton={story.id === 'captain-asher-time-stranglers' || story.id === 'two-sisters'}
                 onPublish={() => handlePublishStory(story.id)}
                 onClick={() => story.isCreateNew ? handleCreateNew() : handleStorySelect(story.id, 'adventure')}
               />

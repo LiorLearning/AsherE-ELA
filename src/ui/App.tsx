@@ -186,77 +186,77 @@ export function App(): JSX.Element {
   }, [currentWorld, selectedStoryId]);
 
   // Picture book data
-  const asherStoryPages = useMemo(() => [
+  const stellaStoryPages = useMemo(() => [
     {
       id: 'page-1',
       pageNumber: 1,
-      text: 'In a magical enchanted bakery hidden behind sparkling rainbow shelves, lived a cheerful teenage girl named London. She wore sparkly star and heart dresses and had her best friend—a blonde girl her age in matching star outfits, alongside Sprinkle Beast, a giant cupcake monster with whipped cream hair.',
+      text: 'In a quiet forest full of mist and magic, lived a girl named Stella. She wore ragged clothes and had only one friend—a tiny frog in a mossy leaf poncho.',
       imageUrl: undefined
     },
     {
       id: 'page-2',
       pageNumber: 2,
-      text: 'One morning, Sprinkle Beast wandered off to explore a magical oven chamber. London followed, calling out through the bakery\'s enchanted voice system—but Sprinkle Beast was gone.',
+      text: 'One morning, the frog hopped away into the trees. Stella followed, calling out—but he was gone.',
       imageUrl: undefined
     },
     {
       id: 'page-3',
       pageNumber: 3,
-      text: 'Just then, a glowing data crystal floated down from above. Inside was a shimmering hologram… pointing the way to his lost friend.',
+      text: 'Just then, a glowing lantern floated down from the sky. Inside was a shimmering map… pointing the way to her lost friend.',
       imageUrl: undefined
     },
     {
       id: 'page-4',
       pageNumber: 4,
-      text: 'London set off through the magical bakery. She spotted chaotic frosting forces swirling around some oven controls. She tried to activate them with her magical baking tools, but they disappeared with magical sparkles!',
+      text: 'Stella set off on the path. She spotted a chicken guarding some shiny eggs. She tried to catch them with a net, but they vanished with a puff!',
       imageUrl: undefined
     },
     {
       id: 'page-5',
       pageNumber: 5,
-      text: 'In the control room, he found only a glowing energy core. He sighed, powered it down, and declared, "No more energy overloads for me!"',
+      text: 'In the nest, she found only a wiggly bug. She sighed, ate it, and declared, "No more eggs for me!"',
       imageUrl: undefined
     },
     {
       id: 'page-6',
       pageNumber: 6,
-      text: 'Suddenly, a single magical oven stabilized in the chamber. London carefully recalibrated it, and the chaotic forces sparkled and vanished into magical mist.',
+      text: 'Suddenly, a single egg appeared in the nest. Stella gently returned it to the chicken, who clucked happily and danced away.',
       imageUrl: undefined
     },
     {
       id: 'page-7',
       pageNumber: 7,
-      text: 'High above, through the magical bakery skylight, her red-hat skydiver brother zoomed by with his rescue net. Someone threw out magical ingredients—London gasped!',
+      text: 'High above, a jet zoomed through the sky. A woman in fancy clothes tossed something out—Stella gasped!',
       imageUrl: undefined
     },
     {
       id: 'page-8',
       pageNumber: 8,
-      text: 'It was a tiny magical spatula companion! London caught it just in time with her sparkling net. "You\'re safe," she whispered.',
+      text: 'It was a tiny brown dog! Stella raced forward and caught him just in time. "You\'re safe," she whispered.',
       imageUrl: undefined
     },
     {
       id: 'page-9',
       pageNumber: 9,
-      text: 'She named the magical spatula Sparkle. It swirled and floated beside her, glittering and bright.',
+      text: 'She named him Robber. He wagged his tail and trotted beside her, brave and proud.',
       imageUrl: undefined
     },
     {
       id: 'page-10',
       pageNumber: 10,
-      text: 'As they walked deeper into the bakery, something rustled in the magical ingredient shelves... Sprinkle Beast—the giant cupcake monster with whipped cream hair—peeked out and gave a tiny giggle.',
+      text: 'As they walked deeper into the forest, something blinked at them from the grass... A second frog—smaller than a pebble—peeked out and gave a tiny croak.',
       imageUrl: undefined
     },
     {
       id: 'page-11',
       pageNumber: 11,
-      text: 'London welcomed him warmly. "You\'re joining our baking team too," she smiled. Now she had her magical spatula friend... and Sprinkle Beast.',
+      text: 'Stella scooped him up gently. "You\'re coming with us too," she smiled. Now she had Robber... and two frog friends.',
       imageUrl: undefined
     },
     {
       id: 'page-12',
       pageNumber: 12,
-      text: 'The magical oven shimmered again—revealing a new baking challenge. With her magical friends by her side, London took a deep breath... and stepped into the enchanted baking adventure.',
+      text: 'The glowing map shimmered again—revealing a new path. With her animal friends by her side, Stella took a deep breath... and stepped into the unknown.',
       imageUrl: undefined
     },
     {
@@ -344,9 +344,9 @@ export function App(): JSX.Element {
   if (selectedStoryId === 'stella-tiny-frog' && storyMode === 'picture-book') {
     return (
       <PictureBook
-        title="London and the Magical Bakery"
-        author="by London, 2nd grade"
-        pages={asherStoryPages}
+        title="Stella and the Tiny Frog"
+        author="by Irene, 2nd grade"
+        pages={stellaStoryPages}
         onBack={handleBackToLibrary}
       />
     );
@@ -391,7 +391,7 @@ export function App(): JSX.Element {
   }
   
   // Show adventure mode for any story (when mode is adventure) or new story creation
-  if ((selectedStoryId === 'london-magical-bakery' && storyMode === 'adventure') || (selectedStoryId === 'captain-asher-time-stranglers' && storyMode === 'adventure') || selectedStoryId === 'new-story') {
+  if ((selectedStoryId === 'london-magical-bakery' && storyMode === 'adventure') || (selectedStoryId === 'captain-asher-time-stranglers' && storyMode === 'adventure') || (selectedStoryId === 'two-sisters' && storyMode === 'adventure') || selectedStoryId === 'new-story') {
     return (
       <div style={{
         display: 'grid',
@@ -482,6 +482,7 @@ export function App(): JSX.Element {
           )}
 
           <QuestionPanel
+            selectedStoryId={selectedStoryId}
             onComplete={() => {
               console.log('All questions completed!');
               // Handle completion logic here

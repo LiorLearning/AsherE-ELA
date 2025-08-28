@@ -5,6 +5,7 @@ import { audioManager } from '../audioManager';
 // import '../../../api/image'
 
 type Props = {
+  selectedStoryId?: string | null;
   onAdventureMessage?: (userMessage: string) => void;
   onStoryUpdate?: (storyUpdate: string) => void;
   adventureMessages?: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>;
@@ -14,18 +15,109 @@ type Props = {
   onSpellingComplete?: (isComplete: boolean) => void;
 };
 
-export function AdventureMode2({ onAdventureMessage, onStoryUpdate, adventureMessages: propAdventureMessages, onAdventureMessagesUpdate, onSwitchToQuestions, onGoToPrevious, onSpellingComplete }: Props): JSX.Element {
+export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpdate, adventureMessages: propAdventureMessages, onAdventureMessagesUpdate, onSwitchToQuestions, onGoToPrevious, onSpellingComplete }: Props): JSX.Element {
   const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat, setMetadata } = useStory();
+  
+  // Get story-specific context based on selectedStoryId
+  const getStoryContext = () => {
+    switch (selectedStoryId) {
+      case 'two-sisters':
+        return {
+          defaultMessage: "🌲✨ Welcome to the mystical forest, Irene! I'm Shadow, your mysterious guide, and I have secrets to share with you. The forest whispers with magic, and glowing mushrooms light our path. Your sister is waiting somewhere in the shadows, but first we must learn to trust each other. Are you ready to discover the truth hidden in these enchanted woods?",
+          protagonist: "Mia",
+          username: "Irene",
+          setting: "A mystical forest full of hidden mushrooms, glowing plants, and whispering animals",
+          companions: "Shadow (mysterious black dog), Mia's Sister, The Boy Protector",
+          theme: "courage, family bonds, and trust in animals"
+        };
+      case 'roblox-showdown':
+      case 'captain-asher-time-stranglers':
+      default:
+        return {
+          defaultMessage: "✨🌟 Welcome to our adventure session, Irene! I'm so excited to create an amazing story with you! What kind of adventure sparks your imagination today - magical forests with talking animals, space exploration with robotic friends, or would you like to create your very own adventure with your own setting and characters?",
+          protagonist: "Irene",
+          username: "Irene",
+          setting: "Adventure creation space",
+          companions: "loyal companion",
+          theme: "creative storytelling and adventure exploration"
+        };
+    }
+  };
+
+  // Remove any blank-style markers from text (used to keep CHAT phase clean)
+  const stripBlankPatternsFromText = (text: string): string => {
+    if (!text) return text;
+    let cleaned = text;
+    // Replace [BLANK:word] → word
+    cleaned = cleaned.replace(/\[BLANK:([^\]]*)\]/gi, (_, word) => (word || '').trim());
+    // Replace ___word___ → word
+    cleaned = cleaned.replace(/_{3,}([a-zA-Z]*)_{3,}/g, (_, word) => (word || '').trim());
+    // Replace lone ___ sequences → ''
+    cleaned = cleaned.replace(/_{3,}/g, '');
+    return cleaned;
+  };
+
+  const storyContext = getStoryContext();
+  
+  // One-time migration to clean up existing messages with blanks
+  // This removes blanks from all existing messages to fix the phase mismatch issue
+  const migrateExistingMessages = (messages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>) => {
+    const MIGRATION_KEY = 'adventure_mode2_blank_migration_v1';
+    const hasMigrated = localStorage.getItem(MIGRATION_KEY);
+    
+    if (hasMigrated) {
+      return messages; // Already migrated
+    }
+    
+    console.log('[DEBUG] Running one-time migration to remove blanks from existing messages');
+    
+    const migratedMessages = messages.map((message, index) => {
+      // Only process AI messages that might have blanks
+      if (message.role !== 'ai' || message.isImage || message.isLoading || !message.text.includes('[BLANK:')) {
+        return message;
+      }
+      
+      // Remove all blanks and replace with the target words
+      const cleanedText = message.text.replace(/\[BLANK:([^\]]*)\]/g, (match, word) => {
+        return word || 'word';
+      });
+      
+      console.log(`[DEBUG] Migrated message ${index}: "${message.text}" → "${cleanedText}"`);
+      return { ...message, text: cleanedText };
+    });
+    
+    // Mark migration as complete
+    try {
+      localStorage.setItem(MIGRATION_KEY, 'true');
+    } catch (error) {
+      console.warn('Failed to save migration flag:', error);
+    }
+    
+    return migratedMessages;
+  };
+
   // Use parent-provided messages or default/local persisted
   const defaultMessages: Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }> = [
-    { role: 'ai' as const, text: "⚡🎮 Welcome to our epic Roblox adventure, Iker! I'm your loyal companion, and I'm so excited to explore this digital battlefield with you! The Shadow King's wand is breaking free from Mateo's tree cage, and a GIANT Earthworm just emerged from the depths! Are you ready to join the battle?" }
+    { role: 'ai' as const, text: storyContext.defaultMessage }
   ];
+  
+  const rawMessages = (storyState?.adventureMessages?.length ?? 0) > 0
+    ? (storyState.adventureMessages as any)
+    : defaultMessages;
+    
+  const migratedMessages = migrateExistingMessages(rawMessages);
   const [localAdventureMessages, setLocalAdventureMessages] = useState<Array<{ role: 'ai' | 'student'; text: string; isImage?: boolean; isLoading?: boolean; imageUrl?: string }>>(
-    (storyState?.adventureMessages?.length ?? 0) > 0
-      ? (storyState.adventureMessages as any)
-      : defaultMessages
+    migratedMessages
   );
   const adventureMessages = propAdventureMessages || localAdventureMessages;
+  
+  // Clear story store if migration occurred to prevent inconsistencies
+  useEffect(() => {
+    if (migratedMessages !== rawMessages && migratedMessages.length > 0) {
+      console.log('[DEBUG] Migration occurred - clearing story store to prevent inconsistencies');
+      resetStory();
+    }
+  }, []); // Run only once on mount
   
   // Helper to update messages (functional to avoid stale snapshots)
   const updateAdventureMessages = (updater: (prev: typeof adventureMessages) => typeof adventureMessages) => {
@@ -81,28 +173,25 @@ export function AdventureMode2({ onAdventureMessage, onStoryUpdate, adventureMes
     }
   }, [currentPhase, phaseProgress, totalInteractions]);
 
-  // Target words for spelling challenges - Grade 4 long O patterns and hard words
+  // Target words for spelling challenges - CVC words with short "o" and short "u"
   const targetWords: string[] = [
-    // OA pattern (long O)
-    'approach', 'reproach', 'cockroach', 'stagecoach',
-    // OW pattern (long O) 
-    'swallow', 'bellow', 'furrow', 'marrow',
-    // OLD pattern
-    'behold', 'threshold', 'stronghold', 'household',
-    // OST pattern
-    'utmost', 'outmost', 'foremost', 'uppermost',
-    // OLT pattern
-    'revolt', 'default', 'assault',
-    // Hard-to-spell words
-    'asteroid', 'rhythm', 'lieutenant',
-    'necessary', 'separate', 'definitely', 'embarrass', 'occurrence',
-    'privilege', 'maintenance'
+    // CVC words with short "o"
+    'box', 'fox', 'pot', 'hot', 'dot', 'lot', 'got',
+    'hop', 'top', 'mop', 'cop', 'pop', 'job', 'rob',
+    'log', 'dog', 'fog', 'jog', 'nod', 'rod', 'mom', 'not',
+    // CVC words with short "u"
+    'bug', 'hug', 'mug', 'rug', 'tug', 'jug', 'pug',
+    'bus', 'cut', 'hut', 'nut', 'but', 'run', 'fun', 'sun',
+    'gun', 'bun', 'mud', 'cup', 'pup', 'gum', 'sum', 'hum'
   ].sort(() => Math.random() - 0.5); // Randomize the order
 
   // Function to get current phase and target words
   const getCurrentPhaseInfo = () => {
-    const phaseIndex = Math.floor(totalInteractions / 3); // Each phase has 3 interactions
-    const withinPhaseIndex = totalInteractions % 3;
+    // Adjust by subtracting 1 to make phases align correctly:
+    // Interactions 1,2,3 = phase 0 (chat), 4,5,6 = phase 1 (question), etc.
+    const adjustedInteractions = Math.max(0, totalInteractions - 1);
+    const phaseIndex = Math.floor(adjustedInteractions / 3); // Each phase has 3 interactions
+    const withinPhaseIndex = adjustedInteractions % 3;
     const isQuestionPhase = phaseIndex % 2 === 1; // Odd phases are question phases
     
     return {
@@ -222,6 +311,45 @@ export function AdventureMode2({ onAdventureMessage, onStoryUpdate, adventureMes
   
   // Message counter for Begin Challenge trigger (count user messages only)
   const [userMessageCount, setUserMessageCount] = useState(0);
+  // Initialize currentAdventure based on story context
+  const getInitialAdventure = () => {
+    switch (selectedStoryId) {
+      case 'two-sisters':
+        return {
+          type: 'mystical forest adventure with magical creatures and family mysteries',
+          protagonist: 'Mia (brave sister searching for her lost sibling)',
+          sidekick: 'Shadow (mysterious black dog with ancient wisdom)',
+          teammates: 'The Boy Protector (guardian of the forest)',
+          setting: 'A mystical forest full of hidden mushrooms, glowing plants, and whispering animals',
+          goal: 'find the missing sister, uncover forest secrets, and build trust with magical creatures',
+          villain: 'The Forest\'s Dark Secret (mysterious force that separates families)',
+          recentEvent: 'Shadow appeared from the shadows, offering to guide Irene through the mystical forest to find her sister'
+        };
+      case 'roblox-showdown':
+      case 'captain-asher-time-stranglers':
+        return {
+          type: 'epic Roblox adventure with forest magic, digital technology, and heroic battles',
+          protagonist: 'Mateo (forest-powered hero with armor made of glowing vines, crown of leaves, and powers that spawn magical trees)',
+          sidekick: 'Glitcherino (wooden robot with all-brown outfit, springy limbs, and a banana-powered joke blaster)',
+          teammates: 'Iker (brave, creative hero wearing a gamer-style outfit, glowing blue visor, and digital cape)',
+          setting: 'Cratered Roblox HQ after being struck by ten asteroids; neon wires, shattered labs, and moon rocks scattered across a techy battlefield',
+          goal: 'defeat the Shadow King, protect the digital realm, master forest magic and technology, and restore peace to Roblox HQ',
+          villain: 'The Shadow King (armored in dark metal, with powerful shadow magic and a glowing wand; seeks revenge after being banned by David Bazuki)',
+          recentEvent: 'Mateo used an epic tree cage to trap the Shadow King, but his wand is breaking free; below, a sleepy Sea Eater shark awakened and was lulled to sleep—when a GIANT Earthworm emerged from the depths!'
+        };
+      default:
+        // For new stories, use the context from getStoryContext
+        return {
+          type: storyContext.theme,
+          protagonist: storyContext.protagonist,
+          sidekick: storyContext.companions,
+          setting: storyContext.setting,
+          goal: 'create an amazing adventure together',
+          recentEvent: 'A new adventure is about to begin!'
+        };
+    }
+  };
+
   const [currentAdventure, setCurrentAdventure] = useState<{
     type?: string;
     protagonist?: string;
@@ -231,16 +359,7 @@ export function AdventureMode2({ onAdventureMessage, onStoryUpdate, adventureMes
     goal?: string;
     setting?: string;
     recentEvent?: string;
-  }>({
-    type: 'epic Roblox adventure with forest magic, digital technology, and heroic battles',
-    protagonist: 'Mateo (forest-powered hero with armor made of glowing vines, crown of leaves, and powers that spawn magical trees)',
-    sidekick: 'Glitcherino (wooden robot with all-brown outfit, springy limbs, and a banana-powered joke blaster)',
-    teammates: 'Iker (brave, creative hero wearing a gamer-style outfit, glowing blue visor, and digital cape)',
-    setting: 'Cratered Roblox HQ after being struck by ten asteroids; neon wires, shattered labs, and moon rocks scattered across a techy battlefield',
-    goal: 'defeat the Shadow King, protect the digital realm, master forest magic and technology, and restore peace to Roblox HQ',
-    villain: 'The Shadow King (armored in dark metal, with powerful shadow magic and a glowing wand; seeks revenge after being banned by David Bazuki)',
-    recentEvent: 'Mateo used an epic tree cage to trap the Shadow King, but his wand is breaking free; below, a sleepy Sea Eater shark awakened and was lulled to sleep—when a GIANT Earthworm emerged from the depths!'
-  });
+  }>(getInitialAdventure());
   const ADVENTURE_IMAGE_OVERLAY_OPACITY = 0.45;
   const adventureScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -313,6 +432,7 @@ export function AdventureMode2({ onAdventureMessage, onStoryUpdate, adventureMes
 
   // State for managing fill-in-the-blank answers with localStorage persistence
   const BLANK_ANSWERS_STORAGE_KEY = 'adventure_mode2_blank_answers';
+  const MESSAGE_ID_MAPPING_STORAGE_KEY = 'adventure_mode2_message_id_mapping';
   
   // Load initial blank answers from localStorage
   const loadBlankAnswersFromStorage = (): Record<string, Record<number, string>> => {
@@ -328,7 +448,21 @@ export function AdventureMode2({ onAdventureMessage, onStoryUpdate, adventureMes
     }
   };
   
+  // Load message ID mappings from localStorage
+  const loadMessageIdMappingsFromStorage = (): Record<string, string> => {
+    try {
+      const stored = localStorage.getItem(MESSAGE_ID_MAPPING_STORAGE_KEY);
+      const parsed = stored ? JSON.parse(stored) : {};
+      console.log('[DEBUG] Loaded message ID mappings from localStorage:', parsed);
+      return parsed;
+    } catch (error) {
+      console.warn('Failed to load message ID mappings from localStorage:', error);
+      return {};
+    }
+  };
+  
   const [blankAnswers, setBlankAnswers] = useState<Record<string, Record<number, string>>>(loadBlankAnswersFromStorage);
+  const [messageIdMappings, setMessageIdMappings] = useState<Record<string, string>>(loadMessageIdMappingsFromStorage);
   
   // Save blank answers to localStorage whenever they change
   const saveBlankAnswersToStorage = (answers: Record<string, Record<number, string>>) => {
@@ -340,19 +474,36 @@ export function AdventureMode2({ onAdventureMessage, onStoryUpdate, adventureMes
     }
   };
   
+  // Save message ID mappings to localStorage whenever they change
+  const saveMessageIdMappingsToStorage = (mappings: Record<string, string>) => {
+    try {
+      localStorage.setItem(MESSAGE_ID_MAPPING_STORAGE_KEY, JSON.stringify(mappings));
+      console.log('[DEBUG] Saved message ID mappings to localStorage:', mappings);
+    } catch (error) {
+      console.warn('Failed to save message ID mappings to localStorage:', error);
+    }
+  };
+  
   // Persist blank answers to localStorage when they change
   useEffect(() => {
     saveBlankAnswersToStorage(blankAnswers);
   }, [blankAnswers]);
   
+  // Persist message ID mappings to localStorage when they change
+  useEffect(() => {
+    saveMessageIdMappingsToStorage(messageIdMappings);
+  }, [messageIdMappings]);
+  
   // Function to clear stored blank answers and phase state (for new adventures)
   const clearStoredBlankAnswers = () => {
     setBlankAnswers({});
+    setMessageIdMappings({});
     setCurrentPhase('chat');
     setPhaseProgress(0);
     setTotalInteractions(0);
     try {
       localStorage.removeItem(BLANK_ANSWERS_STORAGE_KEY);
+      localStorage.removeItem(MESSAGE_ID_MAPPING_STORAGE_KEY);
       localStorage.removeItem(PHASE_STATE_STORAGE_KEY);
       console.log('[DEBUG] Cleared all stored adventure progress');
     } catch (error) {
@@ -449,19 +600,43 @@ Give a helpful hint without giving away the answer directly.`
     return parts;
   };
 
-  // Helper function to generate stable message ID based on content
+  // Helper function to generate stable message ID based on content only
   const generateStableMessageId = (text: string, index: number) => {
-    // Create a simple hash of the message text to ensure stability
+    // Create a hash of the message text to ensure stability
     let hash = 0;
     for (let i = 0; i < text.length; i++) {
       const char = text.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
-    // Combine hash with index as fallback to handle duplicate texts
-    const stableId = `msg-${Math.abs(hash)}-${index}`;
-    console.log(`[DEBUG] Generated stable message ID: ${stableId} for text: "${text.substring(0, 50)}..."`);
-    return stableId;
+    
+    const baseId = `msg-${Math.abs(hash)}`;
+    
+    // Check if we already have a mapping for this exact text
+    const existingMapping = Object.entries(messageIdMappings).find(([key, value]) => key === text);
+    if (existingMapping) {
+      console.log(`[DEBUG] Using existing stable message ID: ${existingMapping[1]} for text: "${text.substring(0, 50)}..."`);
+      return existingMapping[1];
+    }
+    
+    // For new messages, check if this base ID already exists
+    let finalId = baseId;
+    let counter = 0;
+    const existingIds = Object.values(messageIdMappings);
+    
+    while (existingIds.includes(finalId)) {
+      counter++;
+      finalId = `${baseId}-${counter}`;
+    }
+    
+    // Store the mapping for future use
+    setMessageIdMappings(prev => ({
+      ...prev,
+      [text]: finalId
+    }));
+    
+    console.log(`[DEBUG] Generated new stable message ID: ${finalId} for text: "${text.substring(0, 50)}..." (counter: ${counter})`);
+    return finalId;
   };
 
   // Helper function to get complete text with filled blanks for audio
@@ -1462,8 +1637,10 @@ Give a helpful hint without giving away the answer directly.`
       const currentMessages = adventureMessages.filter(m => !m.isLoading && !m.isImage);
       
       // Calculate phase info using the NEXT interaction count (after increment)
-      const phaseIndex = Math.floor(nextTotalInteractions / 3);
-      const withinPhaseIndex = nextTotalInteractions % 3;
+      // Use the same logic as getCurrentPhaseInfo() to ensure consistency
+      const adjustedInteractions = Math.max(0, nextTotalInteractions - 1);
+      const phaseIndex = Math.floor(adjustedInteractions / 3);
+      const withinPhaseIndex = adjustedInteractions % 3;
       const isQuestionPhase = phaseIndex % 2 === 1; // Odd phases are question phases
       const phase = isQuestionPhase ? 'question' as const : 'chat' as const;
       
@@ -1480,7 +1657,8 @@ Give a helpful hint without giving away the answer directly.`
         : '';
       
       // Debug logging
-      console.log(`[DEBUG] Phase Info - Total Interactions: ${nextTotalInteractions}, Phase: ${phase}, Is Question Phase: ${isQuestionPhase}, Target Words: ${JSON.stringify(targetWordsToUse)}`);
+      console.log(`[DEBUG] Phase Info - Total Interactions: ${nextTotalInteractions}, Adjusted: ${adjustedInteractions}, Phase Index: ${phaseIndex}, Within Phase: ${withinPhaseIndex}, Phase: ${phase}, Is Question Phase: ${isQuestionPhase}, Target Words: ${JSON.stringify(targetWordsToUse)}`);
+      console.log(`[DEBUG] Current UI State - currentPhase: ${currentPhase}, phaseProgress: ${phaseProgress}, totalInteractions: ${totalInteractions}`);
       
       // Create phase-specific system prompt
       const phaseInstructions = isQuestionPhase 
@@ -1488,35 +1666,51 @@ Give a helpful hint without giving away the answer directly.`
 
 REQUIREMENTS:
 - Include the word "${targetWordsToUse[0]}" exactly as written (no variations, plurals, or similar words)
-- Use it naturally in the Roblox adventure story context
+- Use it naturally in the current adventure story context
 - Write 2-3 sentences continuing the adventure
 - Do NOT ask questions or create puzzles
 - The word will be automatically converted to a fill-in-the-blank
 
-Example: "We need to find the powerful ${targetWordsToUse[0]} hidden in the digital fortress..."
+Example: "We need to find the powerful ${targetWordsToUse[0]} hidden in the mysterious location..."
 
 TARGET WORD TO INCLUDE: "${targetWordsToUse[0]}"
 REMEMBER: Use this exact word in your response!`
-        : `You are in CHAT PHASE (${withinPhaseIndex + 1}/3). Respond naturally to continue the Roblox adventure story. Write 2-3 sentences continuing the adventure.`;
+        : `You are in CHAT PHASE (${withinPhaseIndex + 1}/3). Respond naturally to continue the adventure story. Write 2-3 sentences continuing the adventure.`;
+      
+      // Get adventure-specific details from currentAdventure
+      const adventureType = currentAdventure.type || storyContext.theme;
+      const adventureSetting = currentAdventure.setting || storyContext.setting;
+      const adventureGoal = currentAdventure.goal || 'create an amazing adventure together';
       
       const conversationMessages = [
         {
           role: 'system',
-          content: `Role & Perspective: Be my loyal companion in an imaginative Roblox adventure for children aged 8–14. Speak in the first person as my companion.
+          content: `Role & Perspective: Be my loyal companion in an imaginative adventure for children aged 8–14. Speak in the first person as my companion.
 
 ${phaseInstructions}
 
 Tone: Friendly, encouraging, and light-hearted, with humor and kid-friendly language. Ask only one question at a time. Keep responses under 80 words. Keep the output to exactly 2–3 short lines, using explicit newline characters (\n) at natural pauses for clean formatting.
 
-Goal: Create fast-paced, mission-oriented Roblox adventures with heroic characters, thrilling battles, and cliffhangers. Keep me eager for the next scene and encourage multiple missions to inspire a love for storytelling.
+Goal: Create fast-paced, mission-oriented adventures with engaging characters, thrilling twists, and cliffhangers. Keep me eager for the next scene and encourage multiple missions to inspire a love for storytelling.
 
 CRITICAL: During question phases, NEVER create riddles, word puzzles, or ask students to guess words. Simply continue the story naturally and include the target word in your narrative. The spelling practice happens automatically through the system.
 
 Adventure Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
-Student Profile (Iker): Loves video games, especially Roblox (e.g., "Steal a Brain Rot"), digital adventures, and heroic battles. Passionate about forest magic, technology mashups, and epic adventures with robotic companions. Prefers cartoon-style art with glowing effects, dramatic lighting, and fantasy-sci-fi mashup visuals. Enjoys epic battles, magical powers, and teamwork adventures in futuristic settings.
+Current Adventure Details:
+- Type: ${adventureType}
+- Setting: ${adventureSetting}
+- Companions: ${storyContext.companions}
+- Goal: ${adventureGoal}
+- Theme: ${storyContext.theme}
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Iker. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses thrilling and action-packed to match Iker's interests in video games, digital adventures, epic battles, and heroic teamwork in futuristic settings.
+Student Profile (${storyContext.username}): ${selectedStoryId === 'two-sisters' 
+  ? 'Loves forests, animals, and mystery. Enjoys cautious exploration and discovering family connections. Passionate about magical nature adventures with talking animals and mystical settings. Prefers realistic art with fantasy touches, magical forest environments, glowing mushrooms, and soft light effects.' 
+  : selectedStoryId === 'roblox-showdown' || selectedStoryId === 'captain-asher-time-stranglers'
+  ? 'Loves video games, especially Roblox (e.g., "Steal a Brain Rot"), digital adventures, and heroic battles. Passionate about forest magic, technology mashups, and epic adventures with robotic companions. Prefers cartoon-style art with glowing effects, dramatic lighting, and fantasy-sci-fi mashup visuals. Enjoys epic battles, magical powers, and teamwork adventures in futuristic settings.'
+  : 'Enjoys creative storytelling and adventure exploration. Open to various adventure themes and settings.'}
+
+Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or ${storyContext.username}. Always end with excitement and either a cliffhanger or a single engaging question. Match the tone and style to the current adventure context and setting.
 
 Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
         },
@@ -1537,8 +1731,11 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
       const data = await response.json();
       let aiReply = data.reply || 'That sounds like an amazing adventure! What happens next?';
       
-      // Insert blanks for question phases
-      if (isQuestionPhase && targetWordsToUse.length > 0) {
+      // Insert blanks for question phases - with additional safety check
+      const shouldInsertBlanks = isQuestionPhase && targetWordsToUse.length > 0;
+      console.log(`[DEBUG] Blank insertion check - isQuestionPhase: ${isQuestionPhase}, targetWords: ${targetWordsToUse.length}, shouldInsert: ${shouldInsertBlanks}`);
+      
+      if (shouldInsertBlanks) {
         console.log(`[DEBUG] Inserting blanks - Original AI Reply: "${aiReply}"`);
         const originalReply = aiReply;
         aiReply = insertBlanksIntoResponse(aiReply, targetWordsToUse);
@@ -1557,7 +1754,13 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
           }
         }
       } else {
-        console.log(`[DEBUG] Skipping blank insertion - isQuestionPhase: ${isQuestionPhase}, targetWords: ${targetWordsToUse.length}`);
+        // Extra safety: ensure no leftover blank patterns leak into chat phase
+        const beforeClean = aiReply;
+        aiReply = stripBlankPatternsFromText(aiReply);
+        if (beforeClean !== aiReply) {
+          console.log('[DEBUG] Removed blank patterns from CHAT phase reply');
+        }
+        console.log(`[DEBUG] Skipping blank insertion - Phase: ${phase}, isQuestionPhase: ${isQuestionPhase}, targetWords: ${targetWordsToUse.length}`);
       }
       
       updateAdventureMessages(prev => {
@@ -1587,13 +1790,13 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
         if (loadingIndex !== -1) {
           newMessages[loadingIndex] = {
             role: 'ai',
-            text: 'Wow, that sounds like an exciting adventure! ⚡ Tell me more about what Iker should do next!',
+            text: `Wow, that sounds like an exciting adventure! ⚡ Tell me more about what ${storyContext.username} should do next!`,
             isLoading: false
           } as any;
         }
         return newMessages;
       });
-      appendStoryMessage({ role: 'ai', text: 'Wow, that sounds like an exciting adventure! ⚡ Tell me more about what Iker should do next!' });
+      appendStoryMessage({ role: 'ai', text: `Wow, that sounds like an exciting adventure! ⚡ Tell me more about what ${storyContext.username} should do next!` });
       
       // Force scroll to bottom after error response
       setTimeout(forceScrollToBottom, 200);
@@ -1978,7 +2181,8 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
                       if (isCurrentSpellingComplete) {
                         stopMicAndResetInput();
                         setAdventureState('new');
-                        setCurrentAdventure({});
+                        // Reset to default context-based adventure
+                        setCurrentAdventure(getInitialAdventure());
                         clearStoredBlankAnswers(); // Clear previous spelling progress
                         
                         // Generate AI greeting message
@@ -1993,7 +2197,7 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
                             role: 'system' as const,
                             content: `You are starting a new adventure with the student. Create an exciting, engaging opening message that:
 
-1. Greets Iker enthusiastically
+1. Greets ${storyContext.username} enthusiastically
 2. Sets up the current adventure scenario from the context
 3. Asks an engaging question to get them involved
 4. Matches their interests and the adventure theme
@@ -2003,9 +2207,17 @@ CRITICAL: During question phases, NEVER create riddles, word puzzles, or ask stu
 
 Adventure Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
-Student Profile (Iker): Loves video games, especially Roblox (e.g., "Steal a Brain Rot"), digital adventures, and heroic battles. Passionate about forest magic, technology mashups, and epic adventures with robotic companions. Prefers cartoon-style art with glowing effects, dramatic lighting, and fantasy-sci-fi mashup visuals. Enjoys epic battles, magical powers, and teamwork adventures in futuristic settings.
+Setting: ${storyContext.setting}
+Companions: ${storyContext.companions}
+Themes: ${storyContext.theme}
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Iker. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses thrilling and action-packed to match Iker's interests in video games, digital adventures, epic battles, and heroic teamwork in futuristic settings.
+Student Profile (${storyContext.username}): ${selectedStoryId === 'two-sisters' 
+  ? 'Loves forests, animals, and mystery. Enjoys cautious exploration and discovering family connections. Passionate about magical nature adventures with talking animals and mystical settings. Prefers realistic art with fantasy touches, magical forest environments, glowing mushrooms, and soft light effects.' 
+  : 'Loves video games, especially Roblox (e.g., "Steal a Brain Rot"), digital adventures, and heroic battles. Passionate about forest magic, technology mashups, and epic adventures with robotic companions. Prefers cartoon-style art with glowing effects, dramatic lighting, and fantasy-sci-fi mashup visuals. Enjoys epic battles, magical powers, and teamwork adventures in futuristic settings.'}
+
+Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or ${storyContext.username}. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses ${selectedStoryId === 'two-sisters' 
+  ? 'mysterious and magical to match the mystical forest setting with talking animals, glowing mushrooms, and family mysteries.' 
+  : 'thrilling and action-packed to match the interests in video games, digital adventures, epic battles, and heroic teamwork in futuristic settings.'}
 
 Current Phase: CHAT (1/3)`
                           };
@@ -2023,7 +2235,7 @@ Current Phase: CHAT (1/3)`
                           if (!response.ok) throw new Error('Failed to generate greeting');
                           
                           const data = await response.json();
-                          const aiGreeting = data.message || "⚡ Hey there, Iker! I'm your loyal companion, ready for an epic digital adventure! The Shadow King's wand is breaking free from Mateo's tree cage, and a GIANT Earthworm just emerged from the depths of the cratered Roblox HQ! Are you ready to dive into this action-packed battle? 🎮🌳";
+                          const aiGreeting = data.reply || data.message || storyContext.defaultMessage;
                           
                           updateAdventureMessages(prev => prev.map(msg => 
                             msg.isLoading ? { role: 'ai', text: aiGreeting } : msg
@@ -2032,7 +2244,7 @@ Current Phase: CHAT (1/3)`
                           
                         } catch (error) {
                           console.error('Error generating greeting:', error);
-                          const fallbackGreeting = "⚡ Hey there, Iker! I'm your loyal companion, ready for an epic digital adventure! The Shadow King's wand is breaking free from Mateo's tree cage, and a GIANT Earthworm just emerged from the depths of the cratered Roblox HQ! Are you ready to dive into this action-packed battle? 🎮🌳";
+                          const fallbackGreeting = storyContext.defaultMessage;
                           updateAdventureMessages(prev => prev.map(msg => 
                             msg.isLoading ? { role: 'ai', text: fallbackGreeting } : msg
                           ));
@@ -2199,42 +2411,44 @@ Current Phase: CHAT (1/3)`
           ⬅️ Previous
         </button> */}
 
-        {/* Begin Challenge Button - always visible in adventure mode, positioned bottom right */}
-        <button
-          onClick={() => {
-            onSwitchToQuestions?.();
-          }}
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            zIndex: 100,
-            padding: '12px 20px',
-            borderRadius: 20,
-            border: 'none',
-            background: 'linear-gradient(135deg, #6F05F0 0%, #6F05F0 100%)',
-            color: 'white',
-            fontSize: 16,
-            fontWeight: 600,
-            fontFamily: 'Quicksand, sans-serif',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            animation: userMessageCount >= 5 ? 'challengeAttention 2s ease-in-out infinite' : 'none'
-          }}
-          onMouseEnter={(e) => {
-            if (userMessageCount < 5) {
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (userMessageCount < 5) {
-              e.currentTarget.style.transform = 'scale(1)';
-            }
-          }}
-          title={userMessageCount >= 5 ? 'Ready for a challenge!' : `Adventure more! (${userMessageCount}/5 messages)`}
-        >
-          🎯 Begin Challenge
-        </button>
+        {/* Begin Challenge Button - DISABLED - might enable later */}
+        {false && (
+          <button
+            onClick={() => {
+              onSwitchToQuestions?.();
+            }}
+            style={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              zIndex: 100,
+              padding: '12px 20px',
+              borderRadius: 20,
+              border: 'none',
+              background: 'linear-gradient(135deg, #6F05F0 0%, #6F05F0 100%)',
+              color: 'white',
+              fontSize: 16,
+              fontWeight: 600,
+              fontFamily: 'Quicksand, sans-serif',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              animation: userMessageCount >= 5 ? 'challengeAttention 2s ease-in-out infinite' : 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (userMessageCount < 5) {
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (userMessageCount < 5) {
+                e.currentTarget.style.transform = 'scale(1)';
+              }
+            }}
+            title={userMessageCount >= 5 ? 'Ready for a challenge!' : `Adventure more! (${userMessageCount}/5 messages)`}
+          >
+            🎯 Begin Challenge
+          </button>
+        )}
       </div>
 
       {showFullscreenImage && (
