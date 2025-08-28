@@ -1973,23 +1973,25 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
                   }} 
                   title={isCurrentSpellingComplete ? "Generate image from your message" : "Complete spelling first"}>🌄</button>
                 {adventureState !== 'new' && (
-                  <button onClick={async () => {
-                    stopMicAndResetInput();
-                    setAdventureState('new');
-                    setCurrentAdventure({});
-                    clearStoredBlankAnswers(); // Clear previous spelling progress
-                    
-                    // Generate AI greeting message
-                    updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Starting your adventure...', isLoading: true }]);
-                    
-                    try {
-                      const storyEventsContext = storyState?.storyEvents?.length > 0 
-                        ? `\n\nPrevious Story Events:\n${storyState.storyEvents.slice(-10).join('\n')}`
-                        : '';
-                      
-                      const greetingPrompt = {
-                        role: 'system' as const,
-                        content: `You are starting a new adventure with the student. Create an exciting, engaging opening message that:
+                  <button 
+                    onClick={async () => {
+                      if (isCurrentSpellingComplete) {
+                        stopMicAndResetInput();
+                        setAdventureState('new');
+                        setCurrentAdventure({});
+                        clearStoredBlankAnswers(); // Clear previous spelling progress
+                        
+                        // Generate AI greeting message
+                        updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Starting your adventure...', isLoading: true }]);
+                        
+                        try {
+                          const storyEventsContext = storyState?.storyEvents?.length > 0 
+                            ? `\n\nPrevious Story Events:\n${storyState.storyEvents.slice(-10).join('\n')}`
+                            : '';
+                          
+                          const greetingPrompt = {
+                            role: 'system' as const,
+                            content: `You are starting a new adventure with the student. Create an exciting, engaging opening message that:
 
 1. Greets Iker enthusiastically
 2. Sets up the current adventure scenario from the context
@@ -2006,40 +2008,60 @@ Student Profile (Iker): Loves video games, especially Roblox (e.g., "Steal a Bra
 Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or Iker. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses thrilling and action-packed to match Iker's interests in video games, digital adventures, epic battles, and heroic teamwork in futuristic settings.
 
 Current Phase: CHAT (1/3)`
-                      };
+                          };
 
-                      const response = await fetch('/api/chat', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          messages: [greetingPrompt],
-                          temperature: 0.8,
-                          max_tokens: 150
-                        })
-                      });
+                          const response = await fetch('/api/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              messages: [greetingPrompt],
+                              temperature: 0.8,
+                              max_tokens: 150
+                            })
+                          });
 
-                      if (!response.ok) throw new Error('Failed to generate greeting');
-                      
-                      const data = await response.json();
-                      const aiGreeting = data.message || "⚡ Hey there, Iker! I'm your loyal companion, ready for an epic digital adventure! The Shadow King's wand is breaking free from Mateo's tree cage, and a GIANT Earthworm just emerged from the depths of the cratered Roblox HQ! Are you ready to dive into this action-packed battle? 🎮🌳";
-                      
-                      updateAdventureMessages(prev => prev.map(msg => 
-                        msg.isLoading ? { role: 'ai', text: aiGreeting } : msg
-                      ));
-                      appendStoryMessage({ role: 'ai', text: aiGreeting });
-                      
-                    } catch (error) {
-                      console.error('Error generating greeting:', error);
-                      const fallbackGreeting = "⚡ Hey there, Iker! I'm your loyal companion, ready for an epic digital adventure! The Shadow King's wand is breaking free from Mateo's tree cage, and a GIANT Earthworm just emerged from the depths of the cratered Roblox HQ! Are you ready to dive into this action-packed battle? 🎮🌳";
-                      updateAdventureMessages(prev => prev.map(msg => 
-                        msg.isLoading ? { role: 'ai', text: fallbackGreeting } : msg
-                      ));
-                      appendStoryMessage({ role: 'ai', text: fallbackGreeting });
-                    }
-                    
-                    // Force scroll to bottom after new adventure greeting
-                    setTimeout(forceScrollToBottom, 200);
-                  }} aria-label="New Adventure" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(245,158,11,0.3)', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Start a new adventure">🎪</button>
+                          if (!response.ok) throw new Error('Failed to generate greeting');
+                          
+                          const data = await response.json();
+                          const aiGreeting = data.message || "⚡ Hey there, Iker! I'm your loyal companion, ready for an epic digital adventure! The Shadow King's wand is breaking free from Mateo's tree cage, and a GIANT Earthworm just emerged from the depths of the cratered Roblox HQ! Are you ready to dive into this action-packed battle? 🎮🌳";
+                          
+                          updateAdventureMessages(prev => prev.map(msg => 
+                            msg.isLoading ? { role: 'ai', text: aiGreeting } : msg
+                          ));
+                          appendStoryMessage({ role: 'ai', text: aiGreeting });
+                          
+                        } catch (error) {
+                          console.error('Error generating greeting:', error);
+                          const fallbackGreeting = "⚡ Hey there, Iker! I'm your loyal companion, ready for an epic digital adventure! The Shadow King's wand is breaking free from Mateo's tree cage, and a GIANT Earthworm just emerged from the depths of the cratered Roblox HQ! Are you ready to dive into this action-packed battle? 🎮🌳";
+                          updateAdventureMessages(prev => prev.map(msg => 
+                            msg.isLoading ? { role: 'ai', text: fallbackGreeting } : msg
+                          ));
+                          appendStoryMessage({ role: 'ai', text: fallbackGreeting });
+                        }
+                        
+                        // Force scroll to bottom after new adventure greeting
+                        setTimeout(forceScrollToBottom, 200);
+                      }
+                    }} 
+                    disabled={!isCurrentSpellingComplete}
+                    aria-label="New Adventure" 
+                    style={{ 
+                      width: 32, 
+                      height: 32, 
+                      borderRadius: 16, 
+                      border: '2px solid rgba(245,158,11,0.3)', 
+                      background: isCurrentSpellingComplete ? 
+                        'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 
+                        'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)', 
+                      color: 'white', 
+                      cursor: isCurrentSpellingComplete ? 'pointer' : 'not-allowed', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      fontSize: 14,
+                      opacity: isCurrentSpellingComplete ? 1 : 0.5
+                    }} 
+                    title={isCurrentSpellingComplete ? "Start a new adventure" : "Complete spelling first"}>🎪</button>
                 )}
                 <button 
                   onClick={() => { 
