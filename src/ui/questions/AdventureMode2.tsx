@@ -39,6 +39,15 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
           companions: "Pikachu.exe (glitch-powered loyal Pokémon), Gregory Prime (wise future self)",
           theme: "courage vs. corruption, self-discovery, and digital world protection"
         };
+      case 'callee-jungle-adventure':
+        return {
+          defaultMessage: "🌿✨ Welcome to the floating sky islands, Callee! I'm Faith, your cloud companion. Let's explore the glowing mist, jungle castles, and mystical vines. Ready for an adventure among the enchanted jungles?",
+          protagonist: "Callee",
+          username: "Callee",
+          setting: "Magical floating sky islands with glowing jungle castles, sky tunnels, puzzle bridges, mystical vines, and swirling floodwaters",
+          companions: "Faith (gentle floating gray cloud), April (loyal golden retriever), Feather (clever rainbow parrot), Bobo (inventive monkey), Blink (shy green puddle-frog), Eight golden retriever puppies",
+          theme: "jungle exploration, gadgets and inventions, animal companionship, and magical water adventures"
+        };
       case 'roblox-showdown':
       case 'captain-asher-time-stranglers':
       default:
@@ -344,6 +353,17 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
           goal: 'face the chained shadow beneath the cursed lake, stop the iPad Kid\'s corruption, and protect the digital world',
           villain: 'The iPad Kid (source of brainrot corruption, spreading glitches across the digital world, sending corrupted anime warriors)',
           recentEvent: 'Gregory, now armed with Echo Shift, journeys deep beneath the cursed lake to face his glitched shadow, while a chained version of Gregory.exe waits to be freed'
+        };
+      case 'callee-jungle-adventure':
+        return {
+          type: 'magical floating sky island adventure with jungle exploration, gadgets, and animal companions',
+          protagonist: 'Callee (young adventurer in jungle explorer outfit with quirky hat and bright eyes, brave and inventive)',
+          sidekick: 'Faith (gentle floating gray cloud with glowing yellow and blue eyes, soft mist, wise and supportive)',
+          teammates: 'April (loyal golden retriever with red bandana), Feather (clever rainbow-colored parrot), Bobo (inventive monkey with goggles), Blink (shy green puddle-frog wearing tracker), Eight golden retriever puppies (fluffy, energetic, mischievous)',
+          setting: 'Magical floating sky islands with glowing jungle castles, sky tunnels, puzzle bridges, mystical vines, and swirling floodwaters from Kassie\'s misty jungle cabin',
+          goal: 'protect the magical waters from Sludgewick and Tempestra, solve sky island puzzles, and keep the floating jungle realms connected and thriving',
+          villain: 'Sludgewick (drains magical waters, traps explorers with vines) and his sister Tempestra (uses wind gadgets and traps, steals crystals with glitter-themed storm vacuums)',
+          recentEvent: 'A powerful spiral storm crystal was activated. Tempestra launched a glitter-themed storm vacuum to steal power midair. Bobo launched banana-powered rockets and released pink glitter-slime that tricked Tempestra. Callee\'s glitter glue stretched between floating islands to stop them from drifting apart. Blink was saved by a ramp flip trick, and puppies were caught with a magical L-shaped foam landing mat.'
         };
       case 'roblox-showdown':
       case 'captain-asher-time-stranglers':
@@ -1401,6 +1421,8 @@ Keep it within 20 words. Keep it encouraging and focus on the learning process r
     // Check for interest-based adventure selection
     const interests = selectedStoryId === 'gregory-ipad-kid' 
       ? ['glitch', 'digital', 'anime', 'pokemon', 'corruption', 'echo', 'cursed', 'shadow', 'battle', 'ipad', 'time', 'cloak']
+      : selectedStoryId === 'callee-jungle-adventure'
+      ? ['jungle', 'gadgets', 'animals', 'swimming', 'basketball', 'water', 'floating', 'islands', 'cloud', 'puppies', 'monkey', 'parrot', 'frog', 'crystals', 'glitter', 'vines', 'storm', 'magic', 'explorer', 'adventure']
       : ['gaming', 'roblox', 'digital', 'battle', 'adventure', 'heroic', 'forest', 'technology', 'shadow', 'magic', 'robot', 'epic', 'futuristic'];
     const selectedInterest = interests.find(interest => lowerUser.includes(interest));
     
@@ -1885,6 +1907,8 @@ REQUIREMENTS:
 - Write 2-3 sentences continuing the adventure
 - Do NOT ask questions or create puzzles
 - The word will be automatically converted to a fill-in-the-blank
+- Ensure that the word is not used elsewhere in the passage so that the student can't just copy and paste the answer.
+- Keep it within 50 words, but also exciting.
 
 Example: "We need to find the powerful ${targetWordsToUse[0]} hidden in the mysterious location..."
 
@@ -1923,6 +1947,8 @@ Student Profile (${storyContext.username}): ${selectedStoryId === 'two-sisters'
   ? 'Loves forests, animals, and mystery. Enjoys cautious exploration and discovering family connections. Passionate about magical nature adventures with talking animals and mystical settings. Prefers realistic art with fantasy touches, magical forest environments, glowing mushrooms, and soft light effects.' 
   : selectedStoryId === 'gregory-ipad-kid'
   ? 'Loves digital worlds, anime, Pokémon, and glitch universes. Passionate about storytelling with corrupted digital fighters, neon glitch effects, and dramatic showdowns. Prefers realistic anime-glitch hybrid art style with glowing artifacts, corrupted digital environments, and epic battle scenes. Enjoys themes of courage vs. corruption, self-discovery, and loyalty.'
+  : selectedStoryId === 'callee-jungle-adventure'
+  ? 'Loves jungle adventures, gadgets, animals, storytelling, swimming and basketball in water. Passionate about exploring magical floating sky islands with animal companions, solving puzzles with inventive gadgets, and protecting magical waters. Prefers realistic art with magical fantasy elements—glowing fog, expressive animals, floating jungle-tech, and enchanted skies. Enjoys teamwork with diverse animal friends, creative problem-solving with gadgets, and water-based adventures.'
   : selectedStoryId === 'roblox-showdown' || selectedStoryId === 'captain-asher-time-stranglers'
   ? 'Loves video games, especially Roblox (e.g., "Steal a Brain Rot"), digital adventures, and heroic battles. Passionate about forest magic, technology mashups, and epic adventures with robotic companions. Prefers cartoon-style art with glowing effects, dramatic lighting, and fantasy-sci-fi mashup visuals. Enjoys epic battles, magical powers, and teamwork adventures in futuristic settings.'
   : 'Enjoys creative storytelling and adventure exploration. Open to various adventure themes and settings.'}
@@ -2320,6 +2346,21 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12, justifyContent: 'center' }}>
                 {selectedStoryId === 'gregory-ipad-kid' ? 
                   ['⚡ Glitch Powers', '🎮 Digital Corruption', '👾 Anime Battles', '🔮 Echo Shift', '💻 Cursed Lake', '🌊 Shadow Chains'].map((option) => (
+                    <button key={option} onClick={() => {
+                      stopMicAndResetInput();
+                      const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
+                      setAdventureInput(`Let's explore ${interest}!`);
+                      scrollInputToEnd();
+                      setTimeout(() => void sendAdventureMessage(), 100);
+                    }}
+                      style={{ padding: '8px 12px', borderRadius: 16, border: 'none', background: 'rgba(255,255,255,0.9)', color: '#374151', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'Quicksand, sans-serif', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s ease' }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+                    >
+                      {option}
+                    </button>
+                  )) : selectedStoryId === 'callee-jungle-adventure' ?
+                  ['🌿 Jungle Exploration', '🔧 Gadget Inventions', '🐕 Animal Friends', '🏊 Water Adventures', '🏝️ Floating Islands', '✨ Magic Crystals'].map((option) => (
                     <button key={option} onClick={() => {
                       stopMicAndResetInput();
                       const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();

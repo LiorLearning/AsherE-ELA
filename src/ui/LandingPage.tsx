@@ -36,14 +36,25 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       pages: undefined
     },
 
+    // {
+    //   id: 'gregory-ipad-kid',
+    //   title: 'Gregory and the iPad Kid',
+    //   author: 'by Gregory, 3rd grade',
+    //   pages: '10 pages',
+    //   emoji: '✨',
+    //   imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252Ftestuser4%252F20250826_160847.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+    //   color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+    //   isCreateNew: false
+    // },
+
     {
-      id: 'gregory-ipad-kid',
-      title: 'Gregory and the iPad Kid',
-      author: 'by Gregory, 3rd grade',
-      pages: '10 pages',
-      emoji: '✨',
-      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252Ftestuser4%252F20250826_160847.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
-      color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+      id: 'callee-jungle-adventure',
+      title: 'Callee\'s Jungle Adventure',
+      author: 'by Callee, 3rd grade',
+      pages: '32 pages',
+      emoji: '🌿',
+      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FCallee%252F20250829_161909.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+      color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
       isCreateNew: false
     }
   ];
