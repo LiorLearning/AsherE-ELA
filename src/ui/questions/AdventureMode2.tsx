@@ -15,51 +15,148 @@ type Props = {
   onSpellingComplete?: (isComplete: boolean) => void;
 };
 
+// Dynamic user configuration interface
+interface UserAdventureConfig {
+  username: string;
+  protagonist: string;
+  interests: string[];
+  quickOptions: string[];
+  studentProfile: string;
+  responseTone: string;
+  defaultMessage: string;
+  setting: string;
+  companions: string;
+  theme: string;
+  adventureType: string;
+  sidekick: string;
+  teammates: string;
+  villain: string;
+  goal: string;
+  recentEvent: string;
+}
+
+// Centralized user configurations
+const USER_CONFIGS: Record<string, UserAdventureConfig> = {
+  'two-sisters': {
+    username: 'Irene',
+    protagonist: 'Mia',
+    interests: ['forest', 'animals', 'mystery', 'family', 'magical', 'nature', 'mushrooms', 'shadows', 'trust', 'exploration'],
+    quickOptions: ['🌲 Forest Exploration', '🐕 Animal Friends', '🔍 Mystery Solving', '👥 Family Bonds', '✨ Magical Creatures', '🍄 Glowing Mushrooms'],
+    studentProfile: 'Loves forests, animals, and mystery. Enjoys cautious exploration and discovering family connections. Passionate about magical nature adventures with talking animals and mystical settings. Prefers realistic art with fantasy touches, magical forest environments, glowing mushrooms, and soft light effects.',
+    responseTone: 'mysterious and magical to match the mystical forest setting with talking animals, glowing mushrooms, and family mysteries.',
+          defaultMessage: "🌲✨ Welcome to the mystical forest, Irene! I'm Shadow, your mysterious guide, and I have secrets to share with you. The forest whispers with magic, and glowing mushrooms light our path. Your sister is waiting somewhere in the shadows, but first we must learn to trust each other. Are you ready to discover the truth hidden in these enchanted woods?",
+          setting: "A mystical forest full of hidden mushrooms, glowing plants, and whispering animals",
+          companions: "Shadow (mysterious black dog), Mia's Sister, The Boy Protector",
+    theme: "courage, family bonds, and trust in animals",
+    adventureType: 'mystical forest adventure with magical creatures and family mysteries',
+    sidekick: 'Shadow (mysterious black dog with ancient wisdom)',
+    teammates: 'The Boy Protector (guardian of the forest)',
+    villain: 'The Forest\'s Dark Secret (mysterious force that separates families)',
+    goal: 'find the missing sister, uncover forest secrets, and build trust with magical creatures',
+    recentEvent: 'Shadow appeared from the shadows, offering to guide Irene through the mystical forest to find her sister'
+  },
+  'gregory-ipad-kid': {
+    username: 'Gregory',
+    protagonist: 'Gregory',
+    interests: ['glitch', 'digital', 'anime', 'pokemon', 'corruption', 'echo', 'cursed', 'shadow', 'battle', 'ipad', 'time', 'cloak'],
+    quickOptions: ['⚡ Glitch Powers', '🎮 Digital Corruption', '👾 Anime Battles', '🔮 Echo Shift', '💻 Cursed Lake', '🌊 Shadow Chains'],
+    studentProfile: 'Loves digital worlds, anime, Pokémon, and glitch universes. Passionate about storytelling with corrupted digital fighters, neon glitch effects, and dramatic showdowns. Prefers realistic anime-glitch hybrid art style with glowing artifacts, corrupted digital environments, and epic battle scenes. Enjoys themes of courage vs. corruption, self-discovery, and loyalty.',
+    responseTone: 'intense and dramatic to match the corrupted digital world with glitch powers, anime battles, and the ongoing fight against the iPad Kid\'s corruption.',
+          defaultMessage: "⚡🎮 Gregory! It's Pikachu.exe. We've reached the cursed lake's depths. Your Time Cloak pulses, weakening the iPad Kid's grip. Gregory.exe is almost free. The shadows tremble. Will you confront the iPad Kid, free Gregory.exe, or explore the glitchy depths? What will you do next? ⚡",
+          setting: "A corrupted glitchy digital world with shifting landscapes, cursed lakes, and hidden digital artifacts",
+          companions: "Pikachu.exe (glitch-powered loyal Pokémon), Gregory Prime (wise future self)",
+    theme: "courage vs. corruption, self-discovery, and digital world protection",
+    adventureType: 'corrupted digital world adventure with glitch powers and anime battles',
+    sidekick: 'Pikachu.exe (once corrupted Pokémon, now captured in a special Pokéball, loyal and glitch-powered)',
+    teammates: 'Gregory Prime (Gregory\'s wiser future self who guided him through the Gregory.exe v2 USB)',
+    villain: 'The iPad Kid (source of brainrot corruption, spreading glitches across the digital world, sending corrupted anime warriors)',
+    goal: 'face the chained shadow beneath the cursed lake, stop the iPad Kid\'s corruption, and protect the digital world',
+    recentEvent: 'Gregory, now armed with Echo Shift, journeys deep beneath the cursed lake to face his glitched shadow, while a chained version of Gregory.exe waits to be freed'
+  },
+  'callee-jungle-adventure': {
+    username: 'Callee',
+    protagonist: 'Callee',
+    interests: ['jungle', 'gadgets', 'animals', 'swimming', 'basketball', 'water', 'floating', 'islands', 'cloud', 'puppies', 'monkey', 'parrot', 'frog', 'crystals', 'glitter', 'vines', 'storm', 'magic', 'explorer', 'adventure'],
+    quickOptions: ['🌿 Jungle Exploration', '🔧 Gadget Inventions', '🐕 Animal Friends', '🏊 Water Adventures', '🏝️ Floating Islands', '✨ Magic Crystals'],
+    studentProfile: 'Loves jungle adventures, gadgets, animals, storytelling, swimming and basketball in water. Passionate about exploring magical floating sky islands with animal companions, solving puzzles with inventive gadgets, and protecting magical waters. Prefers realistic art with magical fantasy elements—glowing fog, expressive animals, floating jungle-tech, and enchanted skies. Enjoys teamwork with diverse animal friends, creative problem-solving with gadgets, and water-based adventures.',
+    responseTone: 'adventurous and inventive to match the magical floating sky islands with gadgets, animal companions, and water adventures.',
+          defaultMessage: "🌿✨ Welcome to the floating sky islands, Callee! I'm Faith, your cloud companion. Let's explore the glowing mist, jungle castles, and mystical vines. Ready for an adventure among the enchanted jungles?",
+          setting: "Magical floating sky islands with glowing jungle castles, sky tunnels, puzzle bridges, mystical vines, and swirling floodwaters",
+          companions: "Faith (gentle floating gray cloud), April (loyal golden retriever), Feather (clever rainbow parrot), Bobo (inventive monkey), Blink (shy green puddle-frog), Eight golden retriever puppies",
+    theme: "jungle exploration, gadgets and inventions, animal companionship, and magical water adventures",
+    adventureType: 'magical floating sky island adventure with jungle exploration, gadgets, and animal companions',
+    sidekick: 'Faith (gentle floating gray cloud with glowing yellow and blue eyes, soft mist, wise and supportive)',
+    teammates: 'April (loyal golden retriever with red bandana), Feather (clever rainbow-colored parrot), Bobo (inventive monkey with goggles), Blink (shy green puddle-frog wearing tracker), Eight golden retriever puppies (fluffy, energetic, mischievous)',
+    villain: 'Sludgewick (drains magical waters, traps explorers with vines) and his sister Tempestra (uses wind gadgets and traps, steals crystals with glitter-themed storm vacuums)',
+    goal: 'protect the magical waters from Sludgewick and Tempestra, solve sky island puzzles, and keep the floating jungle realms connected and thriving',
+    recentEvent: 'A powerful spiral storm crystal was activated. Tempestra launched a glitter-themed storm vacuum to steal power midair. Bobo launched banana-powered rockets and released pink glitter-slime that tricked Tempestra. Callee\'s glitter glue stretched between floating islands to stop them from drifting apart. Blink was saved by a ramp flip trick, and puppies were caught with a magical L-shaped foam landing mat.'
+  },
+  'london-magical-bakery': {
+    username: 'London',
+    protagonist: 'London',
+    interests: ['baking', 'magic', 'cupcakes', 'frosting', 'enchanted', 'bakery', 'sprinkle', 'whipped', 'cream', 'magical', 'treats', 'oven', 'cake', 'sweet', 'sparkle', 'rainbow'],
+    quickOptions: ['🧁 Magical Baking', '🌈 Rainbow Frosting', '✨ Enchanted Ovens', '🍰 Cake Day Challenge', '🧚 Sprinkle Beast', '🎪 Whipped Cream Waves'],
+    studentProfile: 'Loves magical baking, whimsical creatures, and culinary adventures. Passionate about enchanted bakeries, magical treats, and fantasy cooking with sparkly dresses and blonde hair. Prefers colorful, magical art with glowing ovens, rainbow frosting, floating spatulas, and sweet magical creatures. Enjoys themes of friendship, creativity, magical harmony, and solving word puzzles while baking.',
+    responseTone: 'sweet and whimsical to match the magical bakery setting with enchanted ovens, rainbow frosting, magical creatures, and delightful baking adventures.',
+    defaultMessage: "🧁✨ Let's dive into London's magical bakery! Join Sprinkle Beast in crafting spellbinding sweets. Are you set for the thrilling Cake Day showdown? 🌈",
+    setting: "A magical enchanted bakery where ovens glow with mystical energy, frosting storms brew in the sky, rainbow frosting shelves sparkle, spatulas swirl in mid-air, and gumdrop trails lead to mysterious places",
+    companions: "Blonde sidekick (best friend and baking companion), Sprinkle Beast (giant cupcake monster with whipped cream hair and sprinkle eyes), red-hat skydiver brother (rescuer with a net)",
+    theme: "magical baking adventures, whimsical creatures, culinary exploration, and maintaining bakery harmony",
+    adventureType: 'magical enchanted bakery adventure with baking magic, whimsical creatures, and culinary exploration',
+    sidekick: 'Another blonde-haired teenage girl (same age as London, also in star/heart dresses; best friend and baking companion)',
+    teammates: 'Sprinkle Beast (giant cupcake monster with whipped cream hair and sprinkle eyes), red-hat skydiver brother (rescuer with a net who helps when things get chaotic)',
+    villain: 'Chaotic magical forces (wild frosting storms, mischievous singing cupcakes, tricky gumdrop traps) that threaten to disrupt the bakery\'s magical harmony',
+    goal: 'maintain harmony in the magical bakery, master baking magic, solve word puzzles, and create the most amazing magical treats',
+    recentEvent: 'London and her blonde sidekick successfully completed "Cupcake Day" with Sprinkle Beast\'s help! They survived dangerous frosting storms, rode exciting whipped cream waves, solved challenging word puzzles, and encountered a mysterious magical oven that glowed bright red. Now they\'re preparing for "Cake Day" tomorrow - an even bigger, more dazzling magical challenge!'
+  },
+  // Default configuration for new stories or unrecognized IDs
+  'default': {
+    username: 'London',
+    protagonist: 'London',
+    interests: ['gaming', 'roblox', 'digital', 'battle', 'adventure', 'heroic', 'forest', 'technology', 'shadow', 'magic', 'robot', 'epic', 'futuristic'],
+    quickOptions: ['⚡ Epic Battles', '🎮 Digital Adventures', '🌳 Forest Magic', '🤖 Robot Companions', '💫 Heroic Quests', '🎪 Futuristic Worlds'],
+    studentProfile: 'Enjoys creative storytelling and adventure exploration. Open to various adventure themes and settings.',
+    responseTone: 'thrilling and action-packed to match the interests in video games, digital adventures, epic battles, and heroic teamwork in futuristic settings.',
+    defaultMessage: "⚡🎮 Hey London! Ready for an epic magical adventure? I'm thinking enchanted worlds, magical powers, maybe some fantasy creatures in a mystical realm? What sounds most exciting to you today? ⚡",
+          setting: "Adventure creation space",
+          companions: "loyal companion",
+    theme: "creative storytelling and adventure exploration",
+    adventureType: 'creative storytelling and adventure exploration',
+    sidekick: 'loyal companion',
+    teammates: 'adventure companions',
+    villain: 'challenges and obstacles',
+    goal: 'create an amazing adventure together',
+    recentEvent: 'A new adventure is about to begin!'
+  }
+};
+
+// Helper function to get user config
+const getUserConfig = (storyId: string | null | undefined): UserAdventureConfig => {
+  const defaultConfig = USER_CONFIGS['default']!; // We know this exists
+  if (!storyId) return defaultConfig;
+  const config = USER_CONFIGS[storyId];
+  return config || defaultConfig;
+};
+
 export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpdate, adventureMessages: propAdventureMessages, onAdventureMessagesUpdate, onSwitchToQuestions, onGoToPrevious, onSpellingComplete }: Props): JSX.Element {
   const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat, setMetadata } = useStory();
   
-  // Get story-specific context based on selectedStoryId
+  // Get dynamic user configuration
+  const userConfig = getUserConfig(selectedStoryId);
+  
+  // State for dynamic user configuration editing (for easy customization)
+  const [customUserConfig, setCustomUserConfig] = useState<UserAdventureConfig>(userConfig);
+  
+  // Dynamic story context based on user configuration
   const getStoryContext = () => {
-    switch (selectedStoryId) {
-      case 'two-sisters':
-        return {
-          defaultMessage: "🌲✨ Welcome to the mystical forest, Irene! I'm Shadow, your mysterious guide, and I have secrets to share with you. The forest whispers with magic, and glowing mushrooms light our path. Your sister is waiting somewhere in the shadows, but first we must learn to trust each other. Are you ready to discover the truth hidden in these enchanted woods?",
-          protagonist: "Mia",
-          username: "Irene",
-          setting: "A mystical forest full of hidden mushrooms, glowing plants, and whispering animals",
-          companions: "Shadow (mysterious black dog), Mia's Sister, The Boy Protector",
-          theme: "courage, family bonds, and trust in animals"
-        };
-      case 'gregory-ipad-kid':
-        return {
-          defaultMessage: "⚡🎮 Gregory! It's Pikachu.exe. We've reached the cursed lake's depths. Your Time Cloak pulses, weakening the iPad Kid's grip. Gregory.exe is almost free. The shadows tremble. Will you confront the iPad Kid, free Gregory.exe, or explore the glitchy depths? What will you do next? ⚡",
-          protagonist: "Gregory",
-          username: "Gregory",
-          setting: "A corrupted glitchy digital world with shifting landscapes, cursed lakes, and hidden digital artifacts",
-          companions: "Pikachu.exe (glitch-powered loyal Pokémon), Gregory Prime (wise future self)",
-          theme: "courage vs. corruption, self-discovery, and digital world protection"
-        };
-      case 'callee-jungle-adventure':
-        return {
-          defaultMessage: "🌿✨ Welcome to the floating sky islands, Callee! I'm Faith, your cloud companion. Let's explore the glowing mist, jungle castles, and mystical vines. Ready for an adventure among the enchanted jungles?",
-          protagonist: "Callee",
-          username: "Callee",
-          setting: "Magical floating sky islands with glowing jungle castles, sky tunnels, puzzle bridges, mystical vines, and swirling floodwaters",
-          companions: "Faith (gentle floating gray cloud), April (loyal golden retriever), Feather (clever rainbow parrot), Bobo (inventive monkey), Blink (shy green puddle-frog), Eight golden retriever puppies",
-          theme: "jungle exploration, gadgets and inventions, animal companionship, and magical water adventures"
-        };
-      case 'roblox-showdown':
-      case 'captain-asher-time-stranglers':
-      default:
-        return {
-          defaultMessage: "⚡🎮 Hey Gregory! Ready for an epic glitchy adventure? I'm thinking digital battles, anime powers, maybe some Pokemon action in a corrupted world? What sounds most exciting to you today? ⚡",
-          protagonist: "Gregory",
-          username: "Gregory",
-          setting: "Adventure creation space",
-          companions: "loyal companion",
-          theme: "creative storytelling and adventure exploration"
-        };
-    }
+    return {
+      defaultMessage: customUserConfig.defaultMessage,
+      protagonist: customUserConfig.protagonist,
+      username: customUserConfig.username,
+      setting: customUserConfig.setting,
+      companions: customUserConfig.companions,
+      theme: customUserConfig.theme
+    };
   };
 
   // Remove any blank-style markers from text (used to keep CHAT phase clean)
@@ -193,14 +290,10 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
 
   // Target words for spelling challenges - CVC words with short "o" and short "u"
   const targetWords: string[] = [
-    // Common long "u" words with silent e
-    'cube', 'flute', 'mule', 'tune', 'rude', 'cute', 'fuse', 'use', 'mute', 'huge',
-    // Common long "u" words with "ue"
-    'blue', 'clue', 'true', 'glue', 'rescue', 'issue', 'value', 'argue', 'continue', 'avenue',
-    // Common long "u" words with "oo"
-    'moon', 'spoon', 'broom', 'room', 'bloom', 'groom', 'zoom', 'food', 'school', 'noon',
-    // Common long "u" words with "ew"
-    'new', 'stew', 'crew', 'flew', 'chew', 'grew', 'blew', 'few', 'view', 'jewel'
+    // Floss rule words: double the f, l, s, or z in one syllable words following a short vowel
+    'jazz', 'fluff', 'skull', 'bass', 'buzz', 'fizz', 'puff', 'bell', 'hiss', 'fuss',
+    'bluff', 'spill', 'grill', 'shell', 'sniff', 'staff', 'dress', 'press', 'cross', 'toss',
+    'whiff', 'trill', 'bliss', 'fizz', 'snazz', 'quill', 'moss', 'cuff', 'cliff', 'blitz'
   ].sort(() => Math.random() - 0.5); // Randomize the order
 
   // Function to get current phase and target words
@@ -329,65 +422,18 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
   
   // Message counter for Begin Challenge trigger (count user messages only)
   const [userMessageCount, setUserMessageCount] = useState(0);
-  // Initialize currentAdventure based on story context
+    // Dynamic initial adventure based on user configuration
   const getInitialAdventure = () => {
-    switch (selectedStoryId) {
-      case 'two-sisters':
-        return {
-          type: 'mystical forest adventure with magical creatures and family mysteries',
-          protagonist: 'Mia (brave sister searching for her lost sibling)',
-          sidekick: 'Shadow (mysterious black dog with ancient wisdom)',
-          teammates: 'The Boy Protector (guardian of the forest)',
-          setting: 'A mystical forest full of hidden mushrooms, glowing plants, and whispering animals',
-          goal: 'find the missing sister, uncover forest secrets, and build trust with magical creatures',
-          villain: 'The Forest\'s Dark Secret (mysterious force that separates families)',
-          recentEvent: 'Shadow appeared from the shadows, offering to guide Irene through the mystical forest to find her sister'
-        };
-      case 'gregory-ipad-kid':
-        return {
-          type: 'corrupted digital world adventure with glitch powers and anime battles',
-          protagonist: 'Gregory (brave boy wearing a glowing Time Cloak, determined to protect others from corruption)',
-          sidekick: 'Pikachu.exe (once corrupted Pokémon, now captured in a special Pokéball, loyal and glitch-powered)',
-          teammates: 'Gregory Prime (Gregory\'s wiser future self who guided him through the Gregory.exe v2 USB)',
-          setting: 'A corrupted glitchy digital world with shifting landscapes, cursed lakes, corrupted anime warriors, and hidden digital artifacts',
-          goal: 'face the chained shadow beneath the cursed lake, stop the iPad Kid\'s corruption, and protect the digital world',
-          villain: 'The iPad Kid (source of brainrot corruption, spreading glitches across the digital world, sending corrupted anime warriors)',
-          recentEvent: 'Gregory, now armed with Echo Shift, journeys deep beneath the cursed lake to face his glitched shadow, while a chained version of Gregory.exe waits to be freed'
-        };
-      case 'callee-jungle-adventure':
-        return {
-          type: 'magical floating sky island adventure with jungle exploration, gadgets, and animal companions',
-          protagonist: 'Callee (young adventurer in jungle explorer outfit with quirky hat and bright eyes, brave and inventive)',
-          sidekick: 'Faith (gentle floating gray cloud with glowing yellow and blue eyes, soft mist, wise and supportive)',
-          teammates: 'April (loyal golden retriever with red bandana), Feather (clever rainbow-colored parrot), Bobo (inventive monkey with goggles), Blink (shy green puddle-frog wearing tracker), Eight golden retriever puppies (fluffy, energetic, mischievous)',
-          setting: 'Magical floating sky islands with glowing jungle castles, sky tunnels, puzzle bridges, mystical vines, and swirling floodwaters from Kassie\'s misty jungle cabin',
-          goal: 'protect the magical waters from Sludgewick and Tempestra, solve sky island puzzles, and keep the floating jungle realms connected and thriving',
-          villain: 'Sludgewick (drains magical waters, traps explorers with vines) and his sister Tempestra (uses wind gadgets and traps, steals crystals with glitter-themed storm vacuums)',
-          recentEvent: 'A powerful spiral storm crystal was activated. Tempestra launched a glitter-themed storm vacuum to steal power midair. Bobo launched banana-powered rockets and released pink glitter-slime that tricked Tempestra. Callee\'s glitter glue stretched between floating islands to stop them from drifting apart. Blink was saved by a ramp flip trick, and puppies were caught with a magical L-shaped foam landing mat.'
-        };
-      case 'roblox-showdown':
-      case 'captain-asher-time-stranglers':
-        return {
-          type: 'epic Roblox adventure with forest magic, digital technology, and heroic battles',
-          protagonist: 'Mateo (forest-powered hero with armor made of glowing vines, crown of leaves, and powers that spawn magical trees)',
-          sidekick: 'Glitcherino (wooden robot with all-brown outfit, springy limbs, and a banana-powered joke blaster)',
-          teammates: 'Iker (brave, creative hero wearing a gamer-style outfit, glowing blue visor, and digital cape)',
-          setting: 'Cratered Roblox HQ after being struck by ten asteroids; neon wires, shattered labs, and moon rocks scattered across a techy battlefield',
-          goal: 'defeat the Shadow King, protect the digital realm, master forest magic and technology, and restore peace to Roblox HQ',
-          villain: 'The Shadow King (armored in dark metal, with powerful shadow magic and a glowing wand; seeks revenge after being banned by David Bazuki)',
-          recentEvent: 'Mateo used an epic tree cage to trap the Shadow King, but his wand is breaking free; below, a sleepy Sea Eater shark awakened and was lulled to sleep—when a GIANT Earthworm emerged from the depths!'
-        };
-      default:
-        // For new stories, use the context from getStoryContext
-        return {
-          type: storyContext.theme,
-          protagonist: storyContext.protagonist,
-          sidekick: storyContext.companions,
-          setting: storyContext.setting,
-          goal: 'create an amazing adventure together',
-          recentEvent: 'A new adventure is about to begin!'
-        };
-    }
+    return {
+      type: customUserConfig.adventureType,
+      protagonist: customUserConfig.protagonist,
+      sidekick: customUserConfig.sidekick,
+      teammates: customUserConfig.teammates,
+      setting: customUserConfig.setting,
+      goal: customUserConfig.goal,
+      villain: customUserConfig.villain,
+      recentEvent: customUserConfig.recentEvent
+    };
   };
 
   const [currentAdventure, setCurrentAdventure] = useState<{
@@ -668,7 +714,8 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
 
 1. First, explain why their attempt doesn't match the target word
 2. Give them 2-3 alternative options to consider (including the correct answer mixed in)
-3. Strictly ensure the answer isn't directly mentioned in your hint.
+3. Give a subtle recap of Floss Rule if applicable.
+4. Strictly ensure the answer isn't directly mentioned in your hint.
 
 The target word: "${word}"
 Student's attempt: "${userAttempt}"
@@ -676,7 +723,7 @@ Student's attempt: "${userAttempt}"
 Format your response like this:
 "Ah, that sounds like ${userAttempt} which is [explanation]. Here are some options to try: [2-3 choices including correct answer]."
 
-Keep it within 20 words. Keep it encouraging and focus on the learning process rather than giving away the answer.`
+Strictly keep it within 20 words. Keep it encouraging and focus on the learning process rather than giving away the answer.`
             },
             {
               role: 'user',
@@ -1418,12 +1465,8 @@ Keep it within 20 words. Keep it encouraging and focus on the learning process r
     const lowerUser = userMessage.toLowerCase();
     const lowerAI = aiResponse.toLowerCase();
     
-    // Check for interest-based adventure selection
-    const interests = selectedStoryId === 'gregory-ipad-kid' 
-      ? ['glitch', 'digital', 'anime', 'pokemon', 'corruption', 'echo', 'cursed', 'shadow', 'battle', 'ipad', 'time', 'cloak']
-      : selectedStoryId === 'callee-jungle-adventure'
-      ? ['jungle', 'gadgets', 'animals', 'swimming', 'basketball', 'water', 'floating', 'islands', 'cloud', 'puppies', 'monkey', 'parrot', 'frog', 'crystals', 'glitter', 'vines', 'storm', 'magic', 'explorer', 'adventure']
-      : ['gaming', 'roblox', 'digital', 'battle', 'adventure', 'heroic', 'forest', 'technology', 'shadow', 'magic', 'robot', 'epic', 'futuristic'];
+    // Check for interest-based adventure selection using dynamic user config
+    const interests = customUserConfig.interests;
     const selectedInterest = interests.find(interest => lowerUser.includes(interest));
     
     if (selectedInterest && adventureState === 'new') {
@@ -1907,7 +1950,7 @@ REQUIREMENTS:
 - Write 2-3 sentences continuing the adventure
 - Do NOT ask questions or create puzzles
 - The word will be automatically converted to a fill-in-the-blank
-- Ensure that the word is not used elsewhere in the passage so that the student can't just copy and paste the answer.
+- Strictly ensure that the word is not used elsewhere in the passage so that the student can't just copy and paste the answer.
 - Keep it within 50 words, but also exciting.
 
 Example: "We need to find the powerful ${targetWordsToUse[0]} hidden in the mysterious location..."
@@ -1943,15 +1986,7 @@ Current Adventure Details:
 - Goal: ${adventureGoal}
 - Theme: ${storyContext.theme}
 
-Student Profile (${storyContext.username}): ${selectedStoryId === 'two-sisters' 
-  ? 'Loves forests, animals, and mystery. Enjoys cautious exploration and discovering family connections. Passionate about magical nature adventures with talking animals and mystical settings. Prefers realistic art with fantasy touches, magical forest environments, glowing mushrooms, and soft light effects.' 
-  : selectedStoryId === 'gregory-ipad-kid'
-  ? 'Loves digital worlds, anime, Pokémon, and glitch universes. Passionate about storytelling with corrupted digital fighters, neon glitch effects, and dramatic showdowns. Prefers realistic anime-glitch hybrid art style with glowing artifacts, corrupted digital environments, and epic battle scenes. Enjoys themes of courage vs. corruption, self-discovery, and loyalty.'
-  : selectedStoryId === 'callee-jungle-adventure'
-  ? 'Loves jungle adventures, gadgets, animals, storytelling, swimming and basketball in water. Passionate about exploring magical floating sky islands with animal companions, solving puzzles with inventive gadgets, and protecting magical waters. Prefers realistic art with magical fantasy elements—glowing fog, expressive animals, floating jungle-tech, and enchanted skies. Enjoys teamwork with diverse animal friends, creative problem-solving with gadgets, and water-based adventures.'
-  : selectedStoryId === 'roblox-showdown' || selectedStoryId === 'captain-asher-time-stranglers'
-  ? 'Loves video games, especially Roblox (e.g., "Steal a Brain Rot"), digital adventures, and heroic battles. Passionate about forest magic, technology mashups, and epic adventures with robotic companions. Prefers cartoon-style art with glowing effects, dramatic lighting, and fantasy-sci-fi mashup visuals. Enjoys epic battles, magical powers, and teamwork adventures in futuristic settings.'
-  : 'Enjoys creative storytelling and adventure exploration. Open to various adventure themes and settings.'}
+Student Profile (${storyContext.username}): ${customUserConfig.studentProfile}
 
 Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or ${storyContext.username}. Always end with excitement and either a cliffhanger or a single engaging question. Match the tone and style to the current adventure context and setting.
 
@@ -2344,42 +2379,15 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
                           {/* Quick adventure options - show when starting new adventure */}
             {adventureState === 'new' && adventureMessages.length <= 2 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12, justifyContent: 'center' }}>
-                {selectedStoryId === 'gregory-ipad-kid' ? 
-                  ['⚡ Glitch Powers', '🎮 Digital Corruption', '👾 Anime Battles', '🔮 Echo Shift', '💻 Cursed Lake', '🌊 Shadow Chains'].map((option) => (
+                {customUserConfig.quickOptions.map((option) => (
                     <button key={option} onClick={() => {
                       stopMicAndResetInput();
                       const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
-                      setAdventureInput(`Let's explore ${interest}!`);
-                      scrollInputToEnd();
-                      setTimeout(() => void sendAdventureMessage(), 100);
-                    }}
-                      style={{ padding: '8px 12px', borderRadius: 16, border: 'none', background: 'rgba(255,255,255,0.9)', color: '#374151', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'Quicksand, sans-serif', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s ease' }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    >
-                      {option}
-                    </button>
-                  )) : selectedStoryId === 'callee-jungle-adventure' ?
-                  ['🌿 Jungle Exploration', '🔧 Gadget Inventions', '🐕 Animal Friends', '🏊 Water Adventures', '🏝️ Floating Islands', '✨ Magic Crystals'].map((option) => (
-                    <button key={option} onClick={() => {
-                      stopMicAndResetInput();
-                      const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
-                      setAdventureInput(`Let's explore ${interest}!`);
-                      scrollInputToEnd();
-                      setTimeout(() => void sendAdventureMessage(), 100);
-                    }}
-                      style={{ padding: '8px 12px', borderRadius: 16, border: 'none', background: 'rgba(255,255,255,0.9)', color: '#374151', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'Quicksand, sans-serif', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s ease' }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-                    >
-                      {option}
-                    </button>
-                  )) :
-                  ['⚡ Epic Battles', '🎮 Digital Adventures', '🌳 Forest Magic', '🤖 Robot Companions', '💫 Heroic Quests', '🎪 Futuristic Worlds'].map((option) => (
-                    <button key={option} onClick={() => {
-                      stopMicAndResetInput();
-                      const interest = option.split(' ')[1]?.toLowerCase() || option.toLowerCase();
-                      setAdventureInput(`I love ${interest} adventures!`);
+                      // Dynamic action text based on user config theme
+                      const actionText = selectedStoryId === 'london-magical-bakery' 
+                        ? `Let's create ${interest} magic!`
+                        : `Let's explore ${interest}!`;
+                      setAdventureInput(actionText);
                       scrollInputToEnd();
                       setTimeout(() => void sendAdventureMessage(), 100);
                     }}
@@ -2486,15 +2494,9 @@ Setting: ${storyContext.setting}
 Companions: ${storyContext.companions}
 Themes: ${storyContext.theme}
 
-Student Profile (${storyContext.username}): ${selectedStoryId === 'two-sisters' 
-  ? 'Loves forests, animals, and mystery. Enjoys cautious exploration and discovering family connections. Passionate about magical nature adventures with talking animals and mystical settings. Prefers realistic art with fantasy touches, magical forest environments, glowing mushrooms, and soft light effects.' 
-  : 'Loves video games, especially Roblox (e.g., "Steal a Brain Rot"), digital adventures, and heroic battles. Passionate about forest magic, technology mashups, and epic adventures with robotic companions. Prefers cartoon-style art with glowing effects, dramatic lighting, and fantasy-sci-fi mashup visuals. Enjoys epic battles, magical powers, and teamwork adventures in futuristic settings.'}
+Student Profile (${storyContext.username}): ${customUserConfig.studentProfile}
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or ${storyContext.username}. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses ${selectedStoryId === 'two-sisters' 
-  ? 'mysterious and magical to match the mystical forest setting with talking animals, glowing mushrooms, and family mysteries.' 
-  : selectedStoryId === 'gregory-ipad-kid'
-  ? 'intense and dramatic to match the corrupted digital world with glitch powers, anime battles, and the ongoing fight against the iPad Kid\'s corruption.'
-  : 'thrilling and action-packed to match the interests in video games, digital adventures, epic battles, and heroic teamwork in futuristic settings.'}
+Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or ${storyContext.username}. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses ${customUserConfig.responseTone}
 
 Current Phase: CHAT (1/3)`
                           };

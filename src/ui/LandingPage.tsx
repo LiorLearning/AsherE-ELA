@@ -47,14 +47,24 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
     //   isCreateNew: false
     // },
 
+    // {
+    //   id: 'callee-jungle-adventure',
+    //   title: 'Callee\'s Jungle Adventure',
+    //   author: 'by Callee, 3rd grade',
+    //   pages: '32 pages',
+    //   emoji: '🌿',
+    //   imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FCallee%252F20250829_161909.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+    //   color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    //   isCreateNew: false
+    // },
     {
-      id: 'callee-jungle-adventure',
-      title: 'Callee\'s Jungle Adventure',
-      author: 'by Callee, 3rd grade',
-      pages: '32 pages',
-      emoji: '🌿',
-      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FCallee%252F20250829_161909.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
-      color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+      id: 'london-magical-bakery',
+      title: 'London and the Magical Bakery',
+      author: 'by London, 3rd grade',
+      pages: '10 pages',
+      emoji: '✨',
+      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fdubeus2fv4wzz.cloudfront.net%252Fimages%252F20250822_192830_image.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+      color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
       isCreateNew: false
     }
   ];
@@ -807,7 +817,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
               fontFamily: 'Quicksand, system-ui, sans-serif',
               textShadow: '0 2px 4px rgba(0,0,0,0.05)'
             }}>
-              📚 Welcome back, Gregory!
+              📚 Welcome back, London!
             </h1>
             <div style={{ marginTop: 20 }}>
               <AuthorLevelBadge />
@@ -855,7 +865,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
                 imageUrl={story.imageUrl}
                 author={story.author}
                 pages={story.pages}
-                showPublishButton={story.id === 'captain-asher-time-stranglers' || story.id === 'two-sisters' || story.id === 'gregory-ipad-kid'}
+                showPublishButton={story.id === 'captain-asher-time-stranglers' || story.id === 'two-sisters' || story.id === 'gregory-ipad-kid' || story.id === 'london-magical-bakery'}
                 onPublish={() => handlePublishStory(story.id)}
                 onClick={() => story.isCreateNew ? handleCreateNew() : handleStorySelect(story.id, 'adventure')}
               />

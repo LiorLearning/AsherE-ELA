@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Create exciting, adventurous images that kids will love while maintaining safety
-    const enhancedPrompt = `Create a realistic, high-quality image: ${prompt}. Style: Realistic textures with vivid details. It should NOT be cartoonish or kiddish. Keep all content completely family friendly with no nudity, no sexual content, and no sensual or romantic posing. Absolutely avoid sexualized bodies, ensure no sensual poses or clothing (no cleavage, lingerie, swimwear, exposed midriff, or tight/transparent outfits); characters are depicted in fully modest attire suitable for kids. No kissing, flirting, or adult themes. Strictly avoid text on the images.`
+    const enhancedPrompt = `Create a very realistic, high-quality image: ${prompt}. Style: Realistic with vivid details. It should NOT be cartoonish or kiddish. Keep all content completely family friendly with no nudity, no sexual content, and no sensual or romantic posing. Absolutely avoid sexualized bodies, ensure no sensual poses or clothing (no cleavage, lingerie, swimwear, exposed midriff, or tight/transparent outfits); characters are depicted in fully modest attire suitable for kids. No kissing, flirting, or adult themes. Strictly avoid text on the images.`
     // Log the prompts for debugging
     console.log('=== IMAGE GENERATION DEBUG ===');
     console.log('Original prompt:', prompt);
