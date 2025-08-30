@@ -4,6 +4,37 @@ import bg1Url from '../../../bg2.png';
 import { audioManager } from '../audioManager';
 // import '../../../api/image'
 
+// Add CSS animations for the reading component
+const styles = `
+  @keyframes fadeSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+`;
+
+// Inject styles if not already present
+if (!document.querySelector('#adventure-mode-styles')) {
+  const styleSheet = document.createElement('style');
+  styleSheet.id = 'adventure-mode-styles';
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
+}
+
 type Props = {
   selectedStoryId?: string | null;
   onAdventureMessage?: (userMessage: string) => void;
@@ -13,6 +44,7 @@ type Props = {
   onSwitchToQuestions?: () => void;
   onGoToPrevious?: () => void;
   onSpellingComplete?: (isComplete: boolean) => void;
+  questionType?: 'spelling' | 'reading'; // New prop to control question type
 };
 
 // Dynamic user configuration interface
@@ -138,11 +170,17 @@ const getUserConfig = (storyId: string | null | undefined): UserAdventureConfig 
   return config || defaultConfig;
 };
 
-export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpdate, adventureMessages: propAdventureMessages, onAdventureMessagesUpdate, onSwitchToQuestions, onGoToPrevious, onSpellingComplete }: Props): JSX.Element {
+export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpdate, adventureMessages: propAdventureMessages, onAdventureMessagesUpdate, onSwitchToQuestions, onGoToPrevious, onSpellingComplete, questionType: propQuestionType }: Props): JSX.Element {
   const { state: storyState, appendMessage: appendStoryMessage, reset: resetStory, consumePendingAdventureChat, setMetadata } = useStory();
   
   // Get dynamic user configuration
   const userConfig = getUserConfig(selectedStoryId);
+  
+  // Internal question type state - can be controlled within the component
+  const [internalQuestionType, setInternalQuestionType] = useState<'spelling' | 'reading'>(propQuestionType || 'spelling');
+  
+  // Use internal state if no prop is provided, otherwise use prop
+  const questionType = propQuestionType || internalQuestionType;
   
   // State for dynamic user configuration editing (for easy customization)
   const [customUserConfig, setCustomUserConfig] = useState<UserAdventureConfig>(userConfig);
@@ -165,6 +203,8 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
     let cleaned = text;
     // Replace [BLANK:word] → word
     cleaned = cleaned.replace(/\[BLANK:([^\]]*)\]/gi, (_, word) => (word || '').trim());
+    // Replace [READING:word] → word
+    cleaned = cleaned.replace(/\[READING:([^\]]*)\]/gi, (_, word) => (word || '').trim());
     // Replace ___word___ → word
     cleaned = cleaned.replace(/_{3,}([a-zA-Z]*)_{3,}/g, (_, word) => (word || '').trim());
     // Replace lone ___ sequences → ''
@@ -314,7 +354,7 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
   };
 
   // Function to insert blanks into AI response for question phases (1 blank only)
-  const insertBlanksIntoResponse = (response: string, targetWordsToUse: string[]) => {
+  const insertBlanksIntoResponse = (response: string, targetWordsToUse: string[], questionType: 'spelling' | 'reading' = 'spelling') => {
     let modifiedResponse = response;
     
     // Use only the first target word (should be only 1 anyway)
@@ -323,19 +363,21 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
     if (targetWord) {
       console.log(`[DEBUG] Attempting to insert blank for word: "${targetWord}" in response: "${response}"`);
       
-      // Check if the word is already inside a [BLANK:...] marker
-      const existingBlankPattern = new RegExp(`\\[BLANK:[^\\]]*${targetWord}[^\\]]*\\]`, 'i');
-      if (existingBlankPattern.test(modifiedResponse)) {
-        console.log(`[DEBUG] Word "${targetWord}" already in blank, skipping`);
+      // Check if the word is already inside a pattern marker
+      const patternType = questionType === 'reading' ? 'READING' : 'BLANK';
+      const existingPattern = new RegExp(`\\[${patternType}:[^\\]]*${targetWord}[^\\]]*\\]`, 'i');
+      if (existingPattern.test(modifiedResponse)) {
+        console.log(`[DEBUG] Word "${targetWord}" already in ${patternType} pattern, skipping`);
         return modifiedResponse;
       }
       
       // Create a case-insensitive regex to find the word (only first occurrence)
       const wordRegex = new RegExp(`\\b${targetWord}\\b`, 'i');
       if (wordRegex.test(modifiedResponse)) {
-        // Replace only the first occurrence with blank format
-        modifiedResponse = modifiedResponse.replace(wordRegex, `[BLANK:${targetWord.toLowerCase()}]`);
-        console.log(`[DEBUG] Successfully inserted blank for "${targetWord}". Result: "${modifiedResponse}"`);
+        // Replace only the first occurrence with appropriate pattern format
+        const pattern = questionType === 'reading' ? `[READING:${targetWord.toLowerCase()}]` : `[BLANK:${targetWord.toLowerCase()}]`;
+        modifiedResponse = modifiedResponse.replace(wordRegex, pattern);
+        console.log(`[DEBUG] Successfully inserted ${patternType} pattern for "${targetWord}". Result: "${modifiedResponse}"`);
       } else {
         // If the exact word isn't found, try to find similar words or force insert a blank
         console.log(`[DEBUG] Target word "${targetWord}" not found in response. Attempting fallback insertion.`);
@@ -353,11 +395,12 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
           // Check if this word contains our target word or is very similar
           if (cleanWord.includes(targetWord.toLowerCase()) || 
               targetWord.toLowerCase().includes(cleanWord)) {
-            // Replace this word with our target word in a blank
+            // Replace this word with our target word in appropriate pattern
             const wordPattern = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-            modifiedResponse = modifiedResponse.replace(wordPattern, `[BLANK:${targetWord.toLowerCase()}]`);
+            const pattern = questionType === 'reading' ? `[READING:${targetWord.toLowerCase()}]` : `[BLANK:${targetWord.toLowerCase()}]`;
+            modifiedResponse = modifiedResponse.replace(wordPattern, pattern);
             foundSimilar = true;
-            console.log(`[DEBUG] Found similar word "${word}", replaced with blank for "${targetWord}"`);
+            console.log(`[DEBUG] Found similar word "${word}", replaced with ${patternType} pattern for "${targetWord}"`);
           }
         }
         
@@ -398,24 +441,42 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
   
   // Track spelling completion status to control input availability
   const [isCurrentSpellingComplete, setIsCurrentSpellingComplete] = useState<boolean>(true); // Default to true for messages without spelling
+  
+  // Track reading completion status to control input availability
+  const [isCurrentReadingComplete, setIsCurrentReadingComplete] = useState<boolean>(true); // Default to true for messages without reading
 
   // Handle spelling completion updates from FillInTheBlankMessage
   const handleSpellingComplete = React.useCallback((isComplete: boolean) => {
     setIsCurrentSpellingComplete(isComplete);
   }, []);
+  
+  // Handle reading completion updates from ReadingQuestionMessage
+  const handleReadingComplete = React.useCallback((isComplete: boolean) => {
+    setIsCurrentReadingComplete(isComplete);
+  }, []);
 
-  // Reset spelling completion when new messages arrive
+  // Reset completion status when new messages arrive
   React.useEffect(() => {
-    // Check if the latest AI message has blanks
+    // Check if the latest AI message has blanks or reading patterns
     const latestAIMessage = adventureMessages.slice().reverse().find(m => m.role === 'ai' && !m.isLoading && !m.isImage);
     if (latestAIMessage) {
       const hasBlankPattern = /(\[BLANK(?::[^\]]+)?\]|_{3,}[a-zA-Z]*_{3,}|_{3,})/g.test(latestAIMessage.text);
+      const hasReadingPattern = /\[READING:[^\]]+\]/g.test(latestAIMessage.text);
+      
       if (!hasBlankPattern) {
-        // No blanks in latest message, enable input
+        // No blanks in latest message, enable input for spelling
         setIsCurrentSpellingComplete(true);
       } else {
         // Has blanks, disable input until completed
         setIsCurrentSpellingComplete(false);
+      }
+      
+      if (!hasReadingPattern) {
+        // No reading patterns in latest message, enable input for reading
+        setIsCurrentReadingComplete(true);
+      } else {
+        // Has reading patterns, disable input until completed
+        setIsCurrentReadingComplete(false);
       }
     }
   }, [adventureMessages]);
@@ -847,6 +908,544 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
     });
 
     return completeText;
+  };
+
+  // Component to render reading question message
+  const ReadingQuestionMessage: React.FC<{
+    text: string;
+    messageId: string;
+    onReadingComplete?: (isComplete: boolean) => void;
+  }> = ({ text, messageId, onReadingComplete }) => {
+    const [isListening, setIsListening] = useState(false);
+    const [attemptCount, setAttemptCount] = useState(0);
+    const [isCompleted, setIsCompleted] = useState(false);
+    const [currentFeedback, setCurrentFeedback] = useState<string>('');
+    const [hasPlayedAudio, setHasPlayedAudio] = useState(false);
+    const readingAudioRef = useRef<HTMLAudioElement | null>(null);
+    
+    // Parse reading pattern [READING:word] from text
+    const parseReadingText = (text: string) => {
+      const parts: Array<{ type: 'text' | 'reading'; content: string; targetWord?: string }> = [];
+      const pattern = /\[READING:([^\]]+)\]/g;
+      let lastIndex = 0;
+      let match;
+      
+      while ((match = pattern.exec(text)) !== null) {
+        // Add text before the match
+        if (match.index > lastIndex) {
+          parts.push({ type: 'text', content: text.slice(lastIndex, match.index) });
+        }
+        
+        // Add the reading target
+        const targetWord = match[1] || '';
+        parts.push({ 
+          type: 'reading', 
+          content: targetWord, 
+          targetWord: targetWord 
+        });
+        
+        lastIndex = pattern.lastIndex;
+      }
+      
+      // Add remaining text
+      if (lastIndex < text.length) {
+        parts.push({ type: 'text', content: text.slice(lastIndex) });
+      }
+      
+      return parts;
+    };
+    
+    const parts = parseReadingText(text);
+    const targetWord = parts.find(part => part.type === 'reading')?.targetWord;
+    
+    // Play audio up to the target word
+    const playPartialAudio = async () => {
+      if (!targetWord || hasPlayedAudio) return;
+      
+      // Stop any existing audio first (both main audio and any previous reading audio)
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      if (readingAudioRef.current) {
+        readingAudioRef.current.pause();
+        readingAudioRef.current = null;
+      }
+      
+      try {
+        // Find the position of [READING:word] in the original text
+        const readingPatternMatch = text.match(/\[READING:[^\]]+\]/);
+        if (!readingPatternMatch) return;
+        
+        const patternIndex = text.indexOf(readingPatternMatch[0]);
+        
+        // Get text before the [READING:word] pattern
+        let audioText = text.substring(0, patternIndex).trim();
+        
+        // Clean up any remaining patterns and formatting
+        audioText = audioText.replace(/\[BLANK:[^\]]*\]/gi, '').replace(/\*/g, '').trim();
+        
+        console.log(`[DEBUG] Original text: "${text}"`);
+        console.log(`[DEBUG] Target word: "${targetWord}"`);
+        console.log(`[DEBUG] Audio text (stops before target): "${audioText}"`);
+        
+        if (audioText.trim()) {
+          const response = await fetch('/api/text-to-speech', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: audioText })
+          });
+          const data = await response.json();
+          if (data.audioUrl) {
+            readingAudioRef.current = new Audio(data.audioUrl);
+            readingAudioRef.current.playbackRate = 0.8;
+            readingAudioRef.current.play();
+            setHasPlayedAudio(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error playing partial audio:', error);
+      }
+    };
+    
+    // Speech recognition state
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+
+    // Start or stop speech recognition
+    const toggleListening = async () => {
+      if (!targetWord || isCompleted) return;
+      
+      if (isListening) {
+        // Stop recording
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+        return;
+      }
+      
+      setIsListening(true);
+      setCurrentFeedback('Recording... Click the word again to stop.');
+      audioChunksRef.current = [];
+      
+      try {
+        // Request microphone permission and start recording
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamRef.current = stream;
+        
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = async () => {
+          // Stop all tracks to release microphone
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+          }
+          
+          if (audioChunksRef.current.length === 0) {
+            setCurrentFeedback('No audio recorded. Please try again.');
+            setIsListening(false);
+            return;
+          }
+          
+          // Create audio blob and send to Whisper
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const formData = new FormData();
+          formData.append('audio', audioBlob, 'recording.webm');
+          
+          try {
+            const response = await fetch('/api/speech-to-text', {
+              method: 'POST',
+              body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.transcript) {
+              const spokenWord = result.transcript.toLowerCase().trim();
+              const expected = targetWord.toLowerCase().trim();
+              
+              console.log(`[DEBUG] Spoken: "${spokenWord}", Expected: "${expected}"`);
+              
+              // Check for correctness with some tolerance for STT inaccuracies
+              const isCorrect = checkWordMatch(spokenWord, expected);
+              
+              if (isCorrect) {
+                setIsCompleted(true);
+                setCurrentFeedback('');
+                
+                // Play continuation from target word onwards
+                setTimeout(async () => {
+                  try {
+                    // Find the position of [READING:word] in the original text
+                    const readingPatternMatch = text.match(/\[READING:([^\]]+)\]/);
+                    if (!readingPatternMatch) return;
+                    
+                    const patternIndex = text.indexOf(readingPatternMatch[0]);
+                    const targetWordText = readingPatternMatch[1] || targetWord;
+                    
+                    // Get text from the target word onwards
+                    let continuationText = targetWordText + ' ' + text.substring(patternIndex + readingPatternMatch[0].length).trim();
+                    
+                    // Clean up any remaining patterns and formatting
+                    continuationText = continuationText.replace(/\[BLANK:[^\]]*\]/gi, '').replace(/\*/g, '').trim();
+                    
+                    console.log(`[DEBUG] Playing continuation from target word: "${continuationText}"`);
+                    
+                    const response = await fetch('/api/text-to-speech', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ text: continuationText })
+                    });
+                    const data = await response.json();
+                    if (data.audioUrl) {
+                      readingAudioRef.current = new Audio(data.audioUrl);
+                      readingAudioRef.current.playbackRate = 0.8;
+                      readingAudioRef.current.play();
+                    }
+                  } catch (error) {
+                    console.error('Error playing continuation audio:', error);
+                  }
+                }, 300);
+              } else {
+                setCurrentFeedback(`I heard "${spokenWord}". Try saying "${targetWord}" again.`);
+              }
+            } else {
+              setCurrentFeedback('Could not understand. Please speak clearly and try again.');
+            }
+          } catch (error) {
+            console.error('Error with speech recognition:', error);
+            setCurrentFeedback('Sorry, there was an error. Please try again.');
+          } finally {
+            setIsListening(false);
+          }
+        };
+        
+        // Start recording (no time limit)
+        mediaRecorder.start();
+        
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        setCurrentFeedback('Could not access microphone. Please check permissions.');
+        setIsListening(false);
+      }
+    };
+    
+    // Advanced function to check word match with comprehensive tolerance for Whisper STT inaccuracies
+    const checkWordMatch = (spoken: string, expected: string): boolean => {
+      console.log(`[DEBUG] Matching - Spoken: "${spoken}", Expected: "${expected}"`);
+      
+      // Normalize both strings
+      const normalizeWord = (word: string) => {
+        return word
+          .toLowerCase()
+          .replace(/[.,!?;:'"]/g, '') // Remove punctuation
+          .replace(/\s+/g, ' ') // Normalize spaces
+          .trim();
+      };
+      
+      const cleanSpoken = normalizeWord(spoken);
+      const cleanExpected = normalizeWord(expected);
+      
+      // 1. Direct match
+      if (cleanSpoken === cleanExpected) {
+        console.log('[DEBUG] Direct match found');
+        return true;
+      }
+      
+      // 2. Substring matching (handles partial transcriptions)
+      if (cleanSpoken.includes(cleanExpected) || cleanExpected.includes(cleanSpoken)) {
+        console.log('[DEBUG] Substring match found');
+        return true;
+      }
+      
+      // 3. Levenshtein distance for close matches (allows 1-2 character differences)
+      const levenshteinDistance = (a: string, b: string): number => {
+        const matrix: number[][] = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(0));
+        
+        for (let i = 0; i <= a.length; i++) matrix[0]![i] = i;
+        for (let j = 0; j <= b.length; j++) matrix[j]![0] = j;
+        
+        for (let j = 1; j <= b.length; j++) {
+          for (let i = 1; i <= a.length; i++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            matrix[j]![i] = Math.min(
+              matrix[j]![i - 1]! + 1,     // deletion
+              matrix[j - 1]![i]! + 1,     // insertion
+              matrix[j - 1]![i - 1]! + cost // substitution
+            );
+          }
+        }
+        
+        return matrix[b.length]![a.length]!;
+      };
+      
+      const distance = levenshteinDistance(cleanSpoken, cleanExpected);
+      const maxLength = Math.max(cleanSpoken.length, cleanExpected.length);
+      const similarity = 1 - (distance / maxLength);
+      
+      // Allow up to 2 character differences or 80% similarity
+      if (distance <= 2 || similarity >= 0.8) {
+        console.log(`[DEBUG] Levenshtein match found - Distance: ${distance}, Similarity: ${similarity.toFixed(2)}`);
+        return true;
+      }
+      
+      // 4. Phonetic similarity for common Whisper errors
+      const phoneticNormalize = (word: string): string => {
+        let normalized = word;
+        
+        // Common Whisper transcription errors
+        const phoneticRules = [
+          // Consonant confusions
+          ['th', 'f'], ['th', 'd'], ['th', 't'],
+          ['s', 'z'], ['s', 'sh'], ['z', 'zh'],
+          ['b', 'p'], ['d', 't'], ['g', 'k'], ['v', 'f'],
+          ['ch', 'sh'], ['j', 'zh'], ['w', 'v'],
+          
+          // Vowel confusions
+          ['i', 'e'], ['a', 'e'], ['o', 'u'], ['u', 'oo'],
+          ['ai', 'ay'], ['ei', 'ay'], ['ou', 'ow'],
+          
+          // Silent letters and reductions
+          ['ck', 'k'], ['ph', 'f'], ['gh', 'f'], ['kn', 'n'],
+          ['wr', 'r'], ['mb', 'm'], ['bt', 't'],
+          
+          // Double letters
+          ['ss', 's'], ['ll', 'l'], ['ff', 'f'], ['zz', 'z'],
+          ['tt', 't'], ['pp', 'p'], ['bb', 'b'], ['dd', 'd']
+        ];
+        
+        // Apply phonetic rules
+        for (const [from, to] of phoneticRules) {
+          if (from && to) {
+            normalized = normalized.replace(new RegExp(from, 'g'), to);
+          }
+        }
+        
+        return normalized;
+      };
+      
+      const phoneticSpoken = phoneticNormalize(cleanSpoken);
+      const phoneticExpected = phoneticNormalize(cleanExpected);
+      
+      if (phoneticSpoken === phoneticExpected) {
+        console.log('[DEBUG] Phonetic match found');
+        return true;
+      }
+      
+      // 5. Word boundary flexibility (handles "a hiss" vs "hiss", etc.)
+      const spokenWords = cleanSpoken.split(' ');
+      const expectedWords = cleanExpected.split(' ');
+      
+      // Check if any word in spoken matches expected (single word)
+      if (expectedWords.length === 1) {
+        for (const spokenWord of spokenWords) {
+          if (spokenWord === cleanExpected || 
+              levenshteinDistance(spokenWord, cleanExpected) <= 1) {
+            console.log('[DEBUG] Word boundary match found');
+            return true;
+          }
+        }
+      }
+      
+      // 6. Rhyming/similar sounding words (for very short words)
+      if (cleanExpected.length <= 4) {
+        const rhymePatterns = [
+          // Common rhyming endings for short words
+          ['iss', 'is'], ['ass', 'as'], ['ell', 'el'], ['uff', 'uf'],
+          ['ill', 'il'], ['all', 'al'], ['oss', 'os'], ['ull', 'ul']
+        ];
+        
+        for (const [pattern1, pattern2] of rhymePatterns) {
+          if (pattern1 && pattern2) {
+            const spokenWithPattern = cleanSpoken.replace(new RegExp(pattern1, 'g'), pattern2);
+            const expectedWithPattern = cleanExpected.replace(new RegExp(pattern1, 'g'), pattern2);
+            
+            if (spokenWithPattern === cleanExpected || expectedWithPattern === cleanSpoken) {
+              console.log('[DEBUG] Rhyme pattern match found');
+              return true;
+            }
+          }
+        }
+      }
+      
+      console.log('[DEBUG] No match found');
+      return false;
+    };
+    
+    // Notify parent about completion status
+    React.useEffect(() => {
+      if (onReadingComplete) {
+        onReadingComplete(isCompleted);
+      }
+    }, [isCompleted, onReadingComplete]);
+    
+    // Auto-play audio when component mounts
+    React.useEffect(() => {
+      const timer = setTimeout(() => {
+        playPartialAudio();
+      }, 500);
+      return () => clearTimeout(timer);
+    }, []);
+    
+    // Cleanup audio and recording on unmount
+    React.useEffect(() => {
+      return () => {
+        if (readingAudioRef.current) {
+          readingAudioRef.current.pause();
+          readingAudioRef.current = null;
+        }
+        
+        // Stop recording if active
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+        
+        // Stop media stream
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+      };
+    }, []);
+    
+    if (!targetWord) {
+      // No reading pattern found, render as regular text
+      React.useEffect(() => {
+        if (onReadingComplete) {
+          onReadingComplete(true);
+        }
+      }, [onReadingComplete]);
+      
+      return (
+        <span style={{ fontFamily: 'Quicksand, sans-serif', fontSize: 18, fontWeight: 500, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+          {text}
+        </span>
+      );
+    }
+    
+    return (
+      <div style={{ fontFamily: 'Quicksand, sans-serif', fontSize: 18, fontWeight: 500, lineHeight: 1.6 }}>
+        {/* Progress indicator */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          marginBottom: '16px',
+          padding: '8px 12px',
+          background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
+          borderRadius: '12px',
+          border: '1px solid rgba(14, 165, 233, 0.2)',
+          animation: 'fadeSlideIn 0.3s ease-out'
+        }}>
+          <span style={{ fontSize: '16px' }}>📖</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#0369A1' }}>
+            {isCompleted ? 'Reading complete! 🎉' : 
+             'Click the highlighted word and read it aloud'}
+          </span>
+        </div>
+        
+        {/* Feedback message */}
+        {currentFeedback && (
+          <div style={{
+            background: isCompleted ? 'linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%)' : 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
+            border: `1px solid ${isCompleted ? '#16A34A' : '#F59E0B'}`,
+            borderRadius: '12px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            animation: 'fadeSlideIn 0.3s ease-out'
+          }}>
+            <span style={{ fontSize: '16px' }}>{isCompleted ? '🎉' : '💬'}</span>
+            <span style={{ fontSize: '14px', fontWeight: 500, color: isCompleted ? '#15803D' : '#92400E' }}>
+              {currentFeedback}
+            </span>
+          </div>
+        )}
+        
+        {/* Sentence with highlighted target word */}
+        <div style={{ marginBottom: '20px', fontSize: '20px', lineHeight: 1.8 }}>
+          {parts.map((part, index) => (
+            <span key={index}>
+              {part.type === 'text' ? (
+                part.content
+              ) : (
+                <span
+                  onClick={!isCompleted ? toggleListening : undefined}
+                  style={{
+                    backgroundColor: isCompleted ? '#DCFCE7' : (isListening ? '#FEE2E2' : '#FEF3C7'),
+                    color: isCompleted ? '#15803D' : (isListening ? '#DC2626' : '#92400E'),
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    cursor: isCompleted ? 'default' : 'pointer',
+                    border: `2px solid ${isCompleted ? '#16A34A' : (isListening ? '#DC2626' : '#F59E0B')}`,
+                    transition: 'all 0.2s ease',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transform: isListening ? 'scale(1.05)' : 'scale(1)',
+                    boxShadow: isListening ? '0 4px 16px rgba(220, 38, 38, 0.4)' : (isCompleted ? '0 4px 16px rgba(22, 163, 74, 0.4)' : 'none'),
+                    animation: isListening ? 'pulse 1.5s infinite' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isCompleted && !isListening) {
+                      (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)';
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isCompleted && !isListening) {
+                      (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                      (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                    }
+                  }}
+                >
+                  {part.content}
+                  {isListening && (
+                    <span style={{ 
+                      fontSize: '16px',
+                      animation: 'pulse 1s infinite',
+                      color: '#DC2626'
+                    }}>🎤</span>
+                  )}
+                </span>
+              )}
+            </span>
+          ))}
+        </div>
+        
+        {/* Instructions */}
+        {!isCompleted && (
+          <div style={{
+            background: isListening ? 'rgba(254, 242, 242, 0.8)' : 'rgba(239, 246, 255, 0.8)',
+            border: `1px solid ${isListening ? 'rgba(220, 38, 38, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
+            borderRadius: '8px',
+            padding: '12px',
+            fontSize: '14px',
+            color: isListening ? '#DC2626' : '#1E40AF',
+            textAlign: 'center',
+            fontWeight: isListening ? 600 : 400
+          }}>
+            {isListening ? (
+              <>🎤 Recording... Click "{targetWord}" again to stop and submit</>
+            ) : (
+              <>Click on the highlighted word "{targetWord}" to start recording</>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Component to render fill-in-the-blank message
@@ -1606,7 +2205,8 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
       !latestMessage.isLoading &&
       !latestMessage.isImage &&
       !autoPlayedMessages.has(latestIndex) &&
-      latestMessage.text.trim()
+      latestMessage.text.trim() &&
+      !/\[READING:[^\]]+\]/g.test(latestMessage.text) // Don't auto-play reading messages
     ) {
       setAutoPlayedMessages(prev => new Set([...prev, latestIndex]));
       setTimeout(() => {
@@ -1722,6 +2322,12 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
 
   const playAIResponse = async (messageIndex: number, text: string) => {
     try {
+      // Don't play audio for reading messages - they handle their own audio
+      if (/\[READING:[^\]]+\]/g.test(text)) {
+        console.log('[DEBUG] Skipping playAIResponse for reading message');
+        return;
+      }
+      
       // Get complete text with filled blanks for audio
       const completeText = getCompleteTextForAudio(text, `msg-${messageIndex}`);
       const cleanText = completeText.replace(/[🎉🚀🌙🌄✨😊]/g, '').replace(/\*/g, '').trim();
@@ -1814,6 +2420,12 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
   };
 
   const toggleAIResponse = async (messageIndex: number, text: string) => {
+    // Don't handle audio for reading messages - they handle their own audio
+    if (/\[READING:[^\]]+\]/g.test(text)) {
+      console.log('[DEBUG] Skipping toggleAIResponse for reading message');
+      return;
+    }
+    
     const cleanText = text.replace(/[🎉🚀🌙🌄✨😊]/g, '').replace(/\*/g, '').trim();
     const el = audioRef.current;
     const active = audioManager.getActive?.() as HTMLAudioElement | null;
@@ -1942,14 +2554,14 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
       
       // Create phase-specific system prompt
       const phaseInstructions = isQuestionPhase 
-        ? `CRITICAL SPELLING CHALLENGE PHASE (${withinPhaseIndex + 1}/3): Your response MUST include the exact word "${targetWordsToUse[0]}" for spelling practice. 
+        ? `CRITICAL ${questionType.toUpperCase()} CHALLENGE PHASE (${withinPhaseIndex + 1}/3): Your response MUST include the exact word "${targetWordsToUse[0]}" for ${questionType} practice. 
 
 REQUIREMENTS:
 - Include the word "${targetWordsToUse[0]}" exactly as written (no variations, plurals, or similar words)
 - Use it naturally in the current adventure story context
 - Write 2-3 sentences continuing the adventure
 - Do NOT ask questions or create puzzles
-- The word will be automatically converted to a fill-in-the-blank
+- The word will be automatically converted to a ${questionType === 'reading' ? 'highlighted reading target' : 'fill-in-the-blank'}
 - Strictly ensure that the word is not used elsewhere in the passage so that the student can't just copy and paste the answer.
 - Keep it within 50 words, but also exciting.
 
@@ -2016,19 +2628,23 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
       if (shouldInsertBlanks) {
         console.log(`[DEBUG] Inserting blanks - Original AI Reply: "${aiReply}"`);
         const originalReply = aiReply;
-        aiReply = insertBlanksIntoResponse(aiReply, targetWordsToUse);
+        aiReply = insertBlanksIntoResponse(aiReply, targetWordsToUse, questionType);
         console.log(`[DEBUG] After blank insertion: "${aiReply}"`);
         
-        // Final safeguard: if no blanks were inserted in question phase, force insert one
-        if (!aiReply.includes('[BLANK:') && isQuestionPhase) {
-          console.log(`[DEBUG] EMERGENCY: No blanks found in question phase, force inserting!`);
+        // Final safeguard: if no patterns were inserted in question phase, force insert one
+        const expectedPattern = questionType === 'reading' ? '[READING:' : '[BLANK:';
+        if (!aiReply.includes(expectedPattern) && isQuestionPhase) {
+          console.log(`[DEBUG] EMERGENCY: No ${questionType} patterns found in question phase, force inserting!`);
           // Insert blank at the end of the first sentence
           const sentences = aiReply.split(/[.!?]/);
           if (sentences.length > 0 && sentences[0] && sentences[0].trim()) {
             const firstSentence = sentences[0].trim();
             const restOfText = aiReply.substring(firstSentence.length);
-            aiReply = `${firstSentence} [BLANK:${targetWordsToUse[0]?.toLowerCase() || 'word'}]${restOfText}`;
-            console.log(`[DEBUG] Emergency blank inserted: "${aiReply}"`);
+            const pattern = questionType === 'reading' 
+              ? `[READING:${targetWordsToUse[0]?.toLowerCase() || 'word'}]`
+              : `[BLANK:${targetWordsToUse[0]?.toLowerCase() || 'word'}]`;
+            aiReply = `${firstSentence} ${pattern}${restOfText}`;
+            console.log(`[DEBUG] Emergency ${questionType} pattern inserted: "${aiReply}"`);
           }
         }
       } else {
@@ -2189,6 +2805,42 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
           <div style={{ position: 'absolute', inset: 0 as any, backgroundImage: `url(${bg1Url})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.75 }} />
           <div style={{ position: 'absolute', inset: 0 as any, background: `rgba(0,0,0,${ADVENTURE_IMAGE_OVERLAY_OPACITY})` }} />
           
+          {/* Question Type Toggle */}
+          <button
+            onClick={() => setInternalQuestionType(prev => prev === 'spelling' ? 'reading' : 'spelling')}
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 24,
+              zIndex: 2,
+              background: questionType === 'reading' ? 
+                'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' : 
+                'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: 16,
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: 'Quicksand, sans-serif',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+            }}
+          >
+            {questionType === 'reading' ? '📖' : '✏️'} 
+            {questionType === 'reading' ? 'Reading Mode' : 'Spelling Mode'}
+          </button>
+
           {/* Phase indicator */}
           <div style={{
             position: 'absolute',
@@ -2197,7 +2849,9 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
             zIndex: 2,
             background: currentPhase === 'chat' ? 
               'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 
-              'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+              (questionType === 'reading' ? 
+                'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)' : 
+                'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)'),
             color: 'white',
             padding: '6px 12px',
             borderRadius: 16,
@@ -2209,8 +2863,8 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
             alignItems: 'center',
             gap: 6
           }}>
-            {currentPhase === 'chat' ? '💬' : '📝'} 
-            {currentPhase === 'chat' ? 'Adventure Chat' : 'Spelling Challenge'} 
+            {currentPhase === 'chat' ? '💬' : (questionType === 'reading' ? '📖' : '📝')} 
+            {currentPhase === 'chat' ? 'Adventure Chat' : (questionType === 'reading' ? 'Reading Challenge' : 'Spelling Challenge')} 
             ({phaseProgress + 1}/3)
           </div>
           
@@ -2265,25 +2919,34 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
                       <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px 8px', borderRadius: 12, fontSize: 12, fontWeight: 500, }}>🔍 {m.imageUrl ? 'Click to open' : 'Click to expand'}</div>
                     </div>
                   ) : m.role === 'ai' ? (
-                    <FillInTheBlankMessage
-                      text={m.text}
-                      messageId={stableMessageId}
-                      onAnswerChange={(blankIndex, answer) => {
-                        console.log(`[DEBUG] Saving answer for messageId: ${stableMessageId}, blankIndex: ${blankIndex}, answer: "${answer}"`);
-                        setBlankAnswers(prev => ({
-                          ...prev,
-                          [stableMessageId]: {
-                            ...prev[stableMessageId],
-                            [blankIndex]: answer
-                          }
-                        }));
-                      }}
-                      onSpellingComplete={handleSpellingComplete}
-                    />
+                    // Route between spelling and reading question components
+                    /\[READING:[^\]]+\]/g.test(m.text) ? (
+                      <ReadingQuestionMessage
+                        text={m.text}
+                        messageId={stableMessageId}
+                        onReadingComplete={handleReadingComplete}
+                      />
+                    ) : (
+                      <FillInTheBlankMessage
+                        text={m.text}
+                        messageId={stableMessageId}
+                        onAnswerChange={(blankIndex, answer) => {
+                          console.log(`[DEBUG] Saving answer for messageId: ${stableMessageId}, blankIndex: ${blankIndex}, answer: "${answer}"`);
+                          setBlankAnswers(prev => ({
+                            ...prev,
+                            [stableMessageId]: {
+                              ...prev[stableMessageId],
+                              [blankIndex]: answer
+                            }
+                          }));
+                        }}
+                        onSpellingComplete={handleSpellingComplete}
+                      />
+                    )
                   ) : (
                     <span style={{ fontFamily: 'Quicksand, sans-serif', fontSize: 17, fontWeight: 500, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{m.text}</span>
                   )}
-                  {m.role === 'ai' && !m.isLoading && !m.isImage ? (
+                  {m.role === 'ai' && !m.isLoading && !m.isImage && !/\[READING:[^\]]+\]/g.test(m.text) ? (
                     <button onClick={() => void toggleAIResponse(i, getCompleteTextForAudio(m.text, stableMessageId))} disabled={audioLoading === i}
                       style={{ 
                         position: 'absolute', 
@@ -2408,29 +3071,29 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
                   ref={adventureInputRef}
                   value={adventureInput} 
                   onChange={(e) => { 
-                    if (isCurrentSpellingComplete) {
+                    if (isCurrentSpellingComplete && isCurrentReadingComplete) {
                       setAdventureInput(e.target.value); 
                       scrollInputToEnd(); 
                     }
                   }} 
                   onKeyDown={(e) => { 
-                    if (e.key === 'Enter' && isCurrentSpellingComplete) { 
+                    if (e.key === 'Enter' && isCurrentSpellingComplete && isCurrentReadingComplete) { 
                       stopMicAndResetInput(); 
                       void sendAdventureMessage(); 
                     } 
                   }} 
-                  placeholder={isCurrentSpellingComplete ? "Message..." : "Complete the spelling above first..."}
-                  disabled={!isCurrentSpellingComplete}
+                  placeholder={isCurrentSpellingComplete && isCurrentReadingComplete ? "Message..." : "Complete the task above first..."}
+                  disabled={!isCurrentSpellingComplete || !isCurrentReadingComplete}
                   style={{ 
                     flex: 1, 
                     background: 'transparent', 
                     border: 'none', 
                     outline: 'none', 
-                    color: isCurrentSpellingComplete ? '#111827' : '#9CA3AF', 
+                    color: (isCurrentSpellingComplete && isCurrentReadingComplete) ? '#111827' : '#9CA3AF', 
                     fontSize: 17, 
                     fontWeight: 400, 
                     fontFamily: 'Quicksand, sans-serif',
-                    cursor: isCurrentSpellingComplete ? 'text' : 'not-allowed'
+                    cursor: (isCurrentSpellingComplete && isCurrentReadingComplete) ? 'text' : 'not-allowed'
                   }} />
                 <button 
                   onClick={() => { 
@@ -2556,12 +3219,12 @@ Current Phase: CHAT (1/3)`
                 )}
                 <button 
                   onClick={() => { 
-                    if (isCurrentSpellingComplete) {
+                    if (isCurrentSpellingComplete && isCurrentReadingComplete) {
                       stopMicAndResetInput(); 
                       void sendAdventureMessage(); 
                     }
                   }} 
-                  disabled={!isCurrentSpellingComplete}
+                  disabled={!isCurrentSpellingComplete || !isCurrentReadingComplete}
                   aria-label="Send" 
                   style={{ 
                     width: 32, 
