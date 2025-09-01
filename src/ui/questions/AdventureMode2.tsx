@@ -141,24 +141,43 @@ const USER_CONFIGS: Record<string, UserAdventureConfig> = {
     goal: 'maintain harmony in the magical bakery, master baking magic, solve word puzzles, and create the most amazing magical treats',
     recentEvent: 'London and her blonde sidekick successfully completed "Cupcake Day" with Sprinkle Beast\'s help! They survived dangerous frosting storms, rode exciting whipped cream waves, solved challenging word puzzles, and encountered a mysterious magical oven that glowed bright red. Now they\'re preparing for "Cake Day" tomorrow - an even bigger, more dazzling magical challenge!'
   },
+  // Bastian configuration - new user with unknown interests
+  'bastian': {
+    username: 'Bastian',
+    protagonist: 'Bastian',
+    interests: ['adventure', 'exploration', 'discovery', 'mystery', 'magic', 'friendship', 'heroic', 'creative', 'storytelling', 'imagination'],
+    quickOptions: ['🌟 Epic Adventures', '🔍 Mystery Solving', '✨ Magical Worlds', '🤝 Team Adventures', '🎨 Creative Stories', '🌍 World Exploration'],
+    studentProfile: 'New adventurer ready to discover their interests and explore different themes. Open to various adventure types and eager to learn what excites them most.',
+    responseTone: 'encouraging and exploratory to help discover what adventure themes and activities Bastian enjoys most.',
+    defaultMessage: "🌟 Hey Bastian! Welcome to our adventure world! I'm excited to explore with you and discover what kinds of adventures you love most. What sounds interesting to you - magical worlds, mystery solving, epic quests, or something completely different? ✨",
+    setting: "Adventure discovery space where any world is possible",
+    companions: "helpful guide and loyal companions",
+    theme: "discovery, exploration, and finding what sparks joy",
+    adventureType: 'discovery adventure to explore different themes and interests',
+    sidekick: 'encouraging adventure guide',
+    teammates: 'supportive companions ready for any adventure',
+    villain: 'challenges that help us grow and discover our strengths',
+    goal: 'discover what kinds of adventures Bastian loves most and create amazing stories together',
+    recentEvent: 'Bastian has just arrived in the adventure world, ready to discover what excites them most!'
+  },
   // Default configuration for new stories or unrecognized IDs
   'default': {
-    username: 'London',
-    protagonist: 'London',
-    interests: ['gaming', 'roblox', 'digital', 'battle', 'adventure', 'heroic', 'forest', 'technology', 'shadow', 'magic', 'robot', 'epic', 'futuristic'],
-    quickOptions: ['⚡ Epic Battles', '🎮 Digital Adventures', '🌳 Forest Magic', '🤖 Robot Companions', '💫 Heroic Quests', '🎪 Futuristic Worlds'],
-    studentProfile: 'Enjoys creative storytelling and adventure exploration. Open to various adventure themes and settings.',
-    responseTone: 'thrilling and action-packed to match the interests in video games, digital adventures, epic battles, and heroic teamwork in futuristic settings.',
-    defaultMessage: "⚡🎮 Hey London! Ready for an epic magical adventure? I'm thinking enchanted worlds, magical powers, maybe some fantasy creatures in a mystical realm? What sounds most exciting to you today? ⚡",
-          setting: "Adventure creation space",
-          companions: "loyal companion",
-    theme: "creative storytelling and adventure exploration",
-    adventureType: 'creative storytelling and adventure exploration',
-    sidekick: 'loyal companion',
-    teammates: 'adventure companions',
-    villain: 'challenges and obstacles',
-    goal: 'create an amazing adventure together',
-    recentEvent: 'A new adventure is about to begin!'
+    username: 'Bastian',
+    protagonist: 'Bastian',
+    interests: ['adventure', 'exploration', 'discovery', 'mystery', 'magic', 'friendship', 'heroic', 'creative', 'storytelling', 'imagination'],
+    quickOptions: ['🌟 Epic Adventures', '🔍 Mystery Solving', '✨ Magical Worlds', '🤝 Team Adventures', '🎨 Creative Stories', '🌍 World Exploration'],
+    studentProfile: 'New adventurer ready to discover their interests and explore different themes. Open to various adventure types and eager to learn what excites them most.',
+    responseTone: 'encouraging and exploratory to help discover what adventure themes and activities Bastian enjoys most.',
+    defaultMessage: "🌟 Hey Bastian! Welcome to our adventure world! I'm excited to explore with you and discover what kinds of adventures you love most. What sounds interesting to you - magical worlds, mystery solving, epic quests, or something completely different? ✨",
+          setting: "Adventure discovery space where any world is possible",
+          companions: "helpful guide and loyal companions",
+    theme: "discovery, exploration, and finding what sparks joy",
+    adventureType: 'discovery adventure to explore different themes and interests',
+    sidekick: 'encouraging adventure guide',
+    teammates: 'supportive companions ready for any adventure',
+    villain: 'challenges that help us grow and discover our strengths',
+    goal: 'discover what kinds of adventures Bastian loves most and create amazing stories together',
+    recentEvent: 'Bastian has just arrived in the adventure world, ready to discover what excites them most!'
   }
 };
 
@@ -330,10 +349,16 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
 
   // Target words for spelling challenges - CVC words with short "o" and short "u"
   const targetWords: string[] = [
-    // Floss rule words: double the f, l, s, or z in one syllable words following a short vowel
-    'jazz', 'fluff', 'skull', 'bass', 'buzz', 'fizz', 'puff', 'bell', 'hiss', 'fuss',
-    'bluff', 'spill', 'grill', 'shell', 'sniff', 'staff', 'dress', 'press', 'cross', 'toss',
-    'whiff', 'trill', 'bliss', 'fizz', 'snazz', 'quill', 'moss', 'cuff', 'cliff', 'blitz'
+    // CVC words with short "a" vowel
+    'cat', 'bat', 'hat', 'mat', 'rat', 'sat', 'pat', 'fat', 'vat', 'lap',
+    // CVC words with short "e" vowel
+    'bed', 'red', 'led', 'fed', 'wed', 'net', 'pet', 'set', 'bet', 'jet',
+    // CVC words with short "i" vowel
+    'sit', 'bit', 'hit', 'kit', 'lit', 'pit', 'fit', 'wit', 'zip', 'lip',
+    // CVC words with short "o" vowel
+    'dog', 'log', 'fog', 'jog', 'hog', 'cog', 'pot', 'cot', 'dot', 'lot',
+    // CVC words with short "u" vowel
+    'cup', 'pup', 'tub', 'rub', 'sub', 'cub', 'mud', 'bud', 'hug', 'rug'
   ].sort(() => Math.random() - 0.5); // Randomize the order
 
   // Function to get current phase and target words
@@ -2679,13 +2704,13 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
         ? `CRITICAL ${questionType.toUpperCase()} CHALLENGE PHASE (${withinPhaseIndex + 1}/3): Your response MUST include the exact word "${targetWordsToUse[0]}" for ${questionType} practice. 
 
 REQUIREMENTS:
-- Include the word "${targetWordsToUse[0]}" exactly as written (no variations, plurals, or similar words)
-- Use it naturally in the current adventure story context
-- Write 2-3 sentences continuing the adventure
+- Include the word "${targetWordsToUse[0]}" exactly as written (no variations, plurals, or similar words) somewhere in your response.
+- Be careful on integrating it naturally in the response. It should NOT appear out of place at all. Use it naturally in the current adventure story context. 
+- Embed the word such that it appears most natural within the 2-3 sentences of your response. You can fit it anywhere in the response. Ideally have it in the second line.
 - Do NOT ask questions or create puzzles
 - The word will be automatically converted to a ${questionType === 'reading' ? 'highlighted reading target' : 'fill-in-the-blank'}
 - Strictly ensure that the word is not used elsewhere in the passage so that the student can't just copy and paste the answer.
-- Keep it within 50 words, but also exciting.
+- Strictly keep it within 50 words, but also exciting.
 
 Example: "We need to find the powerful ${targetWordsToUse[0]} hidden in the mysterious location..."
 
@@ -2708,7 +2733,7 @@ Role & Perspective
 - Your role is to help me create and control the story. Focus on asking open ended questions on what happens next in the whole story—characters, world, and events. Follow that up with 1-2 starting thoughts (e.g., what happens next - maybe x or y?)
 - Use sparks only to inspire me, not to restrict.
 - If I stall, you can briefly move things forward by adding villain/world actions.
-- Always reference my interests when possible.
+- Always explore and reference Bastian's emerging interests when possible.
 
 Adventure State Awareness
 Adventure State: ${adventureState === 'new' ? 'NEW_ADVENTURE' : adventureState === 'character_creation' ? 'CHARACTER_CREATION' : 'ONGOING_ADVENTURE'}
@@ -2717,7 +2742,7 @@ Current Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 ${phaseInstructions}
 
 NEW_ADVENTURE
-Step 1: Figure out who the hero should be. Reference my previous interests and ask if I have new interests lately that we could use as inspiration for the hero.
+Step 1: Figure out who the hero should be. Since this is a new adventure, explore what kinds of themes and interests excite Bastian most - ask about favorite activities, stories, or adventures to help create the perfect hero.
 Step 2: Story Setup (LOCK). Ask one by one
   Lead (the hero) - who is the lead? What is their appearance? Create an image? (ask in separate responses, one by one)
   Conflict (villain or challenge) - who is the villain? What is their objective? Appearance?
@@ -2749,7 +2774,7 @@ Mix Question Types
 - Callbacks: Remind me of past choices to deepen story.
 
 Relatability & Engagement:
-- Ask for my new interests each adventure and weave them in.
+- Discover Bastian's interests through conversation and weave them into the adventure.
 - Personalize characters/events around my profile and chat.
 
 Remember
@@ -3316,14 +3341,14 @@ Role & Perspective
 - Your role is to help me create and control the story. Focus on asking open ended questions on what happens next in the whole story—characters, world, and events. Follow that up with 1-2 starting thoughts (e.g., what happens next - maybe x or y?)
 - Use sparks only to inspire me, not to restrict.
 - If I stall, you can briefly move things forward by adding villain/world actions.
-- Always reference my interests when possible.
+- Always explore and reference Bastian's emerging interests when possible.
 
 Adventure State Awareness
 Adventure State: NEW_ADVENTURE
 Current Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
 NEW_ADVENTURE
-Step 1: Figure out who the hero should be. Reference my previous interests and ask if I have new interests lately that we could use as inspiration for the hero.
+Step 1: Figure out who the hero should be. Since this is a new adventure, explore what kinds of themes and interests excite Bastian most - ask about favorite activities, stories, or adventures to help create the perfect hero.
 
 Remember
 - Tone: Playful, encouraging, humorous, kid-friendly. React with excitement. Use character dialogue when fitting.

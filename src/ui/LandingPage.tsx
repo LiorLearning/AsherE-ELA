@@ -34,7 +34,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       isCreateNew: true,
       imageUrl: undefined,
       pages: undefined
-    },
+    }
 
     // {
     //   id: 'gregory-ipad-kid',
@@ -57,16 +57,16 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
     //   color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
     //   isCreateNew: false
     // },
-    {
-      id: 'london-magical-bakery',
-      title: 'London and the Magical Bakery',
-      author: 'by London, 3rd grade',
-      pages: '10 pages',
-      emoji: '✨',
-      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fdubeus2fv4wzz.cloudfront.net%252Fimages%252F20250822_192830_image.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
-      color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
-      isCreateNew: false
-    }
+    // {
+    //   id: 'london-magical-bakery',
+    //   title: 'London and the Magical Bakery',
+    //   author: 'by London, 3rd grade',
+    //   pages: '10 pages',
+    //   emoji: '✨',
+    //   imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fdubeus2fv4wzz.cloudfront.net%252Fimages%252F20250822_192830_image.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+    //   color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+    //   isCreateNew: false
+    // }
   ];
 
   const topPicksStories = [
@@ -817,7 +817,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
               fontFamily: 'Quicksand, system-ui, sans-serif',
               textShadow: '0 2px 4px rgba(0,0,0,0.05)'
             }}>
-              📚 Welcome back, London!
+              📚 Welcome, Bastian!
             </h1>
             <div style={{ marginTop: 20 }}>
               <AuthorLevelBadge />
