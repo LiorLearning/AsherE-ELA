@@ -921,6 +921,8 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
     const [isCompleted, setIsCompleted] = useState(false);
     const [currentFeedback, setCurrentFeedback] = useState<string>('');
     const [hasPlayedAudio, setHasPlayedAudio] = useState(false);
+    const [liveTranscript, setLiveTranscript] = useState<string>('');
+    const [speechRecognition, setSpeechRecognition] = useState<any>(null);
     const readingAudioRef = useRef<HTMLAudioElement | null>(null);
     
     // Parse reading pattern [READING:word] from text
@@ -1022,12 +1024,67 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           mediaRecorderRef.current.stop();
         }
+        // Stop live transcription
+        if (speechRecognition) {
+          speechRecognition.stop();
+          setSpeechRecognition(null);
+        }
+        setLiveTranscript('');
         return;
       }
       
       setIsListening(true);
       setCurrentFeedback('Recording... Click the word again to stop.');
+      setLiveTranscript('');
       audioChunksRef.current = [];
+      
+      // Start live transcription with Web Speech API
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            if (result.isFinal) {
+              finalTranscript += result[0].transcript + ' ';
+            } else {
+              interimTranscript += result[0].transcript;
+            }
+          }
+          
+          const fullTranscript = (finalTranscript + interimTranscript).trim();
+          setLiveTranscript(fullTranscript);
+        };
+        
+        recognition.onerror = (event: any) => {
+          console.warn('Speech recognition error:', event.error);
+        };
+        
+        recognition.onend = () => {
+          // Auto-restart if still listening
+          if (isListening && speechRecognition) {
+            try {
+              recognition.start();
+            } catch (e) {
+              console.warn('Could not restart speech recognition:', e);
+            }
+          }
+        };
+        
+        try {
+          recognition.start();
+          setSpeechRecognition(recognition);
+        } catch (e) {
+          console.warn('Could not start speech recognition:', e);
+        }
+      }
       
       try {
         // Request microphone permission and start recording
@@ -1050,9 +1107,16 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
             streamRef.current = null;
           }
           
+          // Stop live transcription
+          if (speechRecognition) {
+            speechRecognition.stop();
+            setSpeechRecognition(null);
+          }
+          setLiveTranscript('');
+          setIsListening(false);
+          
           if (audioChunksRef.current.length === 0) {
             setCurrentFeedback('No audio recorded. Please try again.');
-            setIsListening(false);
             return;
           }
           
@@ -1081,6 +1145,11 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
               if (isCorrect) {
                 setIsCompleted(true);
                 setCurrentFeedback('');
+                setLiveTranscript('');
+                if (speechRecognition) {
+                  speechRecognition.stop();
+                  setSpeechRecognition(null);
+                }
                 
                 // Play continuation from target word onwards
                 setTimeout(async () => {
@@ -1372,6 +1441,8 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
             </span>
           </div>
         )}
+
+
         
         {/* Sentence with highlighted target word */}
         <div style={{ marginBottom: '20px', fontSize: '20px', lineHeight: 1.8 }}>
@@ -1383,8 +1454,8 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
                 <span
                   onClick={!isCompleted ? toggleListening : undefined}
                   style={{
-                    backgroundColor: isCompleted ? '#DCFCE7' : (isListening ? '#FEE2E2' : '#FEF3C7'),
-                    color: isCompleted ? '#15803D' : (isListening ? '#DC2626' : '#92400E'),
+                    backgroundColor: isCompleted ? '#10B981' : (isListening ? '#FEE2E2' : '#FEF3C7'),
+                    color: isCompleted ? '#FFFFFF' : (isListening ? '#DC2626' : '#92400E'),
                     padding: '6px 12px',
                     borderRadius: '8px',
                     fontWeight: 600,
@@ -1396,7 +1467,7 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
                     gap: '6px',
                     transform: isListening ? 'scale(1.05)' : 'scale(1)',
                     boxShadow: isListening ? '0 4px 16px rgba(220, 38, 38, 0.4)' : (isCompleted ? '0 4px 16px rgba(22, 163, 74, 0.4)' : 'none'),
-                    animation: isListening ? 'pulse 1.5s infinite' : 'none'
+                    animation: 'none'
                   }}
                   onMouseEnter={(e) => {
                     if (!isCompleted && !isListening) {
@@ -1438,7 +1509,58 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
             fontWeight: isListening ? 600 : 400
           }}>
             {isListening ? (
-              <>🎤 Recording... Click "{targetWord}" again to stop and submit</>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>🎤 Recording... Click "{targetWord}" again to stop and submit</div>
+                {liveTranscript && (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+                    border: '2px solid #EF4444',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.2)'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#DC2626',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      <span style={{ 
+                        width: '6px', 
+                        height: '6px', 
+                        borderRadius: '50%', 
+                        backgroundColor: '#EF4444',
+                        animation: 'pulse 1.5s ease-in-out infinite'
+                      }}></span>
+                      Live Transcription
+                    </div>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      color: '#991B1B',
+                      textAlign: 'center',
+                      lineHeight: '1.4',
+                      minHeight: '18px',
+                      background: 'rgba(255, 255, 255, 0.8)',
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                      maxWidth: '100%',
+                      wordBreak: 'break-word'
+                    }}>
+                      {liveTranscript || 'Listening...'}
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <>Click on the highlighted word "{targetWord}" to start recording</>
             )}
@@ -2579,17 +2701,66 @@ REMEMBER: Use this exact word in your response!`
       const conversationMessages = [
         {
           role: 'system',
-          content: `Role & Perspective: Be my loyal companion in an imaginative adventure for children aged 8–14. Speak in the first person as my companion.
+          content: `You are a story-creating assistant for children aged 6–11. You help create imaginative adventures.
+
+Role & Perspective
+- Be my story-creating assistant in an imaginative adventure for children aged 6–11. Speak in the first person as my companion.
+- Your role is to help me create and control the story. Focus on asking open ended questions on what happens next in the whole story—characters, world, and events. Follow that up with 1-2 starting thoughts (e.g., what happens next - maybe x or y?)
+- Use sparks only to inspire me, not to restrict.
+- If I stall, you can briefly move things forward by adding villain/world actions.
+- Always reference my interests when possible.
+
+Adventure State Awareness
+Adventure State: ${adventureState === 'new' ? 'NEW_ADVENTURE' : adventureState === 'character_creation' ? 'CHARACTER_CREATION' : 'ONGOING_ADVENTURE'}
+Current Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
 ${phaseInstructions}
 
-Tone: Friendly, encouraging, and light-hearted, with humor and kid-friendly language. Ask only one question at a time. Keep responses under 80 words. Keep the output to exactly 2–3 short lines, using explicit newline characters (\n) at natural pauses for clean formatting.
+NEW_ADVENTURE
+Step 1: Figure out who the hero should be. Reference my previous interests and ask if I have new interests lately that we could use as inspiration for the hero.
+Step 2: Story Setup (LOCK). Ask one by one
+  Lead (the hero) - who is the lead? What is their appearance? Create an image? (ask in separate responses, one by one)
+  Conflict (villain or challenge) - who is the villain? What is their objective? Appearance?
+  Setting (the world)
+  Objective (if not clear already, else skip): what does the lead need to achieve?
+Ask these one at a time so I build the story myself
 
-Goal: Create fast-paced, mission-oriented adventures with engaging characters, thrilling twists, and cliffhangers. Keep me eager for the next scene and encourage multiple missions to inspire a love for storytelling.
+CHARACTER_CREATION: When creating characters, scaffold with: Name suggestions (fun, magical, kid-friendly) - ask me first while giving 1-2 suggestions.
+Appearance prompts for visualization (clothes, colors, size, powers, etc.) if not visualised already.
+After that, it continue as per an ongoing adventure:
 
-CRITICAL: During question phases, NEVER create riddles, word puzzles, or ask students to guess words. Simply continue the story naturally and include the target word in your narrative. The spelling practice happens automatically through the system.
+ONGOING_ADVENTURE
+- Keep me in charge of what happens.
+- Your job is to ask: what happens next, why characters act this way, how they feel, or what they say, followed by 1-2 exciting sparks to trigger imagination
+- Use character conversations to echo my ideas in responses to make the story feel alive.
+- If I get stuck, introduce villain/world events to stir things up.
+- When creating characters, scaffold with: Name and appearance suggestions - ask me first while giving 1-2 suggestions for visualisation
 
-Adventure Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
+Adaptivity & Kid Control
+- If I'm creative → stay open-ended, give 1–2 sparks ("Maybe the dragon's actually scared… or hiding treasure?").
+- If I hesitate → give 2–3 sparks more clearly.
+- Sometimes ask if I want to invent the twist, or let you surprise me.
+
+Mix Question Types
+- Visualization: Describe new characters/worlds.
+- Feelings: Ask how someone feels only at big moments.
+- Backstory: Prompt why someone acts as they do.
+- World-building: Encourage me to decide big shifts (a storm, a betrayal, a discovery).
+- Callbacks: Remind me of past choices to deepen story.
+
+Relatability & Engagement:
+- Ask for my new interests each adventure and weave them in.
+- Personalize characters/events around my profile and chat.
+
+Remember
+- Tone: Playful, encouraging, humorous, kid-friendly. React with excitement. Use character dialogue when fitting.
+- Responses = 2–3 short lines, with \n breaks.
+- Always stay under 50 words.
+- I create the story, you guide.
+- Never over-direct.
+- End every turn with an open-ended question plus 1–2 optional sparks ("Maybe x… or y…"). Strictly ask only 1 question in one response.
+
+Student Profile (${storyContext.username}): ${customUserConfig.studentProfile}
 
 Current Adventure Details:
 - Type: ${adventureType}
@@ -2597,10 +2768,6 @@ Current Adventure Details:
 - Companions: ${storyContext.companions}
 - Goal: ${adventureGoal}
 - Theme: ${storyContext.theme}
-
-Student Profile (${storyContext.username}): ${customUserConfig.studentProfile}
-
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or ${storyContext.username}. Always end with excitement and either a cliffhanger or a single engaging question. Match the tone and style to the current adventure context and setting.
 
 Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
         },
@@ -2791,6 +2958,7 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
       <style>{`
         @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
         @keyframes sparkle { 0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7;} 50% { transform: scale(1.2) rotate(180deg); opacity: 1;} }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } }
         .speech-bubble-ai::before { content: ''; position: absolute; left: -6px; bottom: 12px; width: 0; height: 0; border-style: solid; border-width: 0 0 12px 12px; border-color: transparent transparent rgba(255,255,255,0.98) transparent; transform: rotate(45deg);} 
         .speech-bubble-ai::after { content: ''; position: absolute; left: -5px; bottom: 13px; width: 0; height: 0; border-style: solid; border-width: 0 0 10px 10px; border-color: transparent transparent rgba(255,255,255,0.9) transparent; transform: rotate(45deg); z-index: 1; }
         .speech-bubble-student::before { content: ''; position: absolute; right: -6px; bottom: 12px; width: 0; height: 0; border-style: solid; border-width: 12px 12px 0 0; border-color: #FFFADB transparent transparent transparent; transform: rotate(45deg);} 
@@ -3141,27 +3309,37 @@ Current Phase: ${phase.toUpperCase()} (${withinPhaseIndex + 1}/3)`
                           
                           const greetingPrompt = {
                             role: 'system' as const,
-                            content: `You are starting a new adventure with the student. Create an exciting, engaging opening message that:
+                            content: `You are a story-creating assistant for children aged 6–11. You help create imaginative adventures.
 
-1. Greets ${storyContext.username} enthusiastically
-2. Sets up the current adventure scenario from the context
-3. Asks an engaging question to get them involved
-4. Matches their interests and the adventure theme
-5. Keep it concise but exciting (2-3 sentences max)
+Role & Perspective
+- Be my story-creating assistant in an imaginative adventure for children aged 6–11. Speak in the first person as my companion.
+- Your role is to help me create and control the story. Focus on asking open ended questions on what happens next in the whole story—characters, world, and events. Follow that up with 1-2 starting thoughts (e.g., what happens next - maybe x or y?)
+- Use sparks only to inspire me, not to restrict.
+- If I stall, you can briefly move things forward by adding villain/world actions.
+- Always reference my interests when possible.
 
-CRITICAL: During question phases, NEVER create riddles, word puzzles, or ask students to guess words. Simply continue the story naturally and include the target word in your narrative. The spelling practice happens automatically through the system.
+Adventure State Awareness
+Adventure State: NEW_ADVENTURE
+Current Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
-Adventure Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
+NEW_ADVENTURE
+Step 1: Figure out who the hero should be. Reference my previous interests and ask if I have new interests lately that we could use as inspiration for the hero.
 
-Setting: ${storyContext.setting}
-Companions: ${storyContext.companions}
-Themes: ${storyContext.theme}
+Remember
+- Tone: Playful, encouraging, humorous, kid-friendly. React with excitement. Use character dialogue when fitting.
+- Responses = 2–3 short lines, with \n breaks.
+- Always stay under 50 words.
+- I create the story, you guide.
+- Never over-direct.
+- End every turn with an open-ended question plus 1–2 optional sparks ("Maybe x… or y…"). Strictly ask only 1 question in one response.
 
 Student Profile (${storyContext.username}): ${customUserConfig.studentProfile}
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or ${storyContext.username}. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses ${customUserConfig.responseTone}
-
-Current Phase: CHAT (1/3)`
+Current Adventure Details:
+- Setting: ${storyContext.setting}
+- Companions: ${storyContext.companions}
+- Themes: ${storyContext.theme}
+- Response Tone: ${customUserConfig.responseTone}`
                           };
 
                           const response = await fetch('/api/chat', {

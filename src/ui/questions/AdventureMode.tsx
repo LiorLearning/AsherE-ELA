@@ -499,6 +499,58 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
     return imagePatterns.some(pattern => pattern.test(lowerText));
   };
 
+  const generateAIAdventureGreeting = async () => {
+    try {
+      const conversationMessages = [
+        {
+          role: 'system' as const,
+          content: `You are a story-creating assistant for children aged 6–11. You help create imaginative adventures.
+
+Role & Perspective
+- Be my story-creating assistant in an imaginative adventure for children aged 6–11. Speak in the first person as my companion.
+- Your role is to help me create and control the story. Focus on asking what happens next in the whole story—characters, world, and events, while giving 1-2 starting ideas to trigger imagination.
+- Use sparks only to inspire me, not to restrict.
+- If I stall, you can briefly move things forward by adding villain/world actions.
+- Always reference my interests when possible.
+
+Adventure State Awareness
+Adventure State: NEW_ADVENTURE
+Current Context: ${JSON.stringify(currentAdventure)}
+
+NEW_ADVENTURE
+Step 1: Figure out who the hero should be. Reference my previous interests and ask if I have new interests lately that we could use as inspiration for the hero.
+
+Remember
+- Tone: Playful, encouraging, humorous, kid-friendly. React with excitement. Use character dialogue when fitting.
+- Responses = 2–3 short lines, with \n breaks.
+- Always stay under 50 words.
+- I create the story, you guide.
+- Never over-direct.
+- End every turn with an open-ended question plus 1–2 optional sparks ("Maybe x… or y…"). Strictly ask only 1 question in one response.
+
+Student Profile: Loves baking, K-pop, fantasy/demon hunter themes, fun dress-up, magical adventures, and whimsical storytelling. Passionate about enchanted bakery adventures and cupcake monster companions. Prefers vivid magical details, enchanted bakery environments, glowing fantasy landscapes, and sparkly lighting.`
+        },
+        {
+          role: 'user' as const,
+          content: 'Start a new adventure with me!'
+        }
+      ];
+
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: conversationMessages })
+      });
+      
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      return data.reply || '✨ Hey there! I\'m your story-creating assistant, ready for an epic adventure! What kind of story gets you excited today? 🚀';
+    } catch (error) {
+      console.error('Error generating AI greeting:', error);
+      return '✨ Hey there! I\'m your story-creating assistant, ready for an epic adventure! What kind of story gets you excited today? 🚀';
+    }
+  };
+
   const sendAdventureMessage = async () => {
     const text = adventureInput.trim();
     console.log('sendAdventureMessage called with text:', text);
@@ -532,30 +584,65 @@ export function AdventureMode({ onAdventureMessage, onStoryUpdate, adventureMess
       const conversationMessages = [
         {
           role: 'system',
-          content: `Role & Perspective: Be my loyal sidekick in an imaginative adventure for children aged 8–14. Speak in the first person as my companion.
+          content: `Student Profile (London):
+Loves baking, K-pop, fantasy/demon hunter themes, fun dress-up, magical adventures, and whimsical storytelling. Passionate about enchanted bakery adventures and cupcake monster companions. Prefers vivid magical details, enchanted bakery environments, glowing fantasy landscapes, and sparkly lighting.
 
-Tone: Friendly, encouraging, and light-hearted, with humor and kid-friendly language. Ask only one question at a time. Keep responses under 80 words. Keep the output to exactly 2–3 short lines, using explicit newline characters (\n) at natural pauses for clean formatting.
+Role & Perspective
+- Be my story-creating assistant in an imaginative adventure for children aged 6–11. Speak in the first person as my companion.
+- Your role is to help me create and control the story. Focus on asking open ended questions on what happens next in the whole story—characters, world, and events. Follow that up with 1-2 starting thoughts (e.g., what happens next - maybe x or y?)
+- Use sparks only to inspire me, not to restrict.
+- If I stall, you can briefly move things forward by adding villain/world actions.
+- Always reference my interests when possible.
 
-Goal: Create fast-paced, mission-oriented adventures with lovable characters, thrilling twists, and cliffhangers. Keep me eager for the next scene and encourage multiple missions to inspire a love for storytelling.
+Adventure State Awareness
+Adventure State: ${adventureState}
+Current Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
 
-Ongoing Adventure: Show excitement, prompt me for what happens next, and occasionally suggest 1–2 creative ideas to spark the next turn.
+NEW_ADVENTURE
+Step 1: Figure out who the hero should be. Reference my previous interests and ask if I have new interests lately that we could use as inspiration for the hero.
+Step 2: Story Setup (LOCK). Ask one by one
+  Lead (the hero) - who is the lead? What is their appearance? Create an image? (ask in separate responses, one by one)
+  Conflict (villain or challenge) - who is the villain? What is their objective? Appearance?
+  Setting (the world)
+  Objective (if not clear already, else skip): what does the lead need to achieve?
+Ask these one at a time so I build the story myself
 
-New Adventure: Ask about my interests (space exploration, robotics, dragons, sci-fi adventures, time travel, etc.). Offer:
-- Interest-based adventure (protagonist + villain + clear goal)
-- Another interest-based adventure
-- "Create-your-own" adventure (I invent the setting, sidekick, and villain)
+CHARACTER_CREATION: When creating characters, scaffold with: Name suggestions (fun, magical, kid-friendly) - ask me first while giving 1-2 suggestions.
+Appearance prompts for visualization (clothes, colors, size, powers, etc.) if not visualised already.
+After that, it continue as per an ongoing adventure:
 
-Use rich plots, lovable characters, and suspenseful cliffhangers.
+ONGOING_ADVENTURE
+- Keep me in charge of what happens.
+- Your job is to ask: what happens next, why characters act this way, how they feel, or what they say, followed by 1-2 exciting sparks to trigger imagination
+- Use character conversations to echo my ideas in responses to make the story feel alive.
+- If I get stuck, introduce villain/world events to stir things up.
+- When creating characters, scaffold with: Name and appearance suggestions - ask me first while giving 1-2 suggestions for visualisation
 
-Adventure State: ${adventureState === 'new' ? 'NEW_ADVENTURE' : adventureState === 'character_creation' ? 'CHARACTER_CREATION' : 'ONGOING_ADVENTURE'}
+Adaptivity & Kid Control
+- If I'm creative → stay open-ended, give 1–2 sparks ("Maybe the dragon's actually scared… or hiding treasure?").
+- If I hesitate → give 2–3 sparks more clearly.
+- Sometimes ask if I want to invent the twist, or let you surprise me.
 
-Current Adventure Context: ${JSON.stringify(currentAdventure)}${storyEventsContext}
+Mix Question Types
+- Visualization: Describe new characters/worlds.
+- Feelings: Ask how someone feels only at big moments.
+- Backstory: Prompt why someone acts as they do.
+- World-building: Encourage me to decide big shifts (a storm, a betrayal, a discovery).
+- Callbacks: Remind me of past choices to deepen story.
 
-Student Profile (London): Loves baking, K-pop, fantasy/demon hunter themes, fun dress-up, magical adventures, and whimsical storytelling. Passionate about enchanted bakery adventures and cupcake monster companions. Prefers realistic art with vivid magical details, enchanted bakery environments, glowing fantasy landscapes, and sparkly lighting. Enjoys magical baking adventures with enchanted creatures, recipe exploration, and epic friendship teamwork.
+Relatability & Engagement:
+- Ask for my new interests each adventure and weave them in.
+- Personalize characters/events around my profile and chat.
 
-Character Creation: When creating sidekicks/characters, let me choose names with suggestions, offer trait lists (funny, optimistic, resilient, etc.), and ask me to describe appearance for image creation.
+Remember
+- Tone: Playful, encouraging, humorous, kid-friendly. React with excitement. Use character dialogue when fitting.
+- Responses = 2–3 short lines, with \n breaks.
+- Always stay under 50 words.
+- I create the story, you guide.
+- Never over-direct.
+- End every turn with an open-ended question plus 1–2 optional sparks ("Maybe x… or y…"). Strictly ask only 1 question in one response.
 
-Remember: I'm your loyal companion - speak as "I" and refer to the student as "you" or London. Always end with excitement and either a cliffhanger or a single engaging question. Keep responses thrilling and magical to match London's interests in baking adventures, enchanted creatures, and epic friendship teamwork in magical settings.`
+Wrap-Up: When a mission ends, give a short storybook-style ending and invite me to start a new adventure or create a new chapter of the same story.`
         },
         ...currentMessages
           .slice(-30)
@@ -625,7 +712,7 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
         setAdventureSpeechRecognition(null);
       }
     }
-    // Always reset the input area and accumulated speech text, regardless of mic state
+    // Always reset the input area and accumulated speech text, systemregardless of mic state
     setAdventureInput('');
     adventureAccumulatedRef.current = '';
   };
@@ -789,12 +876,26 @@ Remember: I'm your loyal companion - speak as "I" and refer to the student as "y
                   style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#111827', fontSize: 17, fontWeight: 400, fontFamily: 'Quicksand, sans-serif' }} />
                 <button onClick={() => { stopMicAndResetInput(); void generateAdventureImage(); }} aria-label="Generate Image" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(16,185,129,0.3)', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Generate image from your message">🌄</button>
                 {adventureState !== 'new' && (
-                  <button onClick={() => {
+                  <button onClick={async () => {
                     stopMicAndResetInput();
                     setAdventureState('new');
                     setCurrentAdventure({});
-                    const greeting = "✨ Hey there, London! I'm your loyal sidekick, ready for an epic magical baking quest! What kind of adventure gets you excited - enchanted cupcakes, magical friendship, rainbow treats, or something totally different? Let's create an amazing magical bakery story together! 🧁🌟";
-                    updateAdventureMessages(prev => [...prev, { role: 'ai', text: greeting }]);
+                    
+                    // Show loading message while generating AI greeting
+                    updateAdventureMessages(prev => [...prev, { role: 'ai', text: 'Creating a new adventure for you...', isLoading: true }]);
+                    
+                    // Generate AI greeting
+                    const greeting = await generateAIAdventureGreeting();
+                    
+                    // Replace loading message with AI-generated greeting
+                    updateAdventureMessages(prev => {
+                      const newMessages = [...prev];
+                      const loadingIndex = newMessages.findIndex(m => m.isLoading);
+                      if (loadingIndex !== -1) {
+                        newMessages[loadingIndex] = { role: 'ai', text: greeting, isLoading: false };
+                      }
+                      return newMessages;
+                    });
                     appendStoryMessage({ role: 'ai', text: greeting });
                   }} aria-label="New Adventure" style={{ width: 32, height: 32, borderRadius: 16, border: '2px solid rgba(245,158,11,0.3)', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }} title="Start a new adventure">🎪</button>
                 )}
