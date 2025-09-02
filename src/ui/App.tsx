@@ -391,7 +391,7 @@ export function App(): JSX.Element {
   }
   
   // Show adventure mode for any story (when mode is adventure) or new story creation
-  if ((selectedStoryId === 'london-magical-bakery' && storyMode === 'adventure') || (selectedStoryId === 'captain-asher-time-stranglers' && storyMode === 'adventure') || (selectedStoryId === 'two-sisters' && storyMode === 'adventure') || (selectedStoryId === 'gregory-ipad-kid' && storyMode === 'adventure') || (selectedStoryId === 'callee-jungle-adventure' && storyMode === 'adventure') ||selectedStoryId === 'new-story') {
+  if ((selectedStoryId === 'london-magical-bakery' && storyMode === 'adventure') || (selectedStoryId === 'captain-asher-time-stranglers' && storyMode === 'adventure') || (selectedStoryId === 'two-sisters' && storyMode === 'adventure') || (selectedStoryId === 'gregory-ipad-kid' && storyMode === 'adventure') || (selectedStoryId === 'callee-jungle-adventure' && storyMode === 'adventure') || (selectedStoryId === 'iker-roblox-adventure' && storyMode === 'adventure') || (selectedStoryId === 'iker-new-story' && storyMode === 'adventure') || selectedStoryId === 'new-story') {
     return (
       <div style={{
         display: 'grid',

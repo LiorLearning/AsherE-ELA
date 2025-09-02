@@ -34,7 +34,19 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       isCreateNew: true,
       imageUrl: undefined,
       pages: undefined
+    },
+    {
+      id: 'iker-roblox-adventure',
+      title: 'Roblox Showdown',
+      author: 'by Iker, 4th grade',
+      pages: '5 pages',
+      emoji: '🎮',
+      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FIker%252F20250826_223658.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+      color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+      isCreateNew: false
     }
+  ];
+    
 
     // {
     //   id: 'gregory-ipad-kid',
@@ -67,7 +79,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
     //   color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
     //   isCreateNew: false
     // }
-  ];
+
 
   const topPicksStories = [
     {
@@ -93,12 +105,12 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
     },
 
     {
-      id: 'roblox-showdown',
+      id: 'iker-roblox-adventure',
       title: 'Roblox Showdown',
       author: 'by Iker, 4th grade',
       pages: '5 pages',
       badge: '🎢 "Thrilling!"',
-      emoji: '✨',
+      emoji: '🎮',
       imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FIker%252F20250826_223658.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
       color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
       isCreateNew: false
@@ -817,7 +829,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
               fontFamily: 'Quicksand, system-ui, sans-serif',
               textShadow: '0 2px 4px rgba(0,0,0,0.05)'
             }}>
-              📚 Welcome, Bastian!
+              📚 Welcome, Iker!
             </h1>
             <div style={{ marginTop: 20 }}>
               <AuthorLevelBadge />
@@ -863,11 +875,11 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
                 color={story.color}
                 isCreateNew={story.isCreateNew}
                 imageUrl={story.imageUrl}
-                author={story.author}
+                // author={story.author}
                 pages={story.pages}
-                showPublishButton={story.id === 'captain-asher-time-stranglers' || story.id === 'two-sisters' || story.id === 'gregory-ipad-kid' || story.id === 'london-magical-bakery'}
+                showPublishButton={story.id === 'captain-asher-time-stranglers' || story.id === 'two-sisters' || story.id === 'gregory-ipad-kid' || story.id === 'london-magical-bakery' || story.id === 'iker-roblox-adventure'}
                 onPublish={() => handlePublishStory(story.id)}
-                onClick={() => story.isCreateNew ? handleCreateNew() : handleStorySelect(story.id, 'adventure')}
+                onClick={() => story.isCreateNew ? handleStorySelect('iker-new-story', 'adventure') : handleStorySelect(story.id, 'adventure')}
               />
             ))}
           </div>

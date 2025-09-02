@@ -141,6 +141,43 @@ const USER_CONFIGS: Record<string, UserAdventureConfig> = {
     goal: 'maintain harmony in the magical bakery, master baking magic, solve word puzzles, and create the most amazing magical treats',
     recentEvent: 'London and her blonde sidekick successfully completed "Cupcake Day" with Sprinkle Beast\'s help! They survived dangerous frosting storms, rode exciting whipped cream waves, solved challenging word puzzles, and encountered a mysterious magical oven that glowed bright red. Now they\'re preparing for "Cake Day" tomorrow - an even bigger, more dazzling magical challenge!'
   },
+  'iker-roblox-adventure': {
+    username: 'Iker',
+    protagonist: 'Mateo',
+    interests: ['roblox', 'forest', 'magic', 'digital', 'technology', 'heroic', 'battles', 'armor', 'trees', 'robots', 'gaming', 'adventure', 'epic', 'powers', 'teamwork', 'creative'],
+    quickOptions: ['🌳 Forest Magic', '🤖 Digital Tech', '⚔️ Epic Battles', '🛡️ Vine Armor', '🎮 Roblox Powers', '🌙 Moon Rocks'],
+    studentProfile: 'Loves epic Roblox adventures, forest magic, digital technology, and heroic battles. Passionate about creative heroes with magical powers, robotic companions, and high-tech battlefields. Prefers dynamic art with glowing armor, magical trees, neon wires, and epic battle scenes. Enjoys themes of teamwork, creativity, heroic courage, and mastering both nature and technology.',
+    responseTone: 'epic and heroic to match the Roblox adventure setting with forest magic, digital technology, and the ongoing battle against the Shadow King.',
+    defaultMessage: "🌳⚔️ Iker! Your vine armor glows with power. The Shadow King's wand trembles! A GIANT Earthworm emerges! Moon rocks pulse. Will you unleash Glitcherino's banana blaster or something even wilder? 🤖✨",
+    setting: "Cratered Roblox HQ after being struck by ten asteroids; neon wires, shattered labs, and moon rocks scattered across a techy battlefield",
+    companions: "Glitcherino (wooden robot with all-brown outfit, springy limbs, and a banana-powered joke blaster), Iker (brave, creative hero wearing a gamer-style outfit, glowing blue visor, and digital cape)",
+    theme: "epic heroic battles, forest magic and digital technology fusion, teamwork, and protecting the digital realm",
+    adventureType: 'epic Roblox adventure with forest magic, digital technology, and heroic battles',
+    sidekick: 'Glitcherino (wooden robot with all-brown outfit, springy limbs, and a banana-powered joke blaster)',
+    teammates: 'Iker (brave, creative hero wearing a gamer-style outfit, glowing blue visor, and digital cape)',
+    villain: 'The Shadow King (armored in dark metal, with powerful shadow magic and a glowing wand; seeks revenge after being banned by David Bazuki)',
+    goal: 'defeat the Shadow King, protect the digital realm, master forest magic and technology, and restore peace to Roblox HQ',
+    recentEvent: 'Mateo used an epic tree cage to trap the Shadow King, but his wand is breaking free; below, a sleepy Sea Eater shark awakened and was lulled to sleep—when a GIANT Earthworm emerged from the depths!'
+  },
+  // Iker's new story creation - discovery mode
+  'iker-new-story': {
+    username: 'Iker',
+    protagonist: 'Iker',
+    interests: ['adventure', 'exploration', 'discovery', 'roblox', 'gaming', 'creative', 'heroic', 'magic', 'technology', 'storytelling', 'imagination', 'epic'],
+    quickOptions: ['🎮 Gaming Adventures', '🌟 Epic Quests', '🔍 Mystery Solving', '✨ Magical Worlds', '🤖 Tech Adventures', '🌍 World Building'],
+    studentProfile: 'Creative adventurer who loves gaming, epic stories, and building amazing worlds. Ready to discover new adventure themes and create incredible stories with heroic characters, magical elements, and exciting technology.',
+    responseTone: 'encouraging and epic to help Iker discover what amazing adventure themes excite him most while building his own unique story world.',
+    defaultMessage: "🎮✨ Hey Iker! You're finally here in the Adventure Discovery Space! 🚀 Tell me, what have you been into lately - video games, dragons, animals or maybe something else?",
+    setting: "Iker's personal story creation space where any epic adventure is possible",
+    companions: "creative story guide and adventure companions ready to help build amazing worlds",
+    theme: "discovery, creativity, epic adventures, and building the perfect story world",
+    adventureType: 'creative story discovery adventure to explore themes and build amazing worlds',
+    sidekick: 'encouraging creative guide who helps build epic stories',
+    teammates: 'supportive story companions ready for any adventure Iker can imagine',
+    villain: 'creative challenges that help discover the most exciting story elements',
+    goal: 'discover what kinds of epic adventures Iker loves most and create the most amazing story together',
+    recentEvent: 'Iker has just entered his personal story creation space, ready to build the most epic adventure ever!'
+  },
   // Bastian configuration - new user with unknown interests
   'bastian': {
     username: 'Bastian',
@@ -162,22 +199,22 @@ const USER_CONFIGS: Record<string, UserAdventureConfig> = {
   },
   // Default configuration for new stories or unrecognized IDs
   'default': {
-    username: 'Bastian',
-    protagonist: 'Bastian',
-    interests: ['adventure', 'exploration', 'discovery', 'mystery', 'magic', 'friendship', 'heroic', 'creative', 'storytelling', 'imagination'],
-    quickOptions: ['🌟 Epic Adventures', '🔍 Mystery Solving', '✨ Magical Worlds', '🤝 Team Adventures', '🎨 Creative Stories', '🌍 World Exploration'],
-    studentProfile: 'New adventurer ready to discover their interests and explore different themes. Open to various adventure types and eager to learn what excites them most.',
-    responseTone: 'encouraging and exploratory to help discover what adventure themes and activities Bastian enjoys most.',
-    defaultMessage: "🌟 Hey, Bastian! You're finally here in the Adventure Discovery Space! 🚀 Tell me, what have you been into lately - video games, dragons, animals or maybe something else? ✨",
-          setting: "Adventure discovery space where any world is possible",
-          companions: "helpful guide and loyal companions",
-    theme: "discovery, exploration, and finding what sparks joy",
-    adventureType: 'discovery adventure to explore different themes and interests',
-    sidekick: 'encouraging adventure guide',
-    teammates: 'supportive companions ready for any adventure',
-    villain: 'challenges that help us grow and discover our strengths',
-    goal: 'discover what kinds of adventures Bastian loves most and create amazing stories together',
-    recentEvent: 'Bastian has just arrived in the adventure world, ready to discover what excites them most!'
+    username: 'Iker',
+    protagonist: 'Iker',
+    interests: ['adventure', 'exploration', 'discovery', 'roblox', 'gaming', 'creative', 'heroic', 'magic', 'technology', 'storytelling', 'imagination', 'epic'],
+    quickOptions: ['🎮 Gaming Adventures', '🌟 Epic Quests', '🔍 Mystery Solving', '✨ Magical Worlds', '🤖 Tech Adventures', '🌍 World Building'],
+    studentProfile: 'Creative adventurer who loves gaming, epic stories, and building amazing worlds. Ready to discover new adventure themes and create incredible stories with heroic characters, magical elements, and exciting technology.',
+    responseTone: 'encouraging and epic to help Iker discover what amazing adventure themes excite him most while building his own unique story world.',
+    defaultMessage: "🎮✨ Hey Iker! Welcome to your personal Story Creation Space! I'm here to help you build the most EPIC adventure ever! What kind of story are you feeling today - maybe something with heroes, magic, technology, or something completely new? Tell me what's been on your mind lately! 🚀",
+    setting: "Iker's personal story creation space where any epic adventure is possible",
+    companions: "creative story guide and adventure companions ready to help build amazing worlds",
+    theme: "discovery, creativity, epic adventures, and building the perfect story world",
+    adventureType: 'creative story discovery adventure to explore themes and build amazing worlds',
+    sidekick: 'encouraging creative guide who helps build epic stories',
+    teammates: 'supportive story companions ready for any adventure Iker can imagine',
+    villain: 'creative challenges that help discover the most exciting story elements',
+    goal: 'discover what kinds of epic adventures Iker loves most and create the most amazing story together',
+    recentEvent: 'Iker has just entered his personal story creation space, ready to build the most epic adventure ever!'
   }
 };
 
@@ -349,16 +386,20 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
 
   // Target words for spelling challenges - CVC words with short "o" and short "u"
   const targetWords: string[] = [
-    // CVC words with short "a" vowel
-    'cat', 'bat', 'hat', 'mat', 'rat', 'sat', 'pat', 'fat', 'vat', 'lap',
-    // CVC words with short "e" vowel
-    // 'bed', 'red', 'led', 'fed', 'wed', 'net', 'pet', 'set', 'bet', 'jet',
-    // CVC words with short "i" vowel
-    'sit', 'bit', 'hit', 'kit', 'lit', 'pit', 'fit', 'wit', 'zip', 'lip',
-    // CVC words with short "o" vowel
-    // 'dog', 'log', 'fog', 'jog', 'hog', 'cog', 'pot', 'cot', 'dot', 'lot',
-    // // CVC words with short "u" vowel
-    // 'cup', 'pup', 'tub', 'rub', 'sub', 'cub', 'mud', 'bud', 'hug', 'rug'
+    // OA pattern (long O)
+    'approach', 'reproach', 'cockroach', 'stagecoach',
+    // OW pattern (long O) 
+    'swallow', 'bellow', 'furrow', 'marrow',
+    // OLD pattern
+    'behold', 'threshold', 'stronghold', 'household',
+    // OST pattern
+    'utmost', 'outmost', 'foremost', 'uppermost',
+    // OLT pattern
+    'revolt', 'default', 'assault',
+    // Hard-to-spell words
+    'asteroid', 'rhythm', 'lieutenant',
+    'necessary', 'separate', 'definitely', 'embarrass', 'occurrence',
+    'privilege', 'maintenance'
   ].sort(() => Math.random() - 0.5); // Randomize the order
 
   // Function to get current phase and target words
