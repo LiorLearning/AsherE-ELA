@@ -352,13 +352,13 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
     // CVC words with short "a" vowel
     'cat', 'bat', 'hat', 'mat', 'rat', 'sat', 'pat', 'fat', 'vat', 'lap',
     // CVC words with short "e" vowel
-    'bed', 'red', 'led', 'fed', 'wed', 'net', 'pet', 'set', 'bet', 'jet',
+    // 'bed', 'red', 'led', 'fed', 'wed', 'net', 'pet', 'set', 'bet', 'jet',
     // CVC words with short "i" vowel
     'sit', 'bit', 'hit', 'kit', 'lit', 'pit', 'fit', 'wit', 'zip', 'lip',
     // CVC words with short "o" vowel
-    'dog', 'log', 'fog', 'jog', 'hog', 'cog', 'pot', 'cot', 'dot', 'lot',
-    // CVC words with short "u" vowel
-    'cup', 'pup', 'tub', 'rub', 'sub', 'cub', 'mud', 'bud', 'hug', 'rug'
+    // 'dog', 'log', 'fog', 'jog', 'hog', 'cog', 'pot', 'cot', 'dot', 'lot',
+    // // CVC words with short "u" vowel
+    // 'cup', 'pup', 'tub', 'rub', 'sub', 'cub', 'mud', 'bud', 'hug', 'rug'
   ].sort(() => Math.random() - 0.5); // Randomize the order
 
   // Function to get current phase and target words
@@ -2380,7 +2380,7 @@ Strictly keep it within 20 words. Keep it encouraging and focus on the learning 
     // Build the main image prompt using weighted user message history
     const contextParts = [];
     contextParts.push(weightedContent);
-    contextParts.push('Remove any parts that make it moderated, if any, and create it.');
+    contextParts.push('Remove parts that make it moderated. Reduce intensity of violence or eliminate sexual parts if any. Then proceed to create image.');
     
     // Story setting comes first for context
     // if (currentAdventure?.setting) {
