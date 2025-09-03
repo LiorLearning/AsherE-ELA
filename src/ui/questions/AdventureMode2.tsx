@@ -159,24 +159,24 @@ const USER_CONFIGS: Record<string, UserAdventureConfig> = {
     goal: 'defeat the Shadow King, protect the digital realm, master forest magic and technology, and restore peace to Roblox HQ',
     recentEvent: 'Mateo used an epic tree cage to trap the Shadow King, but his wand is breaking free; below, a sleepy Sea Eater shark awakened and was lulled to sleep—when a GIANT Earthworm emerged from the depths!'
   },
-  // Iker's new story creation - discovery mode
-  'iker-new-story': {
-    username: 'Iker',
-    protagonist: 'Iker',
-    interests: ['adventure', 'exploration', 'discovery', 'roblox', 'gaming', 'creative', 'heroic', 'magic', 'technology', 'storytelling', 'imagination', 'epic'],
-    quickOptions: ['🎮 Gaming Adventures', '🌟 Epic Quests', '🔍 Mystery Solving', '✨ Magical Worlds', '🤖 Tech Adventures', '🌍 World Building'],
-    studentProfile: 'Creative adventurer who loves gaming, epic stories, and building amazing worlds. Ready to discover new adventure themes and create incredible stories with heroic characters, magical elements, and exciting technology.',
-    responseTone: 'encouraging and epic to help Iker discover what amazing adventure themes excite him most while building his own unique story world.',
-    defaultMessage: "🎮✨ Hey Iker! You're finally here in the Adventure Discovery Space! 🚀 Tell me, what have you been into lately - video games, dragons, animals or maybe something else?",
-    setting: "Iker's personal story creation space where any epic adventure is possible",
+  // Asher's new story creation - discovery mode
+  'asher-new-story': {
+    username: 'Asher',
+    protagonist: 'Asher',
+    interests: ['adventure', 'exploration', 'discovery', 'space', 'futuristic', 'creative', 'heroic', 'technology', 'storytelling', 'imagination', 'epic', 'sci-fi'],
+    quickOptions: ['🚀 Space Adventures', '🌟 Epic Quests', '🔍 Mystery Solving', '✨ Futuristic Worlds', '🤖 Tech Adventures', '🌍 World Building'],
+    studentProfile: 'Creative adventurer who loves space adventures, futuristic stories, and building amazing sci-fi worlds. Ready to discover new adventure themes and create incredible stories with heroic characters, advanced technology, and epic exploration.',
+    responseTone: 'encouraging and adventurous to help Asher discover what amazing adventure themes excite him most while building his own unique story world.',
+    defaultMessage: "🚀✨ Hey Asher! You're finally here in the Adventure Discovery Space! 🌌 Tell me, what have you been into lately - space exploration, futuristic technology, dragons or maybe something else?",
+    setting: "Asher's personal story creation space where any epic adventure is possible",
     companions: "creative story guide and adventure companions ready to help build amazing worlds",
     theme: "discovery, creativity, epic adventures, and building the perfect story world",
     adventureType: 'creative story discovery adventure to explore themes and build amazing worlds',
     sidekick: 'encouraging creative guide who helps build epic stories',
-    teammates: 'supportive story companions ready for any adventure Iker can imagine',
+    teammates: 'supportive story companions ready for any adventure Asher can imagine',
     villain: 'creative challenges that help discover the most exciting story elements',
-    goal: 'discover what kinds of epic adventures Iker loves most and create the most amazing story together',
-    recentEvent: 'Iker has just entered his personal story creation space, ready to build the most epic adventure ever!'
+    goal: 'discover what kinds of epic adventures Asher loves most and create the most amazing story together',
+    recentEvent: 'Asher has just entered his personal story creation space, ready to build the most epic adventure ever!'
   },
   // Bastian configuration - new user with unknown interests
   'bastian': {
@@ -197,24 +197,42 @@ const USER_CONFIGS: Record<string, UserAdventureConfig> = {
     goal: 'discover what kinds of adventures Bastian loves most and create amazing stories together',
     recentEvent: 'Bastian has just arrived in the adventure world, ready to discover what excites them most!'
   },
+  'captain-asher-time-stranglers': {
+    username: 'Asher',
+    protagonist: 'Captain Asher',
+    interests: ['space', 'futuristic', 'alien', 'technology', 'time', 'portals', 'exploration', 'strategy', 'dragons', 'robots', 'sci-fi', 'adventure', 'underground', 'starbase', 'neon', 'glowing'],
+    quickOptions: ['🚀 Space Exploration', '⏰ Time Portal Travel', '🤖 Alien Technology', '🐉 Dragon Companions', '🔫 Blaster Combat', '🌌 Starbase Operations'],
+    studentProfile: 'Loves futuristic space adventures, alien technology, time portals, and sci-fi exploration. Passionate about strategic adventures with dragon companions, robotic allies, and advanced technology. Prefers realistic sci-fi anime art style with glowing neon suits, detailed alien dragons, eerie underground creatures, and futuristic machinery in wild alien landscapes. Enjoys themes of courage, exploration, time mastery, and protecting reality.',
+    responseTone: 'adventurous and strategic to match the futuristic space setting with alien technology, time portals, dragon companions, and the ongoing battle against the Time Stranglers.',
+    defaultMessage: "🚀⏰ Captain Asher! Clay's family has joined us through the portal, and you've been named Guardian of Time! The ice creature retreated after your precise blaster shot, but more may lurk beneath Rigonia 7's frozen surface. Your robot burrow-machines are ready for deployment. What's your next strategic move, Guardian? 🐉🤖",
+    setting: "A futuristic jungle on Ragonia 7's moon, filled with glowing portals, floating time-warp cities, hidden underground starbases beneath alien plantlife, and frozen terrain with mysterious creatures lurking below",
+    companions: "Clay (massive brown MudWing dragon with strong limbs, wide wings, stubby snout, warm amber eyes), Shracker (sleek metallic robotic bird with scanning eyes and flappable wings), Mango (six-year-old animus MudWing dragon with enchanting powers), Clay's entire dragon family",
+    theme: "futuristic space exploration, time mastery, alien technology, dragon companionship, and protecting reality from temporal destruction",
+    adventureType: 'futuristic space adventure with alien technology, time portals, dragon companions, and sci-fi exploration',
+    sidekick: 'Clay (massive brown MudWing dragon with strong limbs, wide wings, stubby snout, warm amber eyes; loyal and protective companion)',
+    teammates: 'Shracker (sleek metallic robotic bird with scanning eyes and flappable wings), Mango (six-year-old animus MudWing dragon with enchanting powers), Clay\'s entire dragon family',
+    villain: 'The Time Stranglers (ancient civilization using broken time-tech to erase reality; their leader recently fell into a swirling time abyss)',
+    goal: 'protect reality from temporal destruction, master advanced alien technology, explore the mysteries of time and space, and defend against underground ice creatures',
+    recentEvent: 'After being named Guardian of Time, Asher detected movement beneath the ice and encountered a creepy pale creature with a single cyclops eye. He shot the creature\'s eye with his blaster, forcing it to retreat underground. Clay\'s entire family stormed through a portal to join the team. The Time Stranglers\' leader fell into a time abyss. Mango used animus powers to move a giant tree. A BLT-themed rescue ship caused chaos with spilled chai and knocked-over snacks. Now Asher proposes creating robot burrow-machines to patrol beneath Rigonia 7\'s surface and protect people from being eaten by underground creatures.'
+  },
   // Default configuration for new stories or unrecognized IDs
   'default': {
-    username: 'Iker',
-    protagonist: 'Iker',
-    interests: ['adventure', 'exploration', 'discovery', 'roblox', 'gaming', 'creative', 'heroic', 'magic', 'technology', 'storytelling', 'imagination', 'epic'],
-    quickOptions: ['🎮 Gaming Adventures', '🌟 Epic Quests', '🔍 Mystery Solving', '✨ Magical Worlds', '🤖 Tech Adventures', '🌍 World Building'],
-    studentProfile: 'Creative adventurer who loves gaming, epic stories, and building amazing worlds. Ready to discover new adventure themes and create incredible stories with heroic characters, magical elements, and exciting technology.',
-    responseTone: 'encouraging and epic to help Iker discover what amazing adventure themes excite him most while building his own unique story world.',
-    defaultMessage: "🎮✨ Hey Iker! Welcome to your personal Story Creation Space! I'm here to help you build the most EPIC adventure ever! What kind of story are you feeling today - maybe something with heroes, magic, technology, or something completely new? Tell me what's been on your mind lately! 🚀",
-    setting: "Iker's personal story creation space where any epic adventure is possible",
+    username: 'Asher',
+    protagonist: 'Asher',
+    interests: ['adventure', 'exploration', 'discovery', 'space', 'futuristic', 'creative', 'heroic', 'technology', 'storytelling', 'imagination', 'epic', 'sci-fi'],
+    quickOptions: ['🚀 Space Adventures', '🌟 Epic Quests', '🔍 Mystery Solving', '✨ Futuristic Worlds', '🤖 Tech Adventures', '🌍 World Building'],
+    studentProfile: 'Creative adventurer who loves space adventures, futuristic stories, and building amazing sci-fi worlds. Ready to discover new adventure themes and create incredible stories with heroic characters, advanced technology, and epic exploration.',
+    responseTone: 'encouraging and adventurous to help Asher discover what amazing adventure themes excite him most while building his own unique story world.',
+    defaultMessage: "🚀✨ Hey Asher! Welcome to your personal Story Creation Space! I'm here to help you build the most EPIC adventure ever! What kind of story are you feeling today - maybe something with space exploration, futuristic technology, or something completely new? Tell me what's been on your mind lately! 🌌",
+    setting: "Asher's personal story creation space where any epic adventure is possible",
     companions: "creative story guide and adventure companions ready to help build amazing worlds",
     theme: "discovery, creativity, epic adventures, and building the perfect story world",
     adventureType: 'creative story discovery adventure to explore themes and build amazing worlds',
     sidekick: 'encouraging creative guide who helps build epic stories',
-    teammates: 'supportive story companions ready for any adventure Iker can imagine',
+    teammates: 'supportive story companions ready for any adventure Asher can imagine',
     villain: 'creative challenges that help discover the most exciting story elements',
-    goal: 'discover what kinds of epic adventures Iker loves most and create the most amazing story together',
-    recentEvent: 'Iker has just entered his personal story creation space, ready to build the most epic adventure ever!'
+    goal: 'discover what kinds of epic adventures Asher loves most and create the most amazing story together',
+    recentEvent: 'Asher has just entered his personal story creation space, ready to build the most epic adventure ever!'
   }
 };
 
@@ -386,20 +404,11 @@ export function AdventureMode2({ selectedStoryId, onAdventureMessage, onStoryUpd
 
   // Target words for spelling challenges - CVC words with short "o" and short "u"
   const targetWords: string[] = [
-    // OA pattern (long O)
-    'approach', 'reproach', 'cockroach', 'stagecoach',
-    // OW pattern (long O) 
-    'swallow', 'bellow', 'furrow', 'marrow',
-    // OLD pattern
-    'behold', 'threshold', 'stronghold', 'household',
-    // OST pattern
-    'utmost', 'outmost', 'foremost', 'uppermost',
-    // OLT pattern
-    'revolt', 'default', 'assault',
-    // Hard-to-spell words
-    'asteroid', 'rhythm', 'lieutenant',
-    'necessary', 'separate', 'definitely', 'embarrass', 'occurrence',
-    'privilege', 'maintenance'
+    // Simple spelling words with digraphs
+    'ship', 'shop', 'shot', 'shut', 'shell', 'shack', // SH digraph
+    'thin', 'that', 'this', 'them', 'thick', 'thumb', 'thud', // TH digraph
+    'chat', 'chin', 'chop', 'chip', 'chill', 'chase', 'charm', // CH digraph
+
   ].sort(() => Math.random() - 0.5); // Randomize the order
 
   // Function to get current phase and target words
@@ -2825,12 +2834,13 @@ Relatability & Engagement:
 
 Remember
 - Words used should be extremely easy to understand for an 8 year old.
-- Responses = 2–3 short lines, with \n breaks.
+- Responses = 2–3 short lines, with \n breaks. Add at least 2-3 emojis in every message wherever naturally appropriate.
 - Strictly restrict each response to 40 words maximum. DO NOT exceed this limit. 
 - Strictly ask only one clear question per response. Never stack multiple questions in a single turn. Remove redundant or unnecessary words or lines.. Remove redundant or unnecessary words or lines.
 - I create the story, you guide. Never over-direct.
 - End every response with extremely exciting open-ended question plus 1–2 optional but super exciting sparks ("Maybe x…, y… or something else?"). Strictly ask only 1 question in one response.
 - Tone: Playful, encouraging, humorous, kid-friendly. React with excitement. Use character dialogue often when fitting.
+- Add at least 2-3 emojis in every message wherever naturally appropriate.
 
 Student Profile (${storyContext.username}): ${customUserConfig.studentProfile}
 

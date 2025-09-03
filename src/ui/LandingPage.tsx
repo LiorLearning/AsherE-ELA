@@ -36,15 +36,25 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
       pages: undefined
     },
     {
-      id: 'iker-roblox-adventure',
-      title: 'Roblox Showdown',
-      author: 'by Iker, 4th grade',
-      pages: '5 pages',
-      emoji: '🎮',
-      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FIker%252F20250826_223658.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
-      color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+      id: 'captain-asher-time-stranglers',
+      title: 'Captain Asher and the Time Stranglers',
+      author: 'by Asher Elliman, 3rd grade',
+      pages: '65 pages',
+      emoji: '🚀',
+      imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FAsherE%252F20250815_174915.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+      color: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
       isCreateNew: false
     }
+    // {
+    //   id: 'iker-roblox-adventure',
+    //   title: 'Roblox Showdown',
+    //   author: 'by Iker, 4th grade',
+    //   pages: '5 pages',
+    //   emoji: '🎮',
+    //   imageUrl: 'https://tutor.mathkraft.org/_next/image?url=%2Fapi%2Fproxy%3Furl%3Dhttps%253A%252F%252Fd1ptidrpttdm41.cloudfront.net%252FIker%252F20250826_223658.png&w=3840&q=75&dpl=dpl_2uGXzhZZsLneniBZtsxr7PEabQXN',
+    //   color: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)',
+    //   isCreateNew: false
+    // }
   ];
     
 
@@ -829,7 +839,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
               fontFamily: 'Quicksand, system-ui, sans-serif',
               textShadow: '0 2px 4px rgba(0,0,0,0.05)'
             }}>
-              📚 Welcome, Iker!
+              📚 Welcome, Asher!
             </h1>
             <div style={{ marginTop: 20 }}>
               <AuthorLevelBadge />
@@ -879,7 +889,7 @@ export function LandingPage({ onSelectStory, onCreateNewStory }: Props): JSX.Ele
                 pages={story.pages}
                 showPublishButton={story.id === 'captain-asher-time-stranglers' || story.id === 'two-sisters' || story.id === 'gregory-ipad-kid' || story.id === 'london-magical-bakery' || story.id === 'iker-roblox-adventure'}
                 onPublish={() => handlePublishStory(story.id)}
-                onClick={() => story.isCreateNew ? handleStorySelect('iker-new-story', 'adventure') : handleStorySelect(story.id, 'adventure')}
+                onClick={() => story.isCreateNew ? handleStorySelect('asher-new-story', 'adventure') : handleStorySelect(story.id, 'adventure')}
               />
             ))}
           </div>
